@@ -78,7 +78,7 @@ public class SecondActivity extends Activity
     long startTime;
 
 //    Creates a string of the current date and time
-    SimpleDateFormat dateFormat = new SimpleDateFormat("dd_MM_yyyy__HH_mm");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd__HH_mm");
     Date todaysDate = new Date();
     public String date = dateFormat.format(todaysDate);
 
