@@ -49,7 +49,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
         initialiseButton = (Button) findViewById(R.id.button_Initialise);
         startButton = (Button) findViewById(R.id.button_Start);
 //        Disables the Start button
-        startButton.setEnabled(true);
+        startButton.setEnabled(false);
 
         String startGPS = "Please start the GPS receiver.";
         infoDisplay.setText(startGPS);
