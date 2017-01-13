@@ -17,6 +17,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.io.File;
+
 public class MainActivity extends Activity implements LocationListener, GpsStatus.Listener {
 
     private int MY_PERMISSIONS_REQUEST_GPS = 2;
@@ -34,6 +36,9 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
 
     boolean recordedYet;
 
+    //    Initialise strings for the zipping
+    String mainPath, folderPath;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,6 +55,9 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
         infoDisplay.setText(startGPS);
 
         recordedYet = false;
+
+        mainPath = String.valueOf(getExternalFilesDir(""));
+        folderPath = mainPath + "/" + "New";
 
 //        Checks (and asks for) permission on app start-up
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -79,6 +87,18 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
 
             //noinspection MissingPermission
             myLocationManager.removeUpdates(this);
+
+            File sourceFolder = new File(folderPath);
+            File[] fileList = sourceFolder.listFiles();
+            int filesLeft = fileList.length;
+
+            while (filesLeft > 0) {
+
+                Intent compressionService = new Intent(this, CompressionService.class);
+                this.startService(compressionService);
+
+                filesLeft = filesLeft - 1;
+            }
 
         }
 
