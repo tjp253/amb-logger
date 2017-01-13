@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">CradleRideLogger</string>
+
+    <string name="button_Initialise">Initialise GPS</string>
+    <string name="button_Start">Start Recording</string>
+    <string name="button_Stop">Stop</string>
+
+    <string name="acc_placeholder">Accelerometer Data: \n\n</string>
+    <string name="gps_placeholder">GPS Data: \n\n</string>
+</resources>
