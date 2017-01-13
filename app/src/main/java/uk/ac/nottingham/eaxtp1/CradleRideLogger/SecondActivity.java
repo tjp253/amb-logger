@@ -53,8 +53,8 @@ public class SecondActivity extends Activity
 
     private float[] deviceValues = new float[4];
     private float[] worldValues = new float[3];
-    private float[] gravityValues = null;
-    private float[] magneticValues = null;
+    private float[] gravityValues = new float[3];
+    private float[] magneticValues = new float[3];
     //    Matrices for converting from device to world coordinates
     private float[] rMatrix = new float[16];
     private float[] iMatrix = new float[16];
@@ -65,14 +65,12 @@ public class SecondActivity extends Activity
     private double latGPS;
     private double longGPS;
 
-    String sID;
-    String sEast;
-    String sNorth;
-    String sDown;
-    String sLat;
-    String sLong;
-    String sTime;
-    String outputToData;
+    String sID, sX, sY, sZ;
+    String sGyroX, sGyroY, sGyroZ, sMagX, sMagY, sMagZ;
+    String sEast, sNorth, sDown;
+    String sLat, sLong, sTime;
+    String outputToData, outputToData_First;
+    String outputTitle;
 
     //  Sets the initial counter value to current time
     long startTime;
@@ -141,8 +139,6 @@ public class SecondActivity extends Activity
 //      Sets runnable going, and hence the timer
         timerHandler.post(timerRunnable);
 
-
-
     }
 
     @Override
@@ -181,7 +177,7 @@ public class SecondActivity extends Activity
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor mySensor = sensorEvent.sensor;
 
-        if ((mySensor.getType() == Sensor.TYPE_ACCELEROMETER) && (gravityValues != null) && (magneticValues != null)) {
+        if ((mySensor.getType() == Sensor.TYPE_ACCELEROMETER) /*&& (gravityValues != null) && (magneticValues != null)*/) {
 //            Increments the sample ID
             sampleID = sampleID + 1;
 
@@ -190,10 +186,13 @@ public class SecondActivity extends Activity
             deviceValues[2] = sensorEvent.values[2];
             deviceValues[3] = 0;
 
-            SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);
+            if ((gravityValues != null) && (magneticValues != null)) {
+                SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);
 
-            Matrix.invertM(inverse, 0, rMatrix, 0);
-            Matrix.multiplyMV(worldMatrix, 0, inverse, 0, deviceValues, 0);
+                Matrix.invertM(inverse, 0, rMatrix, 0);
+                Matrix.multiplyMV(worldMatrix, 0, inverse, 0, deviceValues, 0);
+            }
+
 
             worldValues[0] = worldMatrix[0];
             worldValues[1] = worldMatrix[1];
@@ -201,9 +200,22 @@ public class SecondActivity extends Activity
 
 //            Set up strings
             sID = String.valueOf(sampleID);
+            sX = Float.toString(deviceValues[0]);
+            sY = Float.toString(deviceValues[1]);
+            sZ = Float.toString(deviceValues[2]);
+
+            sGyroX = Float.toString(gravityValues[0]);
+            sGyroY = Float.toString(gravityValues[1]);
+            sGyroZ = Float.toString(gravityValues[2]);
+
+            sMagX = Float.toString(magneticValues[0]);
+            sMagY = Float.toString(magneticValues[1]);
+            sMagZ = Float.toString(magneticValues[2]);
+
             sEast = Float.toString(worldValues[0]);
             sNorth = Float.toString(worldValues[1]);
             sDown = Float.toString(worldValues[2]);
+
             sLat = String.valueOf(latGPS);
             sLong = String.valueOf(longGPS);
 
@@ -213,9 +225,9 @@ public class SecondActivity extends Activity
 //            Sets up concatenated strings
             String initTextAccel = "Sample ID: 0" + "\n" +
                     getString(R.string.acc_placeholder) +
-                    "\t\tE: 0.0" + "\n" +
-                    "\t\tN: 0.0" + "\n" +
-                    "\t\tD: 0.0";
+                    "\t\tX: 0.0" + "\n" +
+                    "\t\tY: 0.0" + "\n" +
+                    "\t\tZ: 0.0";
 
             String initTextGPS = getString(R.string.gps_placeholder) +
                     "\t\tLat: " + sLat + "\n" +
@@ -223,15 +235,19 @@ public class SecondActivity extends Activity
 
             String setTextAccel = "Sample ID: " + Long.toString(sampleID) + "\n" +
                     getString(R.string.acc_placeholder) +
-                    "\t\tE: " + sEast + "\n" +
-                    "\t\tN: " + sNorth + "\n" +
-                    "\t\tD: " + sDown;
+                    "\t\tX: " + sX + "\n" +
+                    "\t\tY: " + sY + "\n" +
+                    "\t\tZ: " + sZ;
 
             String setTextGPS = getString(R.string.gps_placeholder) +
                     "\t\tLat: " + sLat + "\n" +
                     "\t\tLong: " + sLong;
 
-            List<String> outputList = Arrays.asList(sID, sEast, sNorth, sDown, sLat, sLong, sTime);
+            List<String> titleList = Arrays.asList("ID", "X", "Y", "Z", "GyroX", "GyroY", "GyroZ",
+                    "MagX", "MagY", "MagZ", "North", "East", "Down", "Lat", "Long", "Time");
+            List<String> outputList = Arrays.asList(sID, sX, sY, sZ, sGyroX, sGyroY, sGyroZ,
+                    sMagX, sMagY, sMagZ, sNorth, sEast, sDown, sLat, sLong, sTime);
+            outputTitle = TextUtils.join(", ", titleList);
             outputToData = TextUtils.join(", ", outputList);
 
 //            Prints every 100 samples
@@ -255,7 +271,9 @@ public class SecondActivity extends Activity
             if (!myFile.exists()) {
                 try {
 
-                    myOutputStream.write(outputToData.getBytes());
+                    outputToData_First = outputTitle + "\n" + outputToData;
+
+                    myOutputStream.write(outputToData_First.getBytes());
                     myOutputStream.close();
 
                 } catch (IOException e) {
@@ -264,15 +282,24 @@ public class SecondActivity extends Activity
             } else {
 
                 try {
+                    if (sampleID==1) {
 
-                    String appendToData = "\n" + outputToData;
-                    myWriter.append(appendToData);
-                    myWriter.flush();
+                        outputToData_First = outputTitle + "\n" + outputToData;
+
+                        myWriter.append(outputToData_First);
+                        myWriter.flush();
+
+                    } else {
+
+                        String appendToData = "\n" + outputToData;
+                        myWriter.append(appendToData);
+                        myWriter.flush();
+
+                    }
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
 
             }
 
