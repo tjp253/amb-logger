@@ -33,20 +33,22 @@
             android:name=".SecondActivity"
             android:screenOrientation="portrait" />
 
-        <receiver
-            android:name=".WifiReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.net.wifi.STATE_CHANGE" />
-            </intent-filter>
-        </receiver>
+        <!--<receiver-->
+            <!--android:name=".WifiReceiver"-->
+            <!--android:enabled="true"-->
+            <!--android:exported="true">-->
+            <!--<intent-filter>-->
+                <!--<action android:name="android.net.wifi.STATE_CHANGE" />-->
+            <!--</intent-filter>-->
+        <!--</receiver>-->
 
-        <service android:name=".UploadIntentService" />
+        <service android:name=".UploadService" />
+
         <service
             android:name=".CompressionService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true"> </service>
+
     </application>
 
 </manifest>
