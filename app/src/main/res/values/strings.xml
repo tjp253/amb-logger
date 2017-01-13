@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CradleRideLogger</string>
+    <string name="app_name">CradleRide Logger</string>
 
     <string name="button_Initialise">Initialise GPS</string>
     <string name="button_Start">Start Recording</string>
