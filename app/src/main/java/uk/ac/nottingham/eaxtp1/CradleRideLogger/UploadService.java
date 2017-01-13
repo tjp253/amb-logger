@@ -6,10 +6,10 @@ import android.content.Intent;
 import android.support.v7.app.NotificationCompat;
 import android.widget.Toast;
 
-public class UploadIntentService extends IntentService {
+public class UploadService extends IntentService {
 
-    public UploadIntentService() {
-        super("UploadIntentService");
+    public UploadService() {
+        super("UploadService");
     }
 
     NotificationCompat.Builder mBuilder;
@@ -22,11 +22,11 @@ public class UploadIntentService extends IntentService {
 
 //        startTime = System.currentTimeMillis();
 
-         mBuilder =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.hand_icon)
-                        .setContentTitle("The service works")
-                        .setContentText("This is proof!!");
+//         mBuilder =
+//                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+//                        .setSmallIcon(R.drawable.hand_icon)
+//                        .setContentTitle("The service works")
+//                        .setContentText("This is proof!!");
 
     }
 
