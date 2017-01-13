@@ -40,4 +40,15 @@
         tools:textAlignment="center"
         android:textSize="30sp" />
 
+    <TextView
+        android:text="Please place the phone with the right side facing forward travel.\n --->"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/infoDisplay"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/textView"
+        android:rotation="0"
+        android:textSize="24sp"
+        android:textAlignment="center" />
+
 </RelativeLayout>
