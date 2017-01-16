@@ -10,15 +10,15 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity">
 
-    <Button
-        android:text="@string/button_Start"
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="92dp"
-        android:id="@+id/button_Start"
-        android:onClick="startRecording" />
+        android:layout_marginTop="44dp"
+        android:id="@+id/infoDisplay"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        tools:textAlignment="center"
+        android:textSize="30sp" />
 
     <Button
         android:text="@string/button_Initialise"
@@ -31,16 +31,6 @@
         android:onClick="initialiseGPS" />
 
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="44dp"
-        android:id="@+id/infoDisplay"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        tools:textAlignment="center"
-        android:textSize="30sp" />
-
-    <TextView
         android:text="Please place the phone with the right side facing forward travel.\n --->"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -51,5 +41,15 @@
         android:layout_above="@+id/button_Start"
         android:layout_alignParentStart="true"
         android:layout_marginBottom="16dp" />
+
+    <Button
+        android:text="@string/button_Start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="92dp"
+        android:id="@+id/button_Start"
+        android:onClick="startRecording" />
 
 </RelativeLayout>

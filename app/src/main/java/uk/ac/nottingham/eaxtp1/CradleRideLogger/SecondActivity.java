@@ -66,13 +66,16 @@ public class SecondActivity extends Activity
     private double longGPS;
 
     String sID, sX, sY, sZ;
+    String sLat, sLong, sTime;
     String sGravX, sGravY, sGravZ, sMagX, sMagY, sMagZ;
     String sEast, sNorth, sDown;
-    String sLat, sLong, sTime;
+
     String outputToData, outputToData_First;
     String outputTitle;
 
     List<String> outputList, titleList;
+
+    String initTextAccel, setTextAccel, initTextGPS, setTextGPS;
 
     //  Sets the initial counter value to current time
     long startTime;
@@ -216,44 +219,40 @@ public class SecondActivity extends Activity
             }
 
 //            Sets up concatenated strings
-            String initTextAccel = "Sample ID: 0" + "\n" +
+            initTextAccel = "Sample ID: 0" + "\n" +
                     getString(R.string.acc_placeholder) +
                     "\t\tX: 0.0" + "\n" +
                     "\t\tY: 0.0" + "\n" +
                     "\t\tZ: 0.0";
 
-            String initTextGPS = getString(R.string.gps_placeholder) +
+            initTextGPS = getString(R.string.gps_placeholder) +
                     "\t\tLat: " + sLat + "\n" +
                     "\t\tLong: " + sLong;
 
-            String setTextAccel = "Sample ID: " + Long.toString(sampleID) + "\n" +
+            setTextAccel = "Sample ID: " + Long.toString(sampleID) + "\n" +
                     getString(R.string.acc_placeholder) +
                     "\t\tX: " + sX + "\n" +
                     "\t\tY: " + sY + "\n" +
                     "\t\tZ: " + sZ;
 
-            String setTextGPS = getString(R.string.gps_placeholder) +
+            setTextGPS = getString(R.string.gps_placeholder) +
                     "\t\tLat: " + sLat + "\n" +
                     "\t\tLong: " + sLong;
 
             if (magneticValues != null && gravityValues != null) {
 
-                titleList = Arrays.asList("ID", "X", "Y", "Z", "GravX", "GravY", "GravZ",
-                        "MagX", "MagY", "MagZ", "North", "East", "Down", "Lat", "Long", "Time");
-                outputList = Arrays.asList(sID, sX, sY, sZ, sGravX, sGravY, sGravZ,
-                        sMagX, sMagY, sMagZ, sNorth, sEast, sDown, sLat, sLong, sTime);
+                titleList = Arrays.asList("ID", "X", "Y", "Z", "Lat", "Long", "Time", "GravX", "GravY", "GravZ",
+                        "MagX", "MagY", "MagZ", "North", "East", "Down");
+                outputList = Arrays.asList(sID, sX, sY, sZ, sLat, sLong, sTime, sGravX, sGravY, sGravZ,
+                        sMagX, sMagY, sMagZ, sNorth, sEast, sDown);
 
-            } else if (magneticValues != null){ //Runs for only Mag Values
+            } else {
 
-                titleList = Arrays.asList("ID", "X", "Y", "Z", "MagX", "MagY", "MagZ", "Lat", "Long", "Time");
-                outputList = Arrays.asList(sID, sX, sY, sZ, sMagX, sMagY, sMagZ, sLat, sLong, sTime);
-
-            } else { // Runs for only Grav values
-
-                titleList = Arrays.asList("ID", "X", "Y", "Z", "GravX", "GravY", "GravZ", "Lat", "Long", "Time");
-                outputList = Arrays.asList(sID, sX, sY, sZ, sGravX, sGravY, sGravZ, sLat, sLong, sTime);
+                titleList = Arrays.asList("ID", "X", "Y", "Z", "Lat", "Long", "Time");
+                outputList = Arrays.asList(sID, sX, sY, sZ, sLat, sLong, sTime);
 
             }
+
 
             outputTitle = TextUtils.join(", ", titleList);
             outputToData = TextUtils.join(", ", outputList);
@@ -310,6 +309,7 @@ public class SecondActivity extends Activity
                 }
 
             }
+
 
 ////            Writes to database.
 //            boolean isInserted = myDB.insertData(worldValues[0], worldValues[1], worldValues[2], latGPS, longGPS, time);
