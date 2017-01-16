@@ -53,8 +53,8 @@ public class SecondActivity extends Activity
 
     private float[] deviceValues = new float[4];
     private float[] worldValues = new float[3];
-    private float[] gravityValues = new float[3];
-    private float[] magneticValues = new float[3];
+    private float[] gravityValues = null;
+    private float[] magneticValues = null;
     //    Matrices for converting from device to world coordinates
     private float[] rMatrix = new float[16];
     private float[] iMatrix = new float[16];
@@ -66,11 +66,13 @@ public class SecondActivity extends Activity
     private double longGPS;
 
     String sID, sX, sY, sZ;
-    String sGyroX, sGyroY, sGyroZ, sMagX, sMagY, sMagZ;
+    String sGravX, sGravY, sGravZ, sMagX, sMagY, sMagZ;
     String sEast, sNorth, sDown;
     String sLat, sLong, sTime;
     String outputToData, outputToData_First;
     String outputTitle;
+
+    List<String> outputList, titleList;
 
     //  Sets the initial counter value to current time
     long startTime;
@@ -177,7 +179,7 @@ public class SecondActivity extends Activity
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor mySensor = sensorEvent.sensor;
 
-        if ((mySensor.getType() == Sensor.TYPE_ACCELEROMETER) /*&& (gravityValues != null) && (magneticValues != null)*/) {
+        if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 //            Increments the sample ID
             sampleID = sampleID + 1;
 
@@ -186,41 +188,32 @@ public class SecondActivity extends Activity
             deviceValues[2] = sensorEvent.values[2];
             deviceValues[3] = 0;
 
-            if ((gravityValues != null) && (magneticValues != null)) {
-                SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);
-
-                Matrix.invertM(inverse, 0, rMatrix, 0);
-                Matrix.multiplyMV(worldMatrix, 0, inverse, 0, deviceValues, 0);
-            }
-
-
-            worldValues[0] = worldMatrix[0];
-            worldValues[1] = worldMatrix[1];
-            worldValues[2] = worldMatrix[2];
-
 //            Set up strings
             sID = String.valueOf(sampleID);
             sX = Float.toString(deviceValues[0]);
             sY = Float.toString(deviceValues[1]);
             sZ = Float.toString(deviceValues[2]);
 
-            sGyroX = Float.toString(gravityValues[0]);
-            sGyroY = Float.toString(gravityValues[1]);
-            sGyroZ = Float.toString(gravityValues[2]);
-
-            sMagX = Float.toString(magneticValues[0]);
-            sMagY = Float.toString(magneticValues[1]);
-            sMagZ = Float.toString(magneticValues[2]);
-
-            sEast = Float.toString(worldValues[0]);
-            sNorth = Float.toString(worldValues[1]);
-            sDown = Float.toString(worldValues[2]);
-
             sLat = String.valueOf(latGPS);
             sLong = String.valueOf(longGPS);
 
             long time = System.currentTimeMillis() - startTime;
             sTime = String.valueOf(time);
+
+            if ((gravityValues != null) && (magneticValues != null)) {
+                SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);
+
+                Matrix.invertM(inverse, 0, rMatrix, 0);
+                Matrix.multiplyMV(worldMatrix, 0, inverse, 0, deviceValues, 0);
+
+                worldValues[0] = worldMatrix[0];
+                worldValues[1] = worldMatrix[1];
+                worldValues[2] = worldMatrix[2];
+
+                sEast = Float.toString(worldValues[0]);
+                sNorth = Float.toString(worldValues[1]);
+                sDown = Float.toString(worldValues[2]);
+            }
 
 //            Sets up concatenated strings
             String initTextAccel = "Sample ID: 0" + "\n" +
@@ -243,10 +236,25 @@ public class SecondActivity extends Activity
                     "\t\tLat: " + sLat + "\n" +
                     "\t\tLong: " + sLong;
 
-            List<String> titleList = Arrays.asList("ID", "X", "Y", "Z", "GyroX", "GyroY", "GyroZ",
-                    "MagX", "MagY", "MagZ", "North", "East", "Down", "Lat", "Long", "Time");
-            List<String> outputList = Arrays.asList(sID, sX, sY, sZ, sGyroX, sGyroY, sGyroZ,
-                    sMagX, sMagY, sMagZ, sNorth, sEast, sDown, sLat, sLong, sTime);
+            if (magneticValues != null && gravityValues != null) {
+
+                titleList = Arrays.asList("ID", "X", "Y", "Z", "GravX", "GravY", "GravZ",
+                        "MagX", "MagY", "MagZ", "North", "East", "Down", "Lat", "Long", "Time");
+                outputList = Arrays.asList(sID, sX, sY, sZ, sGravX, sGravY, sGravZ,
+                        sMagX, sMagY, sMagZ, sNorth, sEast, sDown, sLat, sLong, sTime);
+
+            } else if (magneticValues != null){ //Runs for only Mag Values
+
+                titleList = Arrays.asList("ID", "X", "Y", "Z", "MagX", "MagY", "MagZ", "Lat", "Long", "Time");
+                outputList = Arrays.asList(sID, sX, sY, sZ, sMagX, sMagY, sMagZ, sLat, sLong, sTime);
+
+            } else { // Runs for only Grav values
+
+                titleList = Arrays.asList("ID", "X", "Y", "Z", "GravX", "GravY", "GravZ", "Lat", "Long", "Time");
+                outputList = Arrays.asList(sID, sX, sY, sZ, sGravX, sGravY, sGravZ, sLat, sLong, sTime);
+
+            }
+
             outputTitle = TextUtils.join(", ", titleList);
             outputToData = TextUtils.join(", ", outputList);
 
@@ -265,7 +273,7 @@ public class SecondActivity extends Activity
             }
 
 //            Provides a real time comparison
-            String setRealAccel = "Real Time X: " + sEast;
+            String setRealAccel = "Real Time X: " + sX;
             accelRealTime.setText(setRealAccel);
 
             if (!myFile.exists()) {
@@ -310,9 +318,17 @@ public class SecondActivity extends Activity
 
             gravityValues = sensorEvent.values;
 
+            sGravX = Float.toString(gravityValues[0]);
+            sGravY = Float.toString(gravityValues[1]);
+            sGravZ = Float.toString(gravityValues[2]);
+
         } else if (mySensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
 
             magneticValues = sensorEvent.values;
+
+            sMagX = Float.toString(magneticValues[0]);
+            sMagY = Float.toString(magneticValues[1]);
+            sMagZ = Float.toString(magneticValues[2]);
 
         }
 

@@ -59,6 +59,6 @@
         android:id="@+id/accelRealTime"
         android:layout_above="@+id/textTime"
         android:layout_alignStart="@+id/textTime"
-        android:textAlignment="center" />
+        android:textAlignment="textStart" />
 
 </RelativeLayout>
