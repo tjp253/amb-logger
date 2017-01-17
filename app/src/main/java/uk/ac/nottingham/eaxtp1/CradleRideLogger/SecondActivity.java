@@ -89,7 +89,7 @@ public class SecondActivity extends Activity
     FileOutputStream myOutputStream;
     OutputStreamWriter myWriter;
     String filepath = "New";
-    String filename = "RoadVib_" + date + ".csv";
+    String filename = "Logger_" + date + ".csv";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
