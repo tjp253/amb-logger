@@ -241,14 +241,14 @@ public class SecondActivity extends Activity
 
             if (magneticValues != null && gravityValues != null) {
 
-                titleList = Arrays.asList("ID", "X", "Y", "Z", "Lat", "Long", "Time", "GravX", "GravY", "GravZ",
+                titleList = Arrays.asList("id", "X", "Y", "Z", "Lat", "Long", "Time", "GravX", "GravY", "GravZ",
                         "MagX", "MagY", "MagZ", "North", "East", "Down");
                 outputList = Arrays.asList(sID, sX, sY, sZ, sLat, sLong, sTime, sGravX, sGravY, sGravZ,
                         sMagX, sMagY, sMagZ, sNorth, sEast, sDown);
 
             } else {
 
-                titleList = Arrays.asList("ID", "X", "Y", "Z", "Lat", "Long", "Time");
+                titleList = Arrays.asList("id", "X", "Y", "Z", "Lat", "Long", "Time");
                 outputList = Arrays.asList(sID, sX, sY, sZ, sLat, sLong, sTime);
 
             }
