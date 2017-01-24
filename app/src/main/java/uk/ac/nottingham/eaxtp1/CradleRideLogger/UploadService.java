@@ -6,6 +6,25 @@ import android.content.Intent;
 import android.support.v7.app.NotificationCompat;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.CompressionService.movedPath;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.CompressionService.zipPath;
+
 public class UploadService extends IntentService {
 
     public UploadService() {
@@ -14,19 +33,16 @@ public class UploadService extends IntentService {
 
     NotificationCompat.Builder mBuilder;
 
-//    private long startTime;
+    int jobNumber;
+
+    URL url;
+    String urlString = "http://optics.eee.nottingham.ac.uk/~tp/upload.php";
+
+    String uploadFilePath, fileName, parse;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-//        startTime = System.currentTimeMillis();
-
-//         mBuilder =
-//                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-//                        .setSmallIcon(R.drawable.hand_icon)
-//                        .setContentTitle("The service works")
-//                        .setContentText("This is proof!!");
 
     }
 
@@ -38,41 +54,125 @@ public class UploadService extends IntentService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Toast.makeText(this, "Service is stopped!", Toast.LENGTH_SHORT).show();
+
+//        Toast.makeText(this, "Service is stopped!", Toast.LENGTH_SHORT).show();
+
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
 
-// Sets an ID for the notification
-        int mNotificationId = 001;
+        try {
+            url = new URL(urlString);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        jobNumber = intent.getIntExtra("jobNumber", 1);
+
+        mBuilder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.hand_icon)
+                        .setContentTitle("CradleRide Logger")
+                        .setContentText("Files have been uploaded.");
+
+        File sourceFolder = new File(zipPath);
+        int sourceLength = sourceFolder.getParent().length();
+        sourceLength = sourceLength + 7;
+
+        File[] fileList = sourceFolder.listFiles();
+
+        for (File file : fileList) {
+
+            uploadFilePath = file.getAbsolutePath();
+            fileName = uploadFilePath.substring(sourceLength);
+            parse = fileName.substring(0, fileName.length() - 4) + "/zip";
+
+            try {
+
+                OkHttpClient okHttpClient = new OkHttpClient();
+                File fileToUpload = new File(uploadFilePath);
+
+                RequestBody requestBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("fileToUpload", fileName, RequestBody.create(MediaType.parse(parse), fileToUpload))
+
+                        .build();
+
+                Request request = new Request.Builder().url(url).post(requestBody).build();
+
+                Response response = okHttpClient.newCall(request).execute();
+
+
+
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+
+                // Sets an ID for the notification
+                int mNotificationId = 1;
 // Gets an instance of the NotificationManager service
-        NotificationManager mNotifyMgr =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                NotificationManager mNotifyMgr =
+                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 // Builds the notification and issues it.
-        mNotifyMgr.notify(mNotificationId, mBuilder.build());
-        
+                mNotifyMgr.notify(mNotificationId, mBuilder.build());
 
-//        int jobNumber = intent.getIntExtra("jobNumber", 0);
-//
-//        for (int i=0; i<5; i++) {
-//            try{Thread.sleep(2000);}catch (Exception e){;}
-//
-//
-//
-//
-//        }
-//
-//        Toast.makeText(this, "", Toast.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
-//        int upload = intent.getIntExtra("Upload", 0);
-//
-//        for (int i=0; i<1; i++) {
-//            //        Shows that the IntentService has been called
-//            Toast.makeText(this, "Service has been started! " + String.valueOf(upload),
-//                    Toast.LENGTH_SHORT).show();
-//            int working = i;
-//        }
+            moveFile(fileName);
+        }
+
+
+
+
+        mBuilder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.hand_icon)
+                        .setContentTitle("The service works")
+                        .setContentText("This is proof. number " + String.valueOf(jobNumber));
+
+
+
+
+    }
+
+    private void moveFile(String fileToMove) {
+
+        InputStream in;
+        OutputStream out;
+        try {
+
+            //create output directory if it doesn't exist
+            File dir = new File (movedPath);
+            if (!dir.exists())
+            {
+                dir.mkdirs();
+            }
+
+
+            in = new FileInputStream(zipPath + fileToMove);
+            out = new FileOutputStream(movedPath + fileToMove);
+
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            in.close();
+
+            // write the output file
+            out.flush();
+            out.close();
+
+            // delete the original file
+            new File(zipPath + fileToMove).delete();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 

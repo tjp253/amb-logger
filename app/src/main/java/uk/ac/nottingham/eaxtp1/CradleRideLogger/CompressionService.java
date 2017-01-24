@@ -12,6 +12,9 @@ import java.io.FileOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.folderPath;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.mainPath;
+
 public class CompressionService extends IntentService {
 
     public CompressionService() {
@@ -19,15 +22,14 @@ public class CompressionService extends IntentService {
     }
 
     //    Initialise strings for the zipping
-    String mainPath, folderPath, zipPath;
+    static String zipPath = mainPath + "/Zipped";
+    static String movedPath = mainPath + "/Uploaded";
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        mainPath = String.valueOf(getExternalFilesDir(""));
-        folderPath = mainPath + "/New";
-        zipPath = mainPath + "/Zipped";
+//        zipPath = mainPath + "/Zipped";
 
 //        Ensures there's a folder to put the ZIPs in.
         File zipDirectory = new File(zipPath);
