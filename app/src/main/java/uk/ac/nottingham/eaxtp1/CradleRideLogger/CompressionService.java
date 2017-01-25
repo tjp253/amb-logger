@@ -22,8 +22,7 @@ public class CompressionService extends IntentService {
     }
 
     //    Initialise strings for the zipping
-    static String zipPath = mainPath + "/Zipped";
-    static String movedPath = mainPath + "/Uploaded";
+    String zipPath = mainPath + "/Zipped";
 
     @Override
     public void onCreate() {

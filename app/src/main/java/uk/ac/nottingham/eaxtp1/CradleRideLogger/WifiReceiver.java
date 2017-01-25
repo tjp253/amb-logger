@@ -9,11 +9,11 @@ import android.widget.Toast;
 
 import java.io.File;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.CompressionService.zipPath;
-
 public class WifiReceiver extends BroadcastReceiver {
     public WifiReceiver() {
     }
+
+    String mainPath, zipPath;
 
     private int SERVICE_STARTED = 0;
     int jobNumber;
@@ -21,7 +21,8 @@ public class WifiReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-
+        mainPath = String.valueOf(context.getExternalFilesDir(""));
+        zipPath = mainPath + "/Zipped";
 
         Intent uploadService = new Intent(context, UploadService.class);
 

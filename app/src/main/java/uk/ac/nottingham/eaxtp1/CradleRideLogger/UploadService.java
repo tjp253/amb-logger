@@ -22,8 +22,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.CompressionService.movedPath;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.CompressionService.zipPath;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.mainPath;
 
 public class UploadService extends IntentService {
 
@@ -38,11 +37,16 @@ public class UploadService extends IntentService {
     URL url;
     String urlString = "http://optics.eee.nottingham.ac.uk/~tp/upload.php";
 
-    String uploadFilePath, fileName, parse;
+
+    String mainPath, zipPath, movedPath, uploadFilePath, fileName, parse;
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        mainPath = String.valueOf(getExternalFilesDir(""));
+        zipPath = mainPath + "/Zipped";
+        movedPath = mainPath + "/Uploaded";
 
     }
 
