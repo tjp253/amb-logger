@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.location.GpsStatus;
@@ -19,8 +20,14 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.File;
+import java.util.Random;
 
+@SuppressWarnings("deprecation")
 public class MainActivity extends Activity implements LocationListener, GpsStatus.Listener {
+
+    SharedPreferences preferences;
+    String user_ID = "User ID";
+    static int userID;
 
     private int MY_PERMISSIONS_REQUEST_GPS = 2;
 
@@ -46,10 +53,25 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+//        Initialises a Unique ID for each user.
+        preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
+        if (preferences.getBoolean("firstLogin", true)) {
+
+            Random random = new Random();
+            int rndUserID = 10000000 + random.nextInt(90000000);
+
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean("firstLogin", false);
+            editor.putInt(user_ID, rndUserID);
+            editor.commit();
+        }
+
+        userID = preferences.getInt(user_ID, 1);
+
         infoDisplay = (TextView) findViewById(R.id.infoDisplay);
         versionView = (TextView) findViewById(R.id.versionView);
 
-        String version = "Version: " ;
+        String version = "Unique ID: " + String.valueOf(userID) +"\n"+ "Version: " ;
 //        Gets the versionName from the app gradle to display.
         try {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);

@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
+
 
 @SuppressWarnings("MissingPermission")
 public class SecondActivity extends Activity
@@ -81,7 +83,7 @@ public class SecondActivity extends Activity
     long startTime;
 
 //    Creates a string of the current date and time
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd__HH_mm");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd-HH_mm");
     Date todaysDate = new Date();
     public String date = dateFormat.format(todaysDate);
 
@@ -89,7 +91,7 @@ public class SecondActivity extends Activity
     FileOutputStream myOutputStream;
     OutputStreamWriter myWriter;
     String filepath = "New";
-    String filename = "Logger_" + date + ".csv";
+    String filename = /*"Log_" +*/ date + "-ID" + String.valueOf(userID) + ".csv";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
