@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -26,6 +27,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     public Button startButton;
     public Button initialiseButton;
     public TextView infoDisplay;
+    public TextView versionView;
 
     protected LocationManager myLocationManager;
 
@@ -45,11 +47,22 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
         setContentView(R.layout.activity_main);
 
         infoDisplay = (TextView) findViewById(R.id.infoDisplay);
+        versionView = (TextView) findViewById(R.id.versionView);
+
+        String version = "Version: " ;
+//        Gets the versionName from the app gradle to display.
+        try {
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = version + packageInfo.versionName;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        versionView.setText(version);
 
         initialiseButton = (Button) findViewById(R.id.button_Initialise);
         startButton = (Button) findViewById(R.id.button_Start);
 //        Disables the Start button
-        startButton.setEnabled(true);
+        startButton.setEnabled(false);
 
         String startGPS = "Please start the GPS receiver.";
         infoDisplay.setText(startGPS);
