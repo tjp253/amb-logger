@@ -14,15 +14,13 @@ import java.util.zip.ZipOutputStream;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.folderPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.mainPath;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.zipPath;
 
 public class CompressionService extends IntentService {
 
     public CompressionService() {
         super("CompressionService");
     }
-
-    //    Initialise strings for the zipping
-    String zipPath = mainPath + "/Zipped";
 
     @Override
     public void onCreate() {

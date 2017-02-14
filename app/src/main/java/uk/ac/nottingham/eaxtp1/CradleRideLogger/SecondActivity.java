@@ -91,7 +91,7 @@ public class SecondActivity extends Activity
     FileOutputStream myOutputStream;
     OutputStreamWriter myWriter;
     String filepath = "New";
-    String filename = /*"Log_" +*/ date + "-ID" + String.valueOf(userID) + ".csv";
+    String filename = date + "-ID" + String.valueOf(userID) + ".csv";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

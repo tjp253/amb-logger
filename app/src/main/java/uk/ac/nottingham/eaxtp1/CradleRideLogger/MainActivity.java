@@ -11,6 +11,8 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -24,6 +26,11 @@ import java.util.Random;
 
 @SuppressWarnings("deprecation")
 public class MainActivity extends Activity implements LocationListener, GpsStatus.Listener {
+
+    WifiManager wifiManager;
+    WifiInfo wifiInfo;
+
+    Intent compressionService, uploadService;
 
     SharedPreferences preferences;
     String user_ID = "User ID";
@@ -46,7 +53,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     boolean recordedYet;
 
     //    Initialise strings for the zipping
-    static String mainPath, folderPath;
+    static String mainPath, folderPath, zipPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,7 +99,8 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
         recordedYet = false;
 
         mainPath = String.valueOf(getExternalFilesDir(""));
-        folderPath = mainPath + "/" + "New";
+        folderPath = mainPath + "/New";
+        zipPath = mainPath + "/Zipped";
 
 //        Checks (and asks for) permission on app start-up
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -107,6 +115,10 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
             }
 
         }
+
+        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        uploadService = new Intent(this, UploadService.class);
+        compressionService = new Intent(this, CompressionService.class);
 
     }
 
@@ -123,19 +135,39 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
             //noinspection MissingPermission
             myLocationManager.removeUpdates(this);
 
-            File sourceFolder = new File(folderPath);
-            File[] fileList = sourceFolder.listFiles();
+            File csvFolder = new File(folderPath);
+            File[] fileList = csvFolder.listFiles();
             int filesLeft = fileList.length;
 
             while (filesLeft > 0) {
 
-                Intent compressionService = new Intent(this, CompressionService.class);
                 this.startService(compressionService);
 
                 filesLeft = filesLeft - 1;
             }
 
         }
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+            File zipFolder = new File(zipPath);
+            File[] zipList = zipFolder.listFiles();
+
+            if (zipList != null && zipList.length != 0) {
+
+                wifiInfo = wifiManager.getConnectionInfo();
+
+                if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
+
+                    this.startService(uploadService);
+
+                }
+
+            }
 
     }
 
