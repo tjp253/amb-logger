@@ -50,7 +50,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     long myLastLocationMillis;
     Location myLastLocation;
 
-    boolean recordedYet;
+    boolean recordedYet, gpsON;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -97,6 +97,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
         infoDisplay.setText(startGPS);
 
         recordedYet = false;
+        gpsON = false;
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         folderPath = mainPath + "/New";
@@ -125,6 +126,14 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (gpsON) {
+            //noinspection MissingPermission
+            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            //noinspection MissingPermission
+            myLocationManager.addGpsStatusListener(this);
+        }
+
         if (recordedYet) {
             initialiseButton.setEnabled(true);
             startButton.setEnabled(false);
@@ -134,6 +143,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
 
             //noinspection MissingPermission
             myLocationManager.removeUpdates(this);
+            gpsON = false;
 
             File csvFolder = new File(folderPath);
             File[] fileList = csvFolder.listFiles();
@@ -154,20 +164,25 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     protected void onPause() {
         super.onPause();
 
-            File zipFolder = new File(zipPath);
-            File[] zipList = zipFolder.listFiles();
+        if (gpsON) {
+            //noinspection MissingPermission
+            myLocationManager.removeUpdates(this);
+        }
 
-            if (zipList != null && zipList.length != 0) {
+        File zipFolder = new File(zipPath);
+        File[] zipList = zipFolder.listFiles();
 
-                wifiInfo = wifiManager.getConnectionInfo();
+        if (zipList != null && zipList.length != 0) {
 
-                if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
+            wifiInfo = wifiManager.getConnectionInfo();
 
-                    this.startService(uploadService);
+            if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
 
-                }
+                this.startService(uploadService);
 
             }
+
+        }
 
     }
 
@@ -175,6 +190,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     public void initialiseGPS(View view) {
 
         recordedYet = false;
+        gpsON = true;
 
 //        Re-checks (and asks for) the GPS permission needed
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
