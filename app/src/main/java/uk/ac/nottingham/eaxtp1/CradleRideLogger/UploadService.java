@@ -59,8 +59,6 @@ public class UploadService extends IntentService {
     public void onDestroy() {
         super.onDestroy();
 
-//        Toast.makeText(this, "Service is stopped!", Toast.LENGTH_SHORT).show();
-
     }
 
     @Override
@@ -76,7 +74,7 @@ public class UploadService extends IntentService {
 
         mBuilder =
                 (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.hand_icon)
+                        .setSmallIcon(R.drawable.upload_symb)
                         .setContentTitle("CradleRide Logger")
                         .setContentText("Files have been uploaded.");
 
@@ -85,6 +83,7 @@ public class UploadService extends IntentService {
         sourceLength = sourceLength + 7;
 
         File[] fileList = sourceFolder.listFiles();
+        int filesLeft = fileList.length;
 
         for (File file : fileList) {
 
@@ -113,13 +112,17 @@ public class UploadService extends IntentService {
                     throw new IOException("Unexpected code " + response);
                 }
 
-                // Sets an ID for the notification
-                int mNotificationId = 1;
-// Gets an instance of the NotificationManager service
-                NotificationManager mNotifyMgr =
-                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-// Builds the notification and issues it.
-                mNotifyMgr.notify(mNotificationId, mBuilder.build());
+                filesLeft = filesLeft - 1;
+
+//                Displays notification once the last file has been uploaded
+                if (filesLeft == 0) {
+                    int mNotificationId = 1;
+                    NotificationManager mNotifyMgr =
+                            (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    mNotifyMgr.notify(mNotificationId, mBuilder.build());
+                }
+
+
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -127,18 +130,6 @@ public class UploadService extends IntentService {
 
             moveFile(fileName);
         }
-
-
-
-
-        mBuilder =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.hand_icon)
-                        .setContentTitle("The service works")
-                        .setContentText("This is proof. number " + String.valueOf(jobNumber));
-
-
-
 
     }
 

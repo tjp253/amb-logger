@@ -16,7 +16,6 @@ public class WifiReceiver extends BroadcastReceiver {
     String mainPath, zipPath;
 
     private int SERVICE_STARTED = 0;
-    int jobNumber;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -30,42 +29,16 @@ public class WifiReceiver extends BroadcastReceiver {
 
         if (info != null && info.isConnected()) {
 
-//            Shows that the receiver has been called
-//            Toast.makeText(context, "This is the receiver", Toast.LENGTH_SHORT).show();
-
 //            Allocates where to look for the files to be uploaded
-//            String folder = String.valueOf(context.getExternalFilesDir("Zipped"));
             File directory = new File(zipPath);
             File[] contents = directory.listFiles();
 
             if ((contents != null) && (contents.length != 0)) {
 
-//                Toast.makeText(context, "No folder here...", Toast.LENGTH_SHORT).show();
-
-//            } else if (contents.length != 0) {
-
-//                Toast.makeText(context, "We have files!", Toast.LENGTH_SHORT).show();
-
-//                int filesLeft = contents.length;
-
-//                jobNumber = 1;
-//
-//                while (filesLeft > 0) {
-//
-//                    uploadService.putExtra("jobNumber", jobNumber);
-
-                    context.startService(uploadService);
-
-//                    jobNumber++;
-
-//                    filesLeft = filesLeft - 1;
-//                }
+                context.startService(uploadService);
 
                 SERVICE_STARTED = 1;
 
-
-//            } else {
-////                Toast.makeText(context, "No files here...", Toast.LENGTH_SHORT).show();
             }
 
         } else if (info != null && !info.isConnected() && SERVICE_STARTED == 1) {
