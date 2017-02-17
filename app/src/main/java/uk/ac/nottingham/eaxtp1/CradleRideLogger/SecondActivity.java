@@ -22,7 +22,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -225,9 +224,6 @@ public class SecondActivity extends Activity
             double doubleY = Double.valueOf(sY);
             double doubleZ = Double.valueOf(sZ);
             double xyz = Math.sqrt(Math.pow(doubleX,2) + Math.pow(doubleY,2) + Math.pow(doubleZ,2));
-//            BigDecimal bigDecimal = new BigDecimal(xyz);
-//
-//            xyz = xyz;
             sXYZ = String.valueOf(xyz);
 
 //            Sets up concatenated strings
