@@ -121,18 +121,13 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
         uploadService = new Intent(this, UploadService.class);
         compressionService = new Intent(this, CompressionService.class);
 
+        myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        if (gpsON) {
-            //noinspection MissingPermission
-            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            //noinspection MissingPermission
-            myLocationManager.addGpsStatusListener(this);
-        }
 
         if (recordedYet) {
             initialiseButton.setEnabled(true);
@@ -141,8 +136,11 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
             String closeApp = "Thank you for recording your journey.";
             infoDisplay.setText(closeApp);
 
-            //noinspection MissingPermission
-            myLocationManager.removeUpdates(this);
+            if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                //noinspection MissingPermission
+                myLocationManager.removeUpdates(this);
+            }
+
             gpsON = false;
 
             File csvFolder = new File(folderPath);
@@ -156,6 +154,13 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
                 filesLeft = filesLeft - 1;
             }
 
+        }
+
+        if (gpsON) {
+            //noinspection MissingPermission
+            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            //noinspection MissingPermission
+            myLocationManager.addGpsStatusListener(this);
         }
 
     }
@@ -205,8 +210,6 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
             }
 
         }
-
-        myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
 //        Checks for permission before running following code
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED

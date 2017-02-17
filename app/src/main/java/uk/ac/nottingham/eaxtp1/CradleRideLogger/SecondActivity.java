@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -67,7 +68,7 @@ public class SecondActivity extends Activity
     private double latGPS;
     private double longGPS;
 
-    String sID, sX, sY, sZ;
+    String sID, sX, sY, sZ, sXYZ;
     String sLat, sLong, sTime;
     String sGravX, sGravY, sGravZ, sMagX, sMagY, sMagZ;
     String sEast, sNorth, sDown;
@@ -220,12 +221,22 @@ public class SecondActivity extends Activity
                 sDown = Float.toString(worldValues[2]);
             }
 
+            double doubleX = Double.valueOf(sX);
+            double doubleY = Double.valueOf(sY);
+            double doubleZ = Double.valueOf(sZ);
+            double xyz = Math.sqrt(Math.pow(doubleX,2) + Math.pow(doubleY,2) + Math.pow(doubleZ,2));
+//            BigDecimal bigDecimal = new BigDecimal(xyz);
+//
+//            xyz = xyz;
+            sXYZ = String.valueOf(xyz);
+
 //            Sets up concatenated strings
             initTextAccel = "Sample ID: 0" + "\n" +
                     getString(R.string.acc_placeholder) +
                     "\t\tX: 0.0" + "\n" +
                     "\t\tY: 0.0" + "\n" +
-                    "\t\tZ: 0.0";
+                    "\t\tZ: 0.0" + "\n" +
+                    "\t\tXYZ: 0.0";
 
             initTextGPS = getString(R.string.gps_placeholder) +
                     "\t\tLat: " + sLat + "\n" +
@@ -235,7 +246,8 @@ public class SecondActivity extends Activity
                     getString(R.string.acc_placeholder) +
                     "\t\tX: " + sX + "\n" +
                     "\t\tY: " + sY + "\n" +
-                    "\t\tZ: " + sZ;
+                    "\t\tZ: " + sZ + "\n" +
+                    "\t\tXYZ: " + sXYZ;
 
             setTextGPS = getString(R.string.gps_placeholder) +
                     "\t\tLat: " + sLat + "\n" +
