@@ -1,6 +1,7 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -55,6 +56,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
 
+    @SuppressLint("WifiManagerLeak")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -52,6 +52,7 @@ public class SecondActivity extends Activity
     private Sensor myMagneticField;
 
     private long sampleID;
+    private long gpsSamp;
 
     private float[] deviceValues = new float[4];
     private float[] worldValues = new float[3];
@@ -68,7 +69,7 @@ public class SecondActivity extends Activity
     private double longGPS;
 
     String sID, sX, sY, sZ, sXYZ;
-    String sLat, sLong, sTime;
+    String sLat, sLong, sTime, sGPS;
     String sGravX, sGravY, sGravZ, sMagX, sMagY, sMagZ;
     String sEast, sNorth, sDown;
 
@@ -113,6 +114,7 @@ public class SecondActivity extends Activity
 
 //        Initialises the Sample ID
         sampleID = 0;
+        gpsSamp = 0;
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My WakeLock");
@@ -163,6 +165,7 @@ public class SecondActivity extends Activity
     public void onLocationChanged(Location location) {
         latGPS = location.getLatitude();
         longGPS = location.getLongitude();
+        gpsSamp++;
     }
 
     @Override
@@ -186,7 +189,7 @@ public class SecondActivity extends Activity
 
         if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 //            Increments the sample ID
-            sampleID = sampleID + 1;
+            sampleID++;
 
             deviceValues[0] = sensorEvent.values[0];
             deviceValues[1] = sensorEvent.values[1];
@@ -201,6 +204,7 @@ public class SecondActivity extends Activity
 
             sLat = String.valueOf(latGPS);
             sLong = String.valueOf(longGPS);
+            sGPS = String.valueOf(gpsSamp);
 
             long time = System.currentTimeMillis() - startTime;
             sTime = String.valueOf(time);
@@ -252,9 +256,9 @@ public class SecondActivity extends Activity
             if (magneticValues != null && gravityValues != null) {
 
                 titleList = Arrays.asList("id", "X", "Y", "Z", "Lat", "Long", "Time", "GravX", "GravY", "GravZ",
-                        "MagX", "MagY", "MagZ", "North", "East", "Down");
+                        "MagX", "MagY", "MagZ", "North", "East", "Down", "GPS Sample");
                 outputList = Arrays.asList(sID, sX, sY, sZ, sLat, sLong, sTime, sGravX, sGravY, sGravZ,
-                        sMagX, sMagY, sMagZ, sNorth, sEast, sDown);
+                        sMagX, sMagY, sMagZ, sNorth, sEast, sDown, sGPS);
 
             } else {
 
