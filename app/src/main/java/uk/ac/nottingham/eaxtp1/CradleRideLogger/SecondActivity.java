@@ -88,11 +88,12 @@ public class SecondActivity extends Activity
     Date todaysDate = new Date();
     public String date = dateFormat.format(todaysDate);
 
-    public File myFile;
-    FileOutputStream myOutputStream;
-    OutputStreamWriter myWriter;
+    public File myFile, myFeedback;
+    FileOutputStream myOutputStream, myFeedbackStream;
+    OutputStreamWriter myWriter, myFeedbackWriter;
     String filepath = "New";
     String filename = date + "-ID" + String.valueOf(userID) + ".csv";
+    String feedbackName = date + "-ID" + String.valueOf(userID) + "-Feedback" + ".csv";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -120,11 +121,14 @@ public class SecondActivity extends Activity
         wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My WakeLock");
         wakeLock.acquire();
 
-        myFile = new File(getExternalFilesDir(filepath), filename);
+        myFile = new File(getExternalFilesDir(filepath), filename); // Data file
+        myFeedback = new File(getExternalFilesDir(filepath), feedbackName); // Feedback file - bumps and road surface
 //        Creates the output stream and the stream writer
         try {
             myOutputStream = new FileOutputStream(myFile, true);
+            myFeedbackStream = new FileOutputStream(myFeedback, true);
             myWriter = new OutputStreamWriter(myOutputStream);
+            myFeedbackWriter = new OutputStreamWriter(myFeedbackStream);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -322,6 +326,15 @@ public class SecondActivity extends Activity
                     e.printStackTrace();
                 }
 
+            }
+
+            if (!myFeedback.exists()) {
+                try {
+                    myFeedbackStream.write(outputToData.getBytes());
+                    myFeedbackStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
 
