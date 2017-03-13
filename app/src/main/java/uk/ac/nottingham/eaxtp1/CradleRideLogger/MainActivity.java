@@ -26,7 +26,7 @@ import java.io.File;
 import java.util.Random;
 
 @SuppressWarnings("deprecation")
-public class MainActivity extends Activity implements LocationListener, GpsStatus.Listener {
+public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
 
     WifiManager wifiManager;
     WifiInfo wifiInfo;
@@ -39,7 +39,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
 
     private int MY_PERMISSIONS_REQUEST_GPS = 2;
 
-    public Button startButton;
+    public Button recordButton;
     public Button initialiseButton;
     public TextView infoDisplay;
     public TextView versionView;
@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     long myLastLocationMillis;
     Location myLastLocation;
 
-    boolean recordedYet, gpsON;
+    boolean recording, initialising;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -91,15 +91,17 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
         versionView.setText(version);
 
         initialiseButton = (Button) findViewById(R.id.button_Initialise);
-        startButton = (Button) findViewById(R.id.button_Start);
+        recordButton = (Button) findViewById(R.id.button_Record);
+        initialiseButton.setOnClickListener(this);
+        recordButton.setOnClickListener(this);
 //        Disables the Start button
-        startButton.setEnabled(true);
+        recordButton.setEnabled(false);
 
         String startGPS = "Please start the GPS receiver.";
         infoDisplay.setText(startGPS);
 
-        recordedYet = false;
-        gpsON = false;
+        recording = false;
+        initialising = false;
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         folderPath = mainPath + "/New";
@@ -131,20 +133,20 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     protected void onResume() {
         super.onResume();
 
-        if (recordedYet) {
-            initialiseButton.setEnabled(true);
-            startButton.setEnabled(false);
+//        Resumes GPS when initialising.
+        if (initialising) {
+            initialiseButton.setEnabled(false);
+            recordButton.setEnabled(false);
 
-            String closeApp = "Thank you for recording your journey.";
-            infoDisplay.setText(closeApp);
+            //noinspection MissingPermission
+            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            //noinspection MissingPermission
+            myLocationManager.addGpsStatusListener(this);
 
-            if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                //noinspection MissingPermission
-                myLocationManager.removeUpdates(this);
-            }
+        }
 
-            gpsON = false;
-
+//        Compresses all finished data.
+        if (!recording) {
             File csvFolder = new File(folderPath);
             File[] fileList = csvFolder.listFiles();
             int filesLeft = fileList.length;
@@ -155,14 +157,6 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
 
                 filesLeft = filesLeft - 1;
             }
-
-        }
-
-        if (gpsON) {
-            //noinspection MissingPermission
-            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            //noinspection MissingPermission
-            myLocationManager.addGpsStatusListener(this);
         }
 
     }
@@ -171,77 +165,105 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     protected void onPause() {
         super.onPause();
 
-        if (gpsON) {
+//        Stops GPS from draining the battery.
+        if (initialising && !recording) {
             //noinspection MissingPermission
             myLocationManager.removeUpdates(this);
         }
 
-        File zipFolder = new File(zipPath);
-        File[] zipList = zipFolder.listFiles();
+//        Uploads files. Only when not recording.
+        if (!recording) {
+            File zipFolder = new File(zipPath);
+            File[] zipList = zipFolder.listFiles();
 
-        if (zipList != null && zipList.length != 0) {
+            if (zipList != null && zipList.length != 0) {
 
-            wifiInfo = wifiManager.getConnectionInfo();
+                wifiInfo = wifiManager.getConnectionInfo();
 
-            if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
+                if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
 
-                this.startService(uploadService);
+                    this.startService(uploadService);
 
+                }
             }
-
         }
 
     }
 
-    //    Called when user press the "Initialise GPS" button
-    public void initialiseGPS(View view) {
+    @Override
+    public void onClick(View v) {
+        
+        if (v == initialiseButton) {
+            recording = false;
+            initialising = true;
 
-        recordedYet = false;
-        gpsON = true;
+            initialiseButton.setEnabled(false);
+            recordButton.setEnabled(false);
 
 //        Re-checks (and asks for) the GPS permission needed
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
 //            Checks if permission is NOT granted. Asks for permission if it isn't.
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSIONS_REQUEST_GPS);
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSIONS_REQUEST_GPS);
+
+                }
 
             }
 
-        }
-
 //        Checks for permission before running following code
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-            return;
-        }
+                return;
+            }
 
-        myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-        myLocationManager.addGpsStatusListener(this);
+            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            myLocationManager.addGpsStatusListener(this);
 
 //        Updates text to ask user to wait for GPS fix
-        String waitGPS = "Please wait for the GPS to fix your location.";
-        infoDisplay.setText(waitGPS);
-    }
+            infoDisplay.setText(R.string.initialising);
+            
+        } else if (v == recordButton) {
 
-    // Called when user presses the "start" button
-    public void startRecording(View view) {
-        recordedYet = true;
+            if (!recording) { // Start recording data
 
-        Intent changeActivity = new Intent(this, SecondActivity.class);
+                recording = true;
+                initialising = false;
 
-        startActivity(changeActivity);
+                initialiseButton.setEnabled(false);
 
+                recordButton.setText(R.string.button_Stop);
+
+//            Intent changeActivity = new Intent(this, SecondActivity.class);
+//            startActivity(changeActivity);
+                
+            } else { // Stop recording data
+
+                infoDisplay.setText(R.string.finished);
+
+                recording = false;
+
+                recordButton.setText(R.string.button_Start);
+
+                if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    //noinspection MissingPermission
+                    myLocationManager.removeUpdates(this);
+                }
+
+            }
+            
+        }
+        
     }
 
     @Override
     public void onGpsStatusChanged(int event) {
 
-        if (!recordedYet) {
+        if (initialising) {
             initialiseButton.setEnabled(false);
 
 //        Ensures the GPS is fixed before the user starts recording
@@ -252,15 +274,15 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
 
                     if (isGPSFixed) {
 
-                        if (!startButton.isEnabled()) {
+                        if (!recordButton.isEnabled()) {
 //                        Updates text to tell user they can start recording
                             String recordGPS = "You may now start recording.";
                             infoDisplay.setText(recordGPS);
                         }
 
-                        startButton.setEnabled(true);
+                        recordButton.setEnabled(true);
                     } else {
-                        startButton.setEnabled(false);
+                        recordButton.setEnabled(false);
                     }
 
                     break;
@@ -271,8 +293,6 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
                     break;
             }
         }
-
-
     }
 
     @Override
@@ -287,18 +307,12 @@ public class MainActivity extends Activity implements LocationListener, GpsStatu
     }
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     @Override
-    public void onProviderEnabled(String provider) {
-
-    }
+    public void onProviderEnabled(String provider) {}
 
     @Override
-    public void onProviderDisabled(String provider) {
-
-    }
+    public void onProviderDisabled(String provider) {}
 
 }
