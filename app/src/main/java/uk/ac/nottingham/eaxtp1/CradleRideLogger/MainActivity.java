@@ -39,10 +39,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     private int MY_PERMISSIONS_REQUEST_GPS = 2;
 
-    public Button recordButton;
-    public Button initialiseButton;
-    public TextView infoDisplay;
-    public TextView versionView;
+    public Button recordButton, initialiseButton, potholeButton, surfaceButton;
+    public TextView infoDisplay, versionView;
 
     protected LocationManager myLocationManager;
 
@@ -92,13 +90,20 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         initialiseButton = (Button) findViewById(R.id.button_Initialise);
         recordButton = (Button) findViewById(R.id.button_Record);
+        potholeButton = (Button) findViewById(R.id.button_Pothole);
+        surfaceButton = (Button) findViewById(R.id.button_Surface);
         initialiseButton.setOnClickListener(this);
         recordButton.setOnClickListener(this);
+        potholeButton.setOnClickListener(this);
+        surfaceButton.setOnClickListener(this);
 //        Disables the Start button
         recordButton.setEnabled(true);
 
-        String startGPS = "Please start the GPS receiver.";
-        infoDisplay.setText(startGPS);
+//        Hides the feedback buttons until needed.
+        potholeButton.setVisibility(View.GONE);
+        surfaceButton.setVisibility(View.GONE);
+
+        infoDisplay.setText(R.string.startGPS);
 
         recording = false;
         initialising = false;
@@ -238,6 +243,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 initialising = false;
 
                 initialiseButton.setEnabled(false);
+                initialiseButton.setVisibility(View.GONE);
+
+                potholeButton.setVisibility(View.VISIBLE);
+                surfaceButton.setVisibility(View.VISIBLE);
 
                 recordButton.setText(R.string.button_Stop);
 
@@ -253,8 +262,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 recording = false;
 
                 recordButton.setText(R.string.button_Start);
-                recordButton.setEnabled(false);
+//                recordButton.setEnabled(false);
                 initialiseButton.setEnabled(true);
+                initialiseButton.setVisibility(View.VISIBLE);
+
+                potholeButton.setVisibility(View.GONE);
+                surfaceButton.setVisibility(View.GONE);
 
                 if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     //noinspection MissingPermission

@@ -5,11 +5,15 @@
     <string name="button_Start">Start Recording</string>
     <string name="button_Stop">Stop Recording</string>
 
+    <string name="button_Pothole">Pothole</string>
+    <string name="button_Surface">Bad Surface</string>
+
+    <string name="startGPS">Please start the GPS receiver.</string>
     <string name="initialising">Please wait for the GPS to fix your location.</string>
     <string name="locked">The GPS is locked. Please start recording your journey.</string>
     <string name="recording">Please turn your screen off for the duration of the journey.</string>
     <string name="finished">Thank you for recording your journey.</string>
 
 
-    <string name="info_display">Please place the phone with the right side facing forward travel.\n ---> </string>
+    <string name="info_display">\nPlease place the phone with the right side facing forward travel.\n --->\n </string>
 </resources>
