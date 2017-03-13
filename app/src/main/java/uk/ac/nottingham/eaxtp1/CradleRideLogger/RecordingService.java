@@ -1,5 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -12,11 +13,9 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.opengl.Matrix;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.TextUtils;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -31,7 +30,7 @@ import java.util.List;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
-@SuppressWarnings("MissingPermission")
+@SuppressWarnings({"MissingPermission", "SpellCheckingInspection"})
 public class RecordingService extends Service
         implements SensorEventListener, LocationListener {
     public RecordingService() {
@@ -85,6 +84,7 @@ public class RecordingService extends Service
     long startTime;
 
     //    Creates a string of the current date and time
+    @SuppressLint("SimpleDateFormat")
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd-HH_mm");
     Date todaysDate = new Date();
     public String date = dateFormat.format(todaysDate);
@@ -217,29 +217,6 @@ public class RecordingService extends Service
             double xyz = Math.sqrt(Math.pow(doubleX,2) + Math.pow(doubleY,2) + Math.pow(doubleZ,2));
             sXYZ = String.valueOf(xyz);
 
-////            Sets up concatenated strings
-//            initTextAccel = "Sample ID: 0" + "\n" +
-//                    getString(R.string.acc_placeholder) +
-//                    "\t\tX: 0.0" + "\n" +
-//                    "\t\tY: 0.0" + "\n" +
-//                    "\t\tZ: 0.0" + "\n" +
-//                    "\t\tXYZ: 0.0";
-//
-//            initTextGPS = getString(R.string.gps_placeholder) +
-//                    "\t\tLat: " + sLat + "\n" +
-//                    "\t\tLong: " + sLong;
-//
-//            setTextAccel = "Sample ID: " + Long.toString(sampleID) + "\n" +
-//                    getString(R.string.acc_placeholder) +
-//                    "\t\tX: " + sX + "\n" +
-//                    "\t\tY: " + sY + "\n" +
-//                    "\t\tZ: " + sZ + "\n" +
-//                    "\t\tXYZ: " + sXYZ;
-//
-//            setTextGPS = getString(R.string.gps_placeholder) +
-//                    "\t\tLat: " + sLat + "\n" +
-//                    "\t\tLong: " + sLong;
-
             if (magneticValues != null && gravityValues != null) {
 
                 titleList = Arrays.asList("id", "X", "Y", "Z", "Lat", "Long", "Time", "GravX", "GravY", "GravZ",
@@ -257,24 +234,6 @@ public class RecordingService extends Service
 
             outputTitle = TextUtils.join(", ", titleList);
             outputToData = TextUtils.join(", ", outputList);
-
-////            Prints every 100 samples
-//            if (sampleID % 100 == 0) {
-//
-////                Displays accelerometer values every 100 samples
-//                textAccel.setText(setTextAccel);
-//                textGPS.setText(setTextGPS);
-//
-//            } else if (sampleID == 1) {
-//
-////                Displays accelerometer values at start
-//                textAccel.setText(initTextAccel);
-//                textGPS.setText(initTextGPS);
-//            }
-//
-////            Provides a real time comparison
-//            String setRealAccel = "Real Time X: " + sX;
-//            accelRealTime.setText(setRealAccel);
 
             if (!myFile.exists()) {
                 try {
@@ -344,40 +303,10 @@ public class RecordingService extends Service
 
     }
 
-
-//    //    Creates handler to run code on another thread
-//    Handler timerHandler = new Handler();
-//
-//
-//
-//    //    Defines code to be run on new thread - incremental time
-//    Runnable timerRunnable = new Runnable() {
-//
-//        @Override
-//        public void run() {
-//
-//            long millis = System.currentTimeMillis() - startTime; // Calculates the amount of ms which have passed
-//            int seconds = (int) (millis / 1000);    // Calculates the seconds which have passed
-//            int minutes = seconds / 60;             // Calculates the minutes which have passed
-//            seconds = seconds % 60;                 // Calcs remainder of seconds after dividing by 60
-//
-//            String timeDisplay = String.format("%d:%02d", minutes, seconds);
-//
-//            textTime.setText(timeDisplay); // shows time as mm:ss
-//
-//            timerHandler.postDelayed(this, 1000); // posts results to UI thread every 2000 ms (2 seconds) (?)
-//
-//        }
-//    };
-
-
-
     //  Stops the timer on stop
     @Override
     public void onDestroy() {
         super.onDestroy();
-//        Stops the created runnable thread
-//        timerHandler.removeCallbacks(timerRunnable);
 
         mySensorManager.unregisterListener(this);
 

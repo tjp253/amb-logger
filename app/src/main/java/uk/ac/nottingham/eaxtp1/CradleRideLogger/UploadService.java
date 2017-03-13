@@ -4,11 +4,9 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.support.v7.app.NotificationCompat;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,8 +20,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.mainPath;
-
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class UploadService extends IntentService {
 
     public UploadService() {

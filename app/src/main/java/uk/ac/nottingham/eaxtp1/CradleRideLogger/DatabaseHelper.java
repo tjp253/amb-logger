@@ -1,5 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -24,6 +25,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_7 = "TIME";
 
     //    Creates a string of the current date and time
+    @SuppressLint("SimpleDateFormat")
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd_MM_yyyy__HH_mm");
     private static Date todaysDate = new Date();
     private static String date = dateFormat.format(todaysDate);

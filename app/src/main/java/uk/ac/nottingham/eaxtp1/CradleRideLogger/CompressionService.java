@@ -2,7 +2,6 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.content.Context;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -13,9 +12,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.folderPath;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.mainPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.zipPath;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class CompressionService extends IntentService {
 
     public CompressionService() {
@@ -25,8 +24,6 @@ public class CompressionService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-
-//        zipPath = mainPath + "/Zipped";
 
 //        Ensures there's a folder to put the ZIPs in.
         File zipDirectory = new File(zipPath);

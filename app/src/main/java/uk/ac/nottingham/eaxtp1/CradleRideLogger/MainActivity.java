@@ -3,7 +3,6 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -232,7 +231,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         } else if (v == recordButton) {
 
             if (!recording) { // Start recording data
-
+                infoDisplay.setText(R.string.recording);
                 startService(recordingService);
 
                 recording = true;
@@ -296,8 +295,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                         if (!recordButton.isEnabled()) {
 //                        Updates text to tell user they can start recording
-                            String recordGPS = "You may now start recording.";
-                            infoDisplay.setText(recordGPS);
+                            infoDisplay.setText(R.string.locked);
                         }
 
                         recordButton.setEnabled(true);
