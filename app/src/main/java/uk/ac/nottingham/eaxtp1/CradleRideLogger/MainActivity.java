@@ -3,6 +3,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -31,7 +32,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     WifiManager wifiManager;
     WifiInfo wifiInfo;
 
-    Intent compressionService, uploadService;
+    Intent compressionService, uploadService, recordingService;
 
     SharedPreferences preferences;
     String user_ID = "User ID";
@@ -95,7 +96,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         initialiseButton.setOnClickListener(this);
         recordButton.setOnClickListener(this);
 //        Disables the Start button
-        recordButton.setEnabled(false);
+        recordButton.setEnabled(true);
 
         String startGPS = "Please start the GPS receiver.";
         infoDisplay.setText(startGPS);
@@ -124,6 +125,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         uploadService = new Intent(this, UploadService.class);
         compressionService = new Intent(this, CompressionService.class);
+        recordingService = new Intent(this, RecordingService.class);
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -231,6 +233,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             if (!recording) { // Start recording data
 
+                startService(recordingService);
+
                 recording = true;
                 initialising = false;
 
@@ -243,11 +247,15 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 
             } else { // Stop recording data
 
+                stopService(recordingService);
+
                 infoDisplay.setText(R.string.finished);
 
                 recording = false;
 
                 recordButton.setText(R.string.button_Start);
+                recordButton.setEnabled(false);
+                initialiseButton.setEnabled(true);
 
                 if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     //noinspection MissingPermission
