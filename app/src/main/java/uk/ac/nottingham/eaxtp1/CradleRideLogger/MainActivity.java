@@ -262,6 +262,18 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     myLocationManager.removeUpdates(this);
                 }
 
+//                Compress the recording.
+                File csvFolder = new File(folderPath);
+                File[] fileList = csvFolder.listFiles();
+                int filesLeft = fileList.length;
+
+                while (filesLeft > 0) {
+
+                    this.startService(compressionService);
+
+                    filesLeft = filesLeft - 1;
+                }
+
             }
             
         }
