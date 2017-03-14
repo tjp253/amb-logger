@@ -6,7 +6,8 @@
     <string name="button_Stop">Stop Recording</string>
 
     <string name="button_Pothole">Pothole</string>
-    <string name="button_Surface">Bad Surface</string>
+    <string name="button_SurfaceBad">Bad Surface</string>
+    <string name="button_SurfaceGood">Good Surface</string>
 
     <string name="startGPS">Please start the GPS receiver.</string>
     <string name="initialising">Please wait for the GPS to fix your location.</string>
