@@ -58,6 +58,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     long myLastLocationMillis;
     Location myLastLocation;
     double latGPS, longGPS;
+    long startTime, currentTime;
 
     boolean recording, initialising, badSurface;
 
@@ -70,7 +71,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     OutputStreamWriter myFeedbackWriter;
     String filepath = "New";
 
-    String sLat, sLong, sPothole, sSurface;
+    String sLat, sLong, sTime, sPothole, sSurface;
     String outputToFeedback;
     String feedbackTitle;
     List<String> outputList, titleList;
@@ -131,6 +132,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         sLong = "0.0";
         sPothole = "0";
         sSurface = "0";
+        sTime = "0";
         outputList = Arrays.asList(sLat, sLong, sPothole, sSurface);
         outputToFeedback = TextUtils.join(", ", outputList);
 
@@ -272,6 +274,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 infoDisplay.setText(R.string.recording);
                 startService(recordingService);
 
+                startTime = System.currentTimeMillis();
+
                 //noinspection MissingPermission
                 myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
                 myLocationManager.addGpsStatusListener(this);
@@ -298,7 +302,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 date = dateFormat.format(todaysDate);
                 feedbackName = date + "-ID" + String.valueOf(userID) + "-Feedback" + ".csv";
 
-                titleList = Arrays.asList("Lat", "Long", "Pothole", "Surface");
+                titleList = Arrays.asList("Lat", "Long", "Time", "Pothole", "Surface");
                 feedbackTitle = TextUtils.join(", ", titleList);
 
                 myFeedback = new File(getExternalFilesDir(filepath), feedbackName); // Feedback file - bumps and road surface
@@ -367,9 +371,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             
         } else if (v == potholeButton) {
 
+            currentTime = System.currentTimeMillis() - startTime;
+            sTime = String.valueOf(currentTime);
             sPothole = "1";
 
-            outputList = Arrays.asList(sLat, sLong, sPothole, sSurface);
+            outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
             outputToFeedback = TextUtils.join(", ", outputList);
             outputToFeedback = "\n" + outputToFeedback;
 //            Record the coordinates.
@@ -389,7 +395,19 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 sSurface = "1";
                 badSurface = true;
 
-//                Start recording coordinates.
+                currentTime = System.currentTimeMillis() - startTime;
+                sTime = String.valueOf(currentTime);
+
+                outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
+                outputToFeedback = TextUtils.join(", ", outputList);
+
+                try {
+                    outputToFeedback = "\n" + outputToFeedback;
+                    myFeedbackWriter.append(outputToFeedback);
+                    myFeedbackWriter.flush();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
                 surfaceButton.setText(R.string.button_SurfaceGood);
 
@@ -397,8 +415,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                 sSurface = "0";
                 badSurface = false;
-
-//                Stop recording coordinates.
 
                 surfaceButton.setText(R.string.button_SurfaceBad);
 
@@ -460,7 +476,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             sLat = String.valueOf(latGPS);
             sLong = String.valueOf(longGPS);
 
-            outputList = Arrays.asList(sLat, sLong, sPothole, sSurface);
+            currentTime = System.currentTimeMillis() - startTime;
+            sTime = String.valueOf(currentTime);
+
+            outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
             outputToFeedback = TextUtils.join(", ", outputList);
         }
 
