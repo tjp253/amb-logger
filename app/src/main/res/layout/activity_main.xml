@@ -54,26 +54,26 @@
         android:text="@string/button_Initialise" />
 
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight=".25"
-        android:orientation="horizontal">
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_weight=".25"-->
+        <!--android:orientation="horizontal">-->
 
-        <Button
-            android:id="@+id/button_Pothole"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="0.5"
-            android:text="@string/button_Pothole" />
+        <!--<Button-->
+            <!--android:id="@+id/button_Pothole"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_weight="0.5"-->
+            <!--android:text="@string/button_Pothole" />-->
 
-        <Button
-            android:id="@+id/button_Surface"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="0.5"
-            android:text="@string/button_SurfaceBad" />
+        <!--<Button-->
+            <!--android:id="@+id/button_Surface"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_weight="0.5"-->
+            <!--android:text="@string/button_SurfaceBad" />-->
 
-    </LinearLayout>
+    <!--</LinearLayout>-->
 
 </LinearLayout>

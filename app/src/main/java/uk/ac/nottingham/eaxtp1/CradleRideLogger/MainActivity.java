@@ -18,20 +18,20 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
-import android.text.TextUtils;
+//import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+//import java.io.FileNotFoundException;
+//import java.io.FileOutputStream;
+//import java.io.IOException;
+//import java.io.OutputStreamWriter;
+//import java.text.SimpleDateFormat;
+//import java.util.Arrays;
+//import java.util.Date;
+//import java.util.List;
 import java.util.Random;
 
 @SuppressWarnings("deprecation")
@@ -48,7 +48,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     private int MY_PERMISSIONS_REQUEST_GPS = 2;
 
-    public Button recordButton, initialiseButton, potholeButton, surfaceButton;
+    public Button recordButton, initialiseButton;//, potholeButton, surfaceButton;
     public TextView infoDisplay, versionView;
 
     protected LocationManager myLocationManager;
@@ -57,24 +57,24 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     boolean isGPSFixed;
     long myLastLocationMillis;
     Location myLastLocation;
-    double latGPS, longGPS;
-    long startTime, currentTime;
+//    double latGPS, longGPS;
+    long startTime;//, currentTime;
 
     boolean recording, initialising, badSurface;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
 
-    public String date, feedbackName;
-    public File myFeedback;
-    FileOutputStream myFeedbackStream;
-    OutputStreamWriter myFeedbackWriter;
-    String filepath = "New";
-
-    String sLat, sLong, sTime, sPothole, sSurface;
-    String outputToFeedback;
-    String feedbackTitle;
-    List<String> outputList, titleList;
+//    public String date, feedbackName;
+//    public File myFeedback;
+//    FileOutputStream myFeedbackStream;
+//    OutputStreamWriter myFeedbackWriter;
+//    String filepath = "New";
+//
+//    String sLat, sLong, sTime, sPothole, sSurface;
+//    String outputToFeedback;
+//    String feedbackTitle;
+//    List<String> outputList, titleList;
 
     @SuppressLint("WifiManagerLeak")
     @Override
@@ -112,29 +112,29 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         initialiseButton = (Button) findViewById(R.id.button_Initialise);
         recordButton = (Button) findViewById(R.id.button_Record);
-        potholeButton = (Button) findViewById(R.id.button_Pothole);
-        surfaceButton = (Button) findViewById(R.id.button_Surface);
+//        potholeButton = (Button) findViewById(R.id.button_Pothole);
+//        surfaceButton = (Button) findViewById(R.id.button_Surface);
 
         initialiseButton.setOnClickListener(this);
         recordButton.setOnClickListener(this);
-        potholeButton.setOnClickListener(this);
-        surfaceButton.setOnClickListener(this);
+//        potholeButton.setOnClickListener(this);
+//        surfaceButton.setOnClickListener(this);
 
 //        Disables the Start button
         recordButton.setEnabled(false);
 
-//        Hides the feedback buttons until needed.
-        potholeButton.setVisibility(View.GONE);
-        surfaceButton.setVisibility(View.GONE);
+////        Hides the feedback buttons until needed.
+//        potholeButton.setVisibility(View.GONE);
+//        surfaceButton.setVisibility(View.GONE);
 
-//        Initialises feedback.
-        sLat = "0.0";
-        sLong = "0.0";
-        sPothole = "0";
-        sSurface = "0";
-        sTime = "0";
-        outputList = Arrays.asList(sLat, sLong, sPothole, sSurface);
-        outputToFeedback = TextUtils.join(", ", outputList);
+////        Initialises feedback.
+//        sLat = "0.0";
+//        sLong = "0.0";
+//        sPothole = "0";
+//        sSurface = "0";
+//        sTime = "0";
+//        outputList = Arrays.asList(sLat, sLong, sPothole, sSurface);
+//        outputToFeedback = TextUtils.join(", ", outputList);
 
         infoDisplay.setText(R.string.startGPS);
 
@@ -284,53 +284,53 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 initialising = false;
 
                 initialiseButton.setEnabled(false);
-                initialiseButton.setVisibility(View.GONE);
-
-                potholeButton.setVisibility(View.VISIBLE);
-                surfaceButton.setVisibility(View.VISIBLE);
+//                initialiseButton.setVisibility(View.GONE);
+//
+//                potholeButton.setVisibility(View.VISIBLE);
+//                surfaceButton.setVisibility(View.VISIBLE);
 
                 recordButton.setText(R.string.button_Stop);
 
 //            Intent changeActivity = new Intent(this, SecondActivity.class);
 //            startActivity(changeActivity);
 
-//                Create the feedback file.
-                //    Creates a string of the current date and time
-                @SuppressLint("SimpleDateFormat")
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd-HH_mm");
-                Date todaysDate = new Date();
-                date = dateFormat.format(todaysDate);
-                feedbackName = date + "-ID" + String.valueOf(userID) + "-Feedback" + ".csv";
-
-                titleList = Arrays.asList("Lat", "Long", "Time", "Pothole", "Surface");
-                feedbackTitle = TextUtils.join(", ", titleList);
-
-                myFeedback = new File(getExternalFilesDir(filepath), feedbackName); // Feedback file - bumps and road surface
-//              Creates the output stream and the stream writer
-                try {
-                    myFeedbackStream = new FileOutputStream(myFeedback, true);
-                    myFeedbackWriter = new OutputStreamWriter(myFeedbackStream);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-
-                if (!myFeedback.exists()) {
-                    try {
-                        myFeedbackStream.write(feedbackTitle.getBytes());
-                        myFeedbackStream.close();
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    try {
-                            myFeedbackWriter.append(feedbackTitle);
-                            myFeedbackWriter.flush();
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+////                Create the feedback file.
+//                //    Creates a string of the current date and time
+//                @SuppressLint("SimpleDateFormat")
+//                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd-HH_mm");
+//                Date todaysDate = new Date();
+//                date = dateFormat.format(todaysDate);
+//                feedbackName = date + "-ID" + String.valueOf(userID) + "-Feedback" + ".csv";
+//
+//                titleList = Arrays.asList("Lat", "Long", "Time", "Pothole", "Surface");
+//                feedbackTitle = TextUtils.join(", ", titleList);
+//
+//                myFeedback = new File(getExternalFilesDir(filepath), feedbackName); // Feedback file - bumps and road surface
+////              Creates the output stream and the stream writer
+//                try {
+//                    myFeedbackStream = new FileOutputStream(myFeedback, true);
+//                    myFeedbackWriter = new OutputStreamWriter(myFeedbackStream);
+//                } catch (FileNotFoundException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                if (!myFeedback.exists()) {
+//                    try {
+//                        myFeedbackStream.write(feedbackTitle.getBytes());
+//                        myFeedbackStream.close();
+//
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                } else {
+//                    try {
+//                            myFeedbackWriter.append(feedbackTitle);
+//                            myFeedbackWriter.flush();
+//
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
                 
             } else { // Stop recording data
 
@@ -343,17 +343,17 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 recordButton.setText(R.string.button_Start);
                 recordButton.setEnabled(false);
                 initialiseButton.setEnabled(true);
-                initialiseButton.setVisibility(View.VISIBLE);
-
-                potholeButton.setVisibility(View.GONE);
-                surfaceButton.setVisibility(View.GONE);
+//                initialiseButton.setVisibility(View.VISIBLE);
+//
+//                potholeButton.setVisibility(View.GONE);
+//                surfaceButton.setVisibility(View.GONE);
 
                 if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     //noinspection MissingPermission
                     myLocationManager.removeUpdates(this);
                 }
-                sPothole = "0";
-                sSurface = "0";
+//                sPothole = "0";
+//                sSurface = "0";
 
 //                Compress the recording.
                 File csvFolder = new File(folderPath);
@@ -369,58 +369,58 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             }
             
-        } else if (v == potholeButton) {
-
-            currentTime = System.currentTimeMillis() - startTime;
-            sTime = String.valueOf(currentTime);
-            sPothole = "1";
-
-            outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
-            outputToFeedback = TextUtils.join(", ", outputList);
-            outputToFeedback = "\n" + outputToFeedback;
-//            Record the coordinates.
-            try {
-                myFeedbackWriter.append(outputToFeedback);
-                myFeedbackWriter.flush();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            sPothole = "0";
-
-        } else if (v == surfaceButton) {
-
-            if (!badSurface) {
-
-                sSurface = "1";
-                badSurface = true;
-
-                currentTime = System.currentTimeMillis() - startTime;
-                sTime = String.valueOf(currentTime);
-
-                outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
-                outputToFeedback = TextUtils.join(", ", outputList);
-
-                try {
-                    outputToFeedback = "\n" + outputToFeedback;
-                    myFeedbackWriter.append(outputToFeedback);
-                    myFeedbackWriter.flush();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                surfaceButton.setText(R.string.button_SurfaceGood);
-
-            } else {
-
-                sSurface = "0";
-                badSurface = false;
-
-                surfaceButton.setText(R.string.button_SurfaceBad);
-
-            }
-
-        }
+        } //else if (v == potholeButton) {
+//
+//            currentTime = System.currentTimeMillis() - startTime;
+//            sTime = String.valueOf(currentTime);
+//            sPothole = "1";
+//
+//            outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
+//            outputToFeedback = TextUtils.join(", ", outputList);
+//            outputToFeedback = "\n" + outputToFeedback;
+////            Record the coordinates.
+//            try {
+//                myFeedbackWriter.append(outputToFeedback);
+//                myFeedbackWriter.flush();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//
+//            sPothole = "0";
+//
+//        } else if (v == surfaceButton) {
+//
+//            if (!badSurface) {
+//
+//                sSurface = "1";
+//                badSurface = true;
+//
+//                currentTime = System.currentTimeMillis() - startTime;
+//                sTime = String.valueOf(currentTime);
+//
+//                outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
+//                outputToFeedback = TextUtils.join(", ", outputList);
+//
+//                try {
+//                    outputToFeedback = "\n" + outputToFeedback;
+//                    myFeedbackWriter.append(outputToFeedback);
+//                    myFeedbackWriter.flush();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//
+//                surfaceButton.setText(R.string.button_SurfaceGood);
+//
+//            } else {
+//
+//                sSurface = "0";
+//                badSurface = false;
+//
+//                surfaceButton.setText(R.string.button_SurfaceBad);
+//
+//            }
+//
+//        }
         
     }
 
@@ -469,29 +469,29 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         myLastLocation = location;
 
-        if (recording) {
-            latGPS = location.getLatitude();
-            longGPS = location.getLongitude();
-
-            sLat = String.valueOf(latGPS);
-            sLong = String.valueOf(longGPS);
-
-            currentTime = System.currentTimeMillis() - startTime;
-            sTime = String.valueOf(currentTime);
-
-            outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
-            outputToFeedback = TextUtils.join(", ", outputList);
-        }
-
-        if (badSurface) {
-            try {
-                outputToFeedback = "\n" + outputToFeedback;
-                myFeedbackWriter.append(outputToFeedback);
-                myFeedbackWriter.flush();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+//        if (recording) {
+//            latGPS = location.getLatitude();
+//            longGPS = location.getLongitude();
+//
+//            sLat = String.valueOf(latGPS);
+//            sLong = String.valueOf(longGPS);
+//
+//            currentTime = System.currentTimeMillis() - startTime;
+//            sTime = String.valueOf(currentTime);
+//
+//            outputList = Arrays.asList(sLat, sLong, sTime, sPothole, sSurface);
+//            outputToFeedback = TextUtils.join(", ", outputList);
+//        }
+//
+//        if (badSurface) {
+//            try {
+//                outputToFeedback = "\n" + outputToFeedback;
+//                myFeedbackWriter.append(outputToFeedback);
+//                myFeedbackWriter.flush();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
 
     }
 

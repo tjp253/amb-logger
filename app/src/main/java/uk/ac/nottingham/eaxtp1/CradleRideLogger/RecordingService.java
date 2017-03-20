@@ -16,7 +16,6 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.TextUtils;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -89,18 +88,16 @@ public class RecordingService extends Service
     Date todaysDate = new Date();
     public String date = dateFormat.format(todaysDate);
 
-    public File myFile, myFeedback;
-    FileOutputStream myOutputStream, myFeedbackStream;
-    OutputStreamWriter myWriter, myFeedbackWriter;
+    public File myFile;//, myFeedback;
+    FileOutputStream myOutputStream;//, myFeedbackStream;
+    OutputStreamWriter myWriter;//, myFeedbackWriter;
     String filepath = "New";
     String filename = date + "-ID" + String.valueOf(userID) + ".csv";
-    String feedbackName = date + "-ID" + String.valueOf(userID) + "-Feedback" + ".csv";
+//    String feedbackName = date + "-ID" + String.valueOf(userID) + "-Feedback" + ".csv";
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-        Toast.makeText(this, "This is the recording service!", Toast.LENGTH_SHORT).show();
 
         mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         myAccelerometer = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -124,13 +121,13 @@ public class RecordingService extends Service
         wakeLock.acquire();
 
         myFile = new File(getExternalFilesDir(filepath), filename); // Data file
-        myFeedback = new File(getExternalFilesDir(filepath), feedbackName); // Feedback file - bumps and road surface
+//        myFeedback = new File(getExternalFilesDir(filepath), feedbackName); // Feedback file - bumps and road surface
 //        Creates the output stream and the stream writer
         try {
             myOutputStream = new FileOutputStream(myFile, true);
-            myFeedbackStream = new FileOutputStream(myFeedback, true);
+//            myFeedbackStream = new FileOutputStream(myFeedback, true);
             myWriter = new OutputStreamWriter(myOutputStream);
-            myFeedbackWriter = new OutputStreamWriter(myFeedbackStream);
+//            myFeedbackWriter = new OutputStreamWriter(myFeedbackStream);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -270,14 +267,14 @@ public class RecordingService extends Service
 
             }
 
-            if (!myFeedback.exists()) {
-                try {
-                    myFeedbackStream.write(outputToData.getBytes());
-                    myFeedbackStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+//            if (!myFeedback.exists()) {
+//                try {
+//                    myFeedbackStream.write(outputToData.getBytes());
+//                    myFeedbackStream.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
 
 
 ////            Writes to database.
