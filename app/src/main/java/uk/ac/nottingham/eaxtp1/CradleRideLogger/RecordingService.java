@@ -104,9 +104,9 @@ public class RecordingService extends Service
         myGravity = mySensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
         myMagneticField = mySensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_GAME);
-        mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_GAME);
-        mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_GAME);
+        mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
+        mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
 
 //        Registers the Location Listener, and sets up updates
         LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -139,9 +139,9 @@ public class RecordingService extends Service
 ////      Sets runnable going, and hence the timer
 //        timerHandler.post(timerRunnable);
 
-        mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_GAME);
-        mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_GAME);
-        mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_GAME);
+        mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
+        mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     //    Gets location info
