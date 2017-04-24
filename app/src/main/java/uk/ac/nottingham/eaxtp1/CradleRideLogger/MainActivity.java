@@ -149,16 +149,18 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
 
 //        Compresses all finished data.
-        if (!recording) {
+        if (!recording ) {
             File csvFolder = new File(folderPath);
             File[] fileList = csvFolder.listFiles();
-            int filesLeft = fileList.length;
+            if (csvFolder.isDirectory()) {
+                int filesLeft = fileList.length;
 
-            while (filesLeft > 0) {
+                while (filesLeft > 0) {
 
-                this.startService(compressionService);
+                    this.startService(compressionService);
 
-                filesLeft = filesLeft - 1;
+                    filesLeft = filesLeft - 1;
+                }
             }
         }
 
