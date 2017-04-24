@@ -69,7 +69,7 @@ public class RecordingService extends Service
 
     String sID, sX, sY, sZ, sXYZ;
     String sLat, sLong, sTime, sGPS;
-    String sGravX, sGravY, sGravZ, sMagX, sMagY, sMagZ;
+    String sGravX, sGravY, sGravZ;
     String sEast, sNorth, sDown;
 
     String outputToData, outputToData_First;
@@ -217,9 +217,9 @@ public class RecordingService extends Service
             if (magneticValues != null && gravityValues != null) {
 
                 titleList = Arrays.asList("id", "X", "Y", "Z", "Lat", "Long", "Time", "GravX", "GravY", "GravZ",
-                        "MagX", "MagY", "MagZ", "North", "East", "Down", "GPS Sample");
+                        "North", "East", "Down", "GPS Sample");
                 outputList = Arrays.asList(sID, sX, sY, sZ, sLat, sLong, sTime, sGravX, sGravY, sGravZ,
-                        sMagX, sMagY, sMagZ, sNorth, sEast, sDown, sGPS);
+                        sNorth, sEast, sDown, sGPS);
 
             } else {
 
@@ -291,10 +291,6 @@ public class RecordingService extends Service
         } else if (mySensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
 
             magneticValues = sensorEvent.values;
-
-            sMagX = Float.toString(magneticValues[0]);
-            sMagY = Float.toString(magneticValues[1]);
-            sMagZ = Float.toString(magneticValues[2]);
 
         }
 
