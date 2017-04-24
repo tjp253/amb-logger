@@ -136,9 +136,6 @@ public class RecordingService extends Service
 
         startTime = System.currentTimeMillis();
 
-////      Sets runnable going, and hence the timer
-//        timerHandler.post(timerRunnable);
-
         mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
         mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
         mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
