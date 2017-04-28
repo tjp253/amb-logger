@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.support.v7.app.NotificationCompat;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +20,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.compressing;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class UploadService extends IntentService {
@@ -40,6 +43,14 @@ public class UploadService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        while (compressing) {
+//            DO NOTHING!
+
+            Toast.makeText(this, "Not uploading as compressing", Toast.LENGTH_SHORT).show();
+
+            onDestroy();
+        }
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         zipPath = mainPath + "/Zipped";

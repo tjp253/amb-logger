@@ -67,7 +67,7 @@ public class RecordingService extends Service
     private double latGPS;
     private double longGPS;
 
-    String sID, sX, sY, sZ, sXYZ;
+    String sID, sX, sY, sZ;
     String sLat, sLong, sTime, sGPS;
     String sGravX, sGravY, sGravZ;
     String sEast, sNorth, sDown;
@@ -204,12 +204,6 @@ public class RecordingService extends Service
                 sNorth = Float.toString(worldValues[1]);
                 sDown = Float.toString(worldValues[2]);
             }
-
-            double doubleX = Double.valueOf(sX);
-            double doubleY = Double.valueOf(sY);
-            double doubleZ = Double.valueOf(sZ);
-            double xyz = Math.sqrt(Math.pow(doubleX,2) + Math.pow(doubleY,2) + Math.pow(doubleZ,2));
-            sXYZ = String.valueOf(xyz);
 
             if (magneticValues != null && gravityValues != null) {
 

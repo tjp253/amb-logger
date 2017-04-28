@@ -12,7 +12,7 @@ public class WifiReceiver extends BroadcastReceiver {
     public WifiReceiver() {
     }
 
-    String mainPath, zipPath;
+    String mainPath, folderPath, zipPath;
 
     private int SERVICE_STARTED = 0;
 
@@ -20,6 +20,7 @@ public class WifiReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         mainPath = String.valueOf(context.getExternalFilesDir(""));
+        folderPath = mainPath + "/New";
         zipPath = mainPath + "/Zipped";
 
         Intent uploadService = new Intent(context, UploadService.class);
@@ -29,10 +30,12 @@ public class WifiReceiver extends BroadcastReceiver {
         if (info != null && info.isConnected()) {
 
 //            Allocates where to look for the files to be uploaded
-            File directory = new File(zipPath);
-            File[] contents = directory.listFiles();
+            File newDirectory = new File(folderPath);
+            File[] newContents = newDirectory.listFiles();
+            File zipDirectory = new File(zipPath);
+            File[] zipContents = zipDirectory.listFiles();
 
-            if ((contents != null) && (contents.length != 0)) {
+            if ( (newContents != null) && (newContents.length == 0) && (zipContents != null) && (zipContents.length != 0)) {
 
                 context.startService(uploadService);
 

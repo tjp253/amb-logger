@@ -11,14 +11,13 @@ import java.io.FileOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.compressing;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.folderPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.zipPath;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class CompressionService extends IntentService {
-
-    public CompressionService() {
-        super("CompressionService");
+    public CompressionService() { super("CompressionService");
     }
 
     @Override
@@ -87,6 +86,8 @@ public class CompressionService extends IntentService {
             }
 
         }
+
+        compressing = false;
 
         return true;
     }

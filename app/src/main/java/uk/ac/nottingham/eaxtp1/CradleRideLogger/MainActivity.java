@@ -51,6 +51,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     long startTime;
 
     boolean recording, initialising;
+    static boolean compressing;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -102,6 +103,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         recording = false;
         initialising = false;
+        compressing = false;
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         folderPath = mainPath + "/New";
@@ -156,12 +158,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                 while (filesLeft > 0) {
 
-
+                    compressing = true;
 
                     this.startService(compressionService);
 
                     filesLeft = filesLeft - 1;
                 }
+
             }
         }
 
@@ -178,7 +181,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
 
 //        Uploads files. Only when not recording.
-        if (!recording) {
+        if (!recording && !compressing) {
             File zipFolder = new File(zipPath);
             File[] zipList = zipFolder.listFiles();
 
@@ -275,6 +278,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 int filesLeft = fileList.length;
 
                 while (filesLeft > 0) {
+
+                    compressing = true;
 
                     this.startService(compressionService);
 
