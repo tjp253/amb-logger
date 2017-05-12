@@ -13,19 +13,22 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.opengl.Matrix;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPOutputStream;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
@@ -40,6 +43,11 @@ public class RecordingService extends Service
 //         TO DO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+    int uploadLimit = 10350000; // Restricts file size to ~9.9mb
+    long startTime, checkTime = 1000, checkDelay = 5000;
+
+    File gzFile;
 
     PowerManager.WakeLock wakeLock;
 
@@ -72,15 +80,10 @@ public class RecordingService extends Service
     String sGravX, sGravY, sGravZ;
     String sEast, sNorth, sDown;
 
-    String outputToData, outputToData_First;
+    String outputToData;
     String outputTitle;
 
     List<String> outputList, titleList;
-
-//    String initTextAccel, setTextAccel, initTextGPS, setTextGPS;
-
-    //  Sets the initial counter value to current time
-    long startTime;
 
     //    Creates a string of the current date and time
     @SuppressLint("SimpleDateFormat")
@@ -88,12 +91,11 @@ public class RecordingService extends Service
     Date todaysDate = new Date();
     public String date = dateFormat.format(todaysDate);
 
-    public File myFile;//, myFeedback;
-    FileOutputStream myOutputStream;//, myFeedbackStream;
-    OutputStreamWriter myWriter;//, myFeedbackWriter;
-    String filepath = "New";
-    String filename = date + "-ID" + String.valueOf(userID) + ".csv";
-//    String feedbackName = date + "-ID" + String.valueOf(userID) + "-Feedback" + ".csv";
+    OutputStream myOutputStream;
+    int zipPart = 1;
+    String filepath = "Recording";
+    String filename = date + "-ID" + String.valueOf(userID) + "-" + zipPart + ".csv.gz";
+    String mainPath, gzipPath;
 
     @Override
     public void onCreate() {
@@ -120,17 +122,18 @@ public class RecordingService extends Service
         wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My WakeLock");
         wakeLock.acquire();
 
-        myFile = new File(getExternalFilesDir(filepath), filename); // Data file
-//        myFeedback = new File(getExternalFilesDir(filepath), feedbackName); // Feedback file - bumps and road surface
-//        Creates the output stream and the stream writer
+        mainPath = String.valueOf(getExternalFilesDir(filepath)) + "/";
+        gzipPath = mainPath + filename;
+
         try {
-            myOutputStream = new FileOutputStream(myFile, true);
-//            myFeedbackStream = new FileOutputStream(myFeedback, true);
-            myWriter = new OutputStreamWriter(myOutputStream);
-//            myFeedbackWriter = new OutputStreamWriter(myFeedbackStream);
-        } catch (FileNotFoundException e) {
+            myOutputStream = new FileOutputStream(gzipPath);
+            myOutputStream = new GZIPOutputStream(myOutputStream)
+                                {{def.setLevel(Deflater.BEST_COMPRESSION);}};
+        } catch (IOException e) {
             e.printStackTrace();
         }
+
+        gzFile = new File(gzipPath);
 
 //        myDB = new DatabaseHelper(this);
 
@@ -221,52 +224,32 @@ public class RecordingService extends Service
 
 
             outputTitle = TextUtils.join(", ", titleList);
-            outputToData = TextUtils.join(", ", outputList);
+            outputToData = "\n" + TextUtils.join(", ", outputList);
 
-            if (!myFile.exists()) {
+            if (sampleID == 1) {
                 try {
-
-                    outputToData_First = outputTitle + "\n" + outputToData;
-
-                    myOutputStream.write(outputToData_First.getBytes());
-                    myOutputStream.close();
-
+                    myOutputStream.write(outputTitle.getBytes("UTF-8"));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            } else {
-
-                try {
-                    if (sampleID==1) {
-
-                        outputToData_First = outputTitle + "\n" + outputToData;
-
-                        myWriter.append(outputToData_First);
-                        myWriter.flush();
-
-                    } else {
-
-                        String appendToData = "\n" + outputToData;
-                        myWriter.append(appendToData);
-                        myWriter.flush();
-
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
             }
 
-//            if (!myFeedback.exists()) {
-//                try {
-//                    myFeedbackStream.write(outputToData.getBytes());
-//                    myFeedbackStream.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
+            try {
+                myOutputStream.write(outputToData.getBytes("UTF-8"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
+            if (time - checkTime > checkDelay ) {
+//                File gzFile = new File(gzipPath);
+                if (gzFile.length() > uploadLimit) {
+                    // Split the recording into a new file
+                    zipPart++;
+                    fileSplitter(zipPart);
+                }
+
+                checkTime = time;
+            }
 
 ////            Writes to database.
 //            boolean isInserted = myDB.insertData(worldValues[0], worldValues[1], worldValues[2], latGPS, longGPS, time);
@@ -284,6 +267,24 @@ public class RecordingService extends Service
             magneticValues = sensorEvent.values;
 
         }
+    }
+
+    public void fileSplitter(int filePart) {
+
+        gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + "-" + filePart + ".csv.gz";
+
+        try {
+            myOutputStream.close();
+            myOutputStream = new FileOutputStream(gzipPath);
+            myOutputStream = new GZIPOutputStream(myOutputStream)
+                                {{def.setLevel(Deflater.BEST_COMPRESSION);}};
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Toast.makeText(this, gzipPath, Toast.LENGTH_LONG).show();
+
+        gzFile = new File(gzipPath);
 
     }
 
@@ -297,9 +298,19 @@ public class RecordingService extends Service
         LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         myLocationManager.removeUpdates(this);
 
+        try {
+            myOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 //        myDB.close();
 
         wakeLock.release();
+
+        Intent movingService = new Intent(this, MovingService.class);
+        this.startService(movingService);
+
     }
 
     @Override

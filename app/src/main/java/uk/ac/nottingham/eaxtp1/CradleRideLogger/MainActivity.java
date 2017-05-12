@@ -31,7 +31,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     WifiManager wifiManager;
     WifiInfo wifiInfo;
 
-    Intent compressionService, uploadService, recordingService;
+    Intent /*compressionService,*/ uploadService, recordingService;
 
     SharedPreferences preferences;
     String user_ID = "User ID";
@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     long startTime;
 
     boolean recording, initialising;
-    static boolean compressing;
+    static boolean compressing, moving;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -97,7 +97,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordButton.setOnClickListener(this);
 
 //        Disables the Start button
-        recordButton.setEnabled(false);
+        recordButton.setEnabled(true);
 
         infoDisplay.setText(R.string.startGPS);
 
@@ -106,8 +106,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         compressing = false;
 
         mainPath = String.valueOf(getExternalFilesDir(""));
-        folderPath = mainPath + "/New";
-        zipPath = mainPath + "/Zipped";
+        folderPath = mainPath + "/Recording";
+        zipPath = mainPath + "/Finished";
 
 //        Checks (and asks for) permission on app start-up
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -125,7 +125,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         uploadService = new Intent(this, UploadService.class);
-        compressionService = new Intent(this, CompressionService.class);
+//        compressionService = new Intent(this, CompressionService.class);
         recordingService = new Intent(this, RecordingService.class);
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -149,24 +149,24 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             infoDisplay.setText(R.string.initialising);
         }
 
-//        Compresses all finished data.
-        if (!recording ) {
-            File csvFolder = new File(folderPath);
-            File[] fileList = csvFolder.listFiles();
-            if (csvFolder.isDirectory()) {
-                int filesLeft = fileList.length;
-
-                while (filesLeft > 0) {
-
-                    compressing = true;
-
-                    this.startService(compressionService);
-
-                    filesLeft = filesLeft - 1;
-                }
-
-            }
-        }
+////        Compresses all finished data.
+//        if (!recording ) {
+//            File csvFolder = new File(folderPath);
+//            File[] fileList = csvFolder.listFiles();
+//            if (csvFolder.isDirectory()) {
+//                int filesLeft = fileList.length;
+//
+//                while (filesLeft > 0) {
+//
+//                    compressing = true;
+//
+//                    this.startService(compressionService);
+//
+//                    filesLeft = filesLeft - 1;
+//                }
+//
+//            }
+//        }
 
     }
 
@@ -272,19 +272,19 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     myLocationManager.removeUpdates(this);
                 }
 
-//                Compress the recording.
-                File csvFolder = new File(folderPath);
-                File[] fileList = csvFolder.listFiles();
-                int filesLeft = fileList.length;
-
-                while (filesLeft > 0) {
-
-                    compressing = true;
-
-                    this.startService(compressionService);
-
-                    filesLeft = filesLeft - 1;
-                }
+////                Compress the recording.
+//                File csvFolder = new File(folderPath);
+//                File[] fileList = csvFolder.listFiles();
+//                int filesLeft = fileList.length;
+//
+//                while (filesLeft > 0) {
+//
+//                    compressing = true;
+//
+//                    this.startService(compressionService);
+//
+//                    filesLeft = filesLeft - 1;
+//                }
 
             }
             

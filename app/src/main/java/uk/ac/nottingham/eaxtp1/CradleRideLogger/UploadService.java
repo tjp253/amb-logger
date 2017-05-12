@@ -22,6 +22,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.compressing;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class UploadService extends IntentService {
@@ -38,22 +39,26 @@ public class UploadService extends IntentService {
     String urlString = "http://optics.eee.nottingham.ac.uk/~tp/upload.php";
 
 
-    String mainPath, zipPath, movedPath, uploadFilePath, fileName, parse;
+    String mainPath, recordPath, zipPath, movedPath, uploadFilePath, fileName, parse;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        while (compressing) {
+        while (moving) {
 //            DO NOTHING!
 
-            Toast.makeText(this, "Not uploading as compressing", Toast.LENGTH_SHORT).show();
-
-            onDestroy();
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                onDestroy();
+            }
         }
 
         mainPath = String.valueOf(getExternalFilesDir(""));
-        zipPath = mainPath + "/Zipped";
+        recordPath = mainPath + "/Recording";
+        zipPath = mainPath + "/Finished";
         movedPath = mainPath + "/Uploaded";
 
     }
@@ -72,6 +77,11 @@ public class UploadService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
+        File recordFolder = new File(recordPath);
+        if (recordFolder.listFiles().length > 0) {
+            onDestroy();
+        }
+
         try {
             url = new URL(urlString);
         } catch (Exception e) {
@@ -88,7 +98,7 @@ public class UploadService extends IntentService {
 
         File sourceFolder = new File(zipPath);
         int sourceLength = sourceFolder.getParent().length();
-        sourceLength = sourceLength + 7;
+        sourceLength = sourceLength + 9;
 
         File[] fileList = sourceFolder.listFiles();
         int filesLeft = fileList.length;
@@ -97,7 +107,7 @@ public class UploadService extends IntentService {
 
             uploadFilePath = file.getAbsolutePath();
             fileName = uploadFilePath.substring(sourceLength);
-            parse = fileName.substring(0, fileName.length() - 4) + "/zip";
+            parse = fileName.substring(0, fileName.length() - 2) + "/gz";
 
             try {
 
@@ -143,8 +153,15 @@ public class UploadService extends IntentService {
 
     private void moveFile(String fileToMove) {
 
+        NotificationCompat.Builder errorBuilder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.upload_symb)
+                        .setContentTitle("CradleRide Logger")
+                        .setContentText(fileToMove);
+
         InputStream in;
         OutputStream out;
+        Toast.makeText(this, zipPath + fileToMove, Toast.LENGTH_LONG).show();
         try {
 
             //create output directory if it doesn't exist
@@ -156,6 +173,7 @@ public class UploadService extends IntentService {
 
 
             in = new FileInputStream(zipPath + fileToMove);
+            Toast.makeText(this, zipPath + fileToMove, Toast.LENGTH_LONG).show();
             out = new FileOutputStream(movedPath + fileToMove);
 
             byte[] buffer = new byte[1024];
@@ -175,6 +193,10 @@ public class UploadService extends IntentService {
 
         } catch (Exception e) {
             e.printStackTrace();
+            int mNotificationId = 2;
+            NotificationManager mNotifyMgr =
+                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            mNotifyMgr.notify(mNotificationId, errorBuilder.build());
         }
 
     }
