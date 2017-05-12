@@ -4,7 +4,6 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.support.v7.app.NotificationCompat;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,7 +20,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.compressing;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -153,15 +151,9 @@ public class UploadService extends IntentService {
 
     private void moveFile(String fileToMove) {
 
-        NotificationCompat.Builder errorBuilder =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.upload_symb)
-                        .setContentTitle("CradleRide Logger")
-                        .setContentText(fileToMove);
-
         InputStream in;
         OutputStream out;
-        Toast.makeText(this, zipPath + fileToMove, Toast.LENGTH_LONG).show();
+
         try {
 
             //create output directory if it doesn't exist
@@ -173,7 +165,6 @@ public class UploadService extends IntentService {
 
 
             in = new FileInputStream(zipPath + fileToMove);
-            Toast.makeText(this, zipPath + fileToMove, Toast.LENGTH_LONG).show();
             out = new FileOutputStream(movedPath + fileToMove);
 
             byte[] buffer = new byte[1024];
@@ -193,10 +184,6 @@ public class UploadService extends IntentService {
 
         } catch (Exception e) {
             e.printStackTrace();
-            int mNotificationId = 2;
-            NotificationManager mNotifyMgr =
-                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            mNotifyMgr.notify(mNotificationId, errorBuilder.build());
         }
 
     }

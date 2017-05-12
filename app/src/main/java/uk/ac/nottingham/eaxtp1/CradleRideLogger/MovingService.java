@@ -2,7 +2,6 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;

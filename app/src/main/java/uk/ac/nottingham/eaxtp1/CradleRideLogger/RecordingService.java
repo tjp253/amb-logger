@@ -13,11 +13,9 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.opengl.Matrix;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.TextUtils;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -281,8 +279,6 @@ public class RecordingService extends Service
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        Toast.makeText(this, gzipPath, Toast.LENGTH_LONG).show();
 
         gzFile = new File(gzipPath);
 
