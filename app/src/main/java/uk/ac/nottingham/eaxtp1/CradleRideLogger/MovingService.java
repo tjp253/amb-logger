@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.folderPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.zipPath;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class MovingService extends IntentService {
@@ -87,6 +88,10 @@ public class MovingService extends IntentService {
 
         moving = false;
 
+        if (wifiConnected) {
+            Intent uploadService = new Intent(this, UploadService.class);
+            this.startService(uploadService);
+        }
 
 
         return true;

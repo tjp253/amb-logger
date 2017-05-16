@@ -5,14 +5,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.widget.Toast;
 
 import java.io.File;
+import java.io.IOException;
 
 public class WifiReceiver extends BroadcastReceiver {
     public WifiReceiver() {
     }
 
-    String mainPath, folderPath, zipPath;
+    String mainPath, zipPath;
+
+    static boolean wifiConnected = false;
 
     private int SERVICE_STARTED = 0;
 
@@ -20,8 +24,7 @@ public class WifiReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         mainPath = String.valueOf(context.getExternalFilesDir(""));
-        folderPath = mainPath + "/New";
-        zipPath = mainPath + "/Zipped";
+        zipPath = mainPath + "/Finished";
 
         Intent uploadService = new Intent(context, UploadService.class);
 
@@ -29,13 +32,13 @@ public class WifiReceiver extends BroadcastReceiver {
 
         if (info != null && info.isConnected()) {
 
+            wifiConnected = true;
+
 //            Allocates where to look for the files to be uploaded
-            File newDirectory = new File(folderPath);
-            File[] newContents = newDirectory.listFiles();
             File zipDirectory = new File(zipPath);
             File[] zipContents = zipDirectory.listFiles();
 
-            if ( (newContents != null) && (newContents.length == 0) && (zipContents != null) && (zipContents.length != 0)) {
+            if ((zipContents != null) && (zipContents.length != 0)) {
 
                 context.startService(uploadService);
 
@@ -43,8 +46,13 @@ public class WifiReceiver extends BroadcastReceiver {
 
             }
 
-        } else if (info != null && !info.isConnected() && SERVICE_STARTED == 1) {
-            context.stopService(uploadService);
+        } else if (info != null && !info.isConnected()) {
+
+            wifiConnected = false;
+
+            if (SERVICE_STARTED == 1) {
+                context.stopService(uploadService);
+            }
         }
 
     }

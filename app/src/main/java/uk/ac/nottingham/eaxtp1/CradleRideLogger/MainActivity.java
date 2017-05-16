@@ -181,7 +181,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
 
 //        Uploads files. Only when not recording.
-        if (!recording && !compressing) {
+        if (!recording && !moving) {
             File zipFolder = new File(zipPath);
             File[] zipList = zipFolder.listFiles();
 
