@@ -57,7 +57,7 @@ public class RecordingService extends Service
     Sensor myMagneticField;
 
     private long sampleID;
-    private long gpsSamp;
+    private long gpsSamp, prevSamp;
 
     private float[] deviceValues = new float[4];
     private float[] worldValues = new float[3];
@@ -115,6 +115,7 @@ public class RecordingService extends Service
 //        Initialises the Sample ID
         sampleID = 0;
         gpsSamp = 0;
+        prevSamp = 0;
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My WakeLock");
@@ -208,15 +209,29 @@ public class RecordingService extends Service
 
             if (magneticValues != null && gravityValues != null) {
 
-                titleList = Arrays.asList("id", "X", "Y", "Z", "Lat", "Long", "Time", "GravX", "GravY", "GravZ",
-                        "North", "East", "Down", "GPS Sample");
-                outputList = Arrays.asList(sID, sX, sY, sZ, sLat, sLong, sTime, sGravX, sGravY, sGravZ,
-                        sNorth, sEast, sDown, sGPS);
+                if (gpsSamp > prevSamp) {
+                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
+                            "North", "East", "Down", "GPS Sample", "Lat", "Long");
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
+                            sNorth, sEast, sDown, sGPS, sLat, sLong);
+                    prevSamp = gpsSamp;
+                } else {
+                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
+                            "North", "East", "Down", "GPS Sample");
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
+                            sNorth, sEast, sDown, sGPS);
+                }
 
             } else {
 
-                titleList = Arrays.asList("id", "X", "Y", "Z", "Lat", "Long", "Time");
-                outputList = Arrays.asList(sID, sX, sY, sZ, sLat, sLong, sTime);
+                if (gpsSamp > prevSamp) {
+                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long");
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong);
+                    prevSamp = gpsSamp;
+                } else {
+                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample");
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS);
+                }
 
             }
 
