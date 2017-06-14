@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
 @SuppressWarnings({"MissingPermission", "SpellCheckingInspection"})
@@ -98,6 +99,11 @@ public class RecordingService extends Service
     @Override
     public void onCreate() {
         super.onCreate();
+
+        if (userID == 0) {
+            crashed = true;
+            onDestroy();
+        }
 
         mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         myAccelerometer = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -304,20 +310,22 @@ public class RecordingService extends Service
     public void onDestroy() {
         super.onDestroy();
 
-        mySensorManager.unregisterListener(this);
+        if (!crashed) {
+            mySensorManager.unregisterListener(this);
 
-        LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        myLocationManager.removeUpdates(this);
+            LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            myLocationManager.removeUpdates(this);
 
-        try {
-            myOutputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            try {
+                myOutputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
 //        myDB.close();
 
-        wakeLock.release();
+            wakeLock.release();
+        }
 
         Intent movingService = new Intent(this, MovingService.class);
         this.startService(movingService);

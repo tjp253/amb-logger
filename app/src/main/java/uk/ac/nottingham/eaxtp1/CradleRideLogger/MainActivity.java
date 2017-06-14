@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     long startTime;
 
     boolean recording, initialising;
-    static boolean compressing, moving;
+    static boolean compressing, moving, crashed;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -97,13 +97,14 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordButton.setOnClickListener(this);
 
 //        Disables the Start button
-        recordButton.setEnabled(false);
+        recordButton.setEnabled(true);
 
         infoDisplay.setText(R.string.startGPS);
 
         recording = false;
         initialising = false;
         compressing = false;
+        crashed = false;
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         folderPath = mainPath + "/Recording";
@@ -147,6 +148,15 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             myLocationManager.addGpsStatusListener(this);
 
             infoDisplay.setText(R.string.initialising);
+        }
+
+        if (crashed) {
+            recording = false;
+            initialising = false;
+            recordButton.setText(R.string.button_Start);
+            recordButton.setEnabled(false);
+            initialiseButton.setEnabled(false);
+            infoDisplay.setText(R.string.crashed);
         }
 
 ////        Compresses all finished data.
