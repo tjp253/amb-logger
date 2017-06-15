@@ -16,6 +16,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
@@ -97,7 +98,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordButton.setOnClickListener(this);
 
 //        Disables the Start button
-        recordButton.setEnabled(true);
+        recordButton.setEnabled(false);
 
         infoDisplay.setText(R.string.startGPS);
 
@@ -151,6 +152,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
 
         if (crashed) {
+
+            if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                //noinspection MissingPermission
+                myLocationManager.removeUpdates(this);
+            }
+            stopService(recordingService);
             recording = false;
             initialising = false;
             recordButton.setText(R.string.button_Start);
@@ -205,6 +212,21 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                 }
             }
+        }
+
+        if (crashed) {
+
+            if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                //noinspection MissingPermission
+                myLocationManager.removeUpdates(this);
+            }
+            stopService(recordingService);
+            recording = false;
+            initialising = false;
+            recordButton.setText(R.string.button_Start);
+            recordButton.setEnabled(false);
+            initialiseButton.setEnabled(false);
+            infoDisplay.setText(R.string.crashed);
         }
 
     }
@@ -346,6 +368,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         myLastLocationMillis = SystemClock.elapsedRealtime();
 
         myLastLocation = location;
+
+        if (crashed) {
+            myLocationManager.removeUpdates(this);
+        }
 
     }
 

@@ -310,11 +310,16 @@ public class RecordingService extends Service
     public void onDestroy() {
         super.onDestroy();
 
-        if (!crashed) {
-            mySensorManager.unregisterListener(this);
 
-            LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             myLocationManager.removeUpdates(this);
+        }
+
+        if (!crashed) {
+
+            mySensorManager.unregisterListener(this);
 
             try {
                 myOutputStream.close();
