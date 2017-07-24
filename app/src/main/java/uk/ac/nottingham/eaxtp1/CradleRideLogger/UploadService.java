@@ -32,7 +32,7 @@ public class UploadService extends IntentService {
         super("UploadService");
     }
 
-    NotificationCompat.Builder mBuilder, mBuilder2;
+    NotificationCompat.Builder mBuilder, mBuilder2, mBuilder3;
 
     int jobNumber;
 
@@ -40,9 +40,9 @@ public class UploadService extends IntentService {
     String urlString = "http://optics.eee.nottingham.ac.uk/~tp/upload.php";
 
 
-    String mainPath, recordPath, zipPath, movedPath, uploadFilePath, fileName, parse, oversizedPath;
+    String mainPath, recordPath, zipPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
 
-    int uploadFileCount = 0, oversizedFileCount = 0;
+    int uploadFileCount, oversizedFileCount, failedFileCount;
 
     @Override
     public void onCreate() {
@@ -57,6 +57,7 @@ public class UploadService extends IntentService {
         zipPath = mainPath + "/Finished";
         movedPath = mainPath + "/Uploaded";
         oversizedPath = mainPath + "/Oversized";
+        failedPath = mainPath + "/FailedUploads";
 
     }
 
@@ -124,20 +125,27 @@ public class UploadService extends IntentService {
                     throw new IOException("S E");
                 }
 
-                if (response.code() == 900) {
-                    moveOversized(fileName);
-                    filesLeft = filesLeft - 1;
-                    oversizedFileCount = oversizedFileCount + 1;
-                    fileName = null;
-                    throw new IOException("File too large to upload.");
-                } else if (response.code() == 901) {
-                    filesLeft = filesLeft - 1;
-                    uploadFileCount = uploadFileCount + 1;
-                    throw new IOException("File already uploaded.");
+                switch (response.code()) {
+                    case 900:
+                        moveOversized(fileName);
+                        filesLeft--;
+                        oversizedFileCount++;
+                        fileName = null;
+                        throw new IOException("File too large to upload.");
+                    case 901:
+                        filesLeft--;
+                        uploadFileCount++;
+                        throw new IOException("File already uploaded.");
+                    case 902:
+                        moveFailed(fileName);
+                        filesLeft--;
+                        failedFileCount++;
+                        fileName = null;
+                        throw new IOException("Upload failed.");
                 }
 
-                filesLeft = filesLeft - 1;
-                uploadFileCount = uploadFileCount + 1;
+                filesLeft--;
+                uploadFileCount++;
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -188,6 +196,25 @@ public class UploadService extends IntentService {
                         (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                 mNotifyMgr2.notify(2, mBuilder2.build());
             }
+
+            if (failedFileCount > 0) {
+                String oText;
+                if (failedFileCount == 1) {
+                    oText = failedFileCount + " file failed to upload.\nPlease check UploadFailed folder.";
+                } else {
+                    oText = failedFileCount + " files too large to upload.\nPlease check UploadFailed folder.";
+                }
+
+                mBuilder3 =
+                        (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                                .setSmallIcon(R.drawable.oversize_symb)
+                                .setContentTitle("CradleRide Logger")
+                                .setContentText(oText);
+
+                NotificationManager mNotifyMgr3 =
+                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                mNotifyMgr3.notify(3, mBuilder3.build());
+            }
         }
 
     }
@@ -230,8 +257,7 @@ public class UploadService extends IntentService {
 
     }
 
-    public void
-    moveOversized(String oversizeFile) {
+    public void moveOversized(String oversizeFile) {
 
         InputStream in;
         OutputStream out;
@@ -262,6 +288,44 @@ public class UploadService extends IntentService {
 
             // delete the original file
             new File(zipPath + oversizeFile).delete();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void moveFailed(String failedFile) {
+
+        InputStream in;
+        OutputStream out;
+
+        try {
+
+            //create output directory if it doesn't exist
+            File dir = new File (failedPath);
+            if (!dir.exists())
+            {
+                dir.mkdirs();
+            }
+
+
+            in = new FileInputStream(zipPath + failedFile);
+            out = new FileOutputStream(failedPath + failedFile);
+
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            in.close();
+
+            // write the output file
+            out.flush();
+            out.close();
+
+            // delete the original file
+            new File(zipPath + failedFile).delete();
 
 
         } catch (Exception e) {
