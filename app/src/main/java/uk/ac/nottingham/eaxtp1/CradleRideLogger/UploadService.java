@@ -44,6 +44,9 @@ public class UploadService extends IntentService {
 
     int uploadFileCount, oversizedFileCount, failedFileCount;
 
+    long uploadTime;
+    boolean uploaded;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -100,6 +103,9 @@ public class UploadService extends IntentService {
 
         for (File file : fileList) {
 
+            uploadTime = System.currentTimeMillis();
+            uploaded = false;
+
             uploadFilePath = file.getAbsolutePath();
             fileName = uploadFilePath.substring(sourceLength);
             parse = fileName.substring(0, fileName.length() - 2) + "/gz";
@@ -128,33 +134,37 @@ public class UploadService extends IntentService {
                 switch (response.code()) {
                     case 900:
                         moveOversized(fileName);
-                        filesLeft--;
                         oversizedFileCount++;
                         fileName = null;
                         throw new IOException("File too large to upload.");
                     case 901:
-                        filesLeft--;
                         uploadFileCount++;
                         throw new IOException("File already uploaded.");
                     case 902:
                         moveFailed(fileName);
-                        filesLeft--;
                         failedFileCount++;
                         fileName = null;
                         throw new IOException("Upload failed.");
+                    case 910:
+                        uploaded = true;
+                        uploadFileCount++;
                 }
 
-                filesLeft--;
-                uploadFileCount++;
+                while (!uploaded) {
+                    if (System.currentTimeMillis() - uploadTime > 60000) {
+                        throw new IOException("Upload failed - a minute has passed.");
+                    }
+                }
 
             } catch (IOException e) {
                 e.printStackTrace();
-//                break;
             }
 
             if (fileName != null) {
                 moveFile(fileName);
             }
+
+            filesLeft--;
         }
 
 //      Displays notification once the last file has been uploaded
