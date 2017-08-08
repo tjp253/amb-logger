@@ -15,6 +15,9 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Permission for recording sound -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -45,9 +48,10 @@
         </receiver>
 
         <service android:name=".UploadService" />
-        <!--<service android:name=".CompressionService" />-->
+        <!-- <service android:name=".CompressionService" /> -->
         <service android:name=".RecordingService" />
         <service android:name=".MovingService" />
+        <service android:name=".AudioService" />
     </application>
 
 </manifest>

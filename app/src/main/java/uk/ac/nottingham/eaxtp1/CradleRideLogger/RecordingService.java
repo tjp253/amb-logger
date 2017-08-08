@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
@@ -70,14 +71,12 @@ public class RecordingService extends Service
     private float[] worldMatrix = new float[16];
     private float[] inverse = new float[16];
 
-    //    Sets up GPS variables
-    private double latGPS;
-    private double longGPS;
-
     String sID, sX, sY, sZ;
-    String sLat, sLong, sTime, sGPS;
+    String sLat, sLong, sTime, sGPS = "0";
     String sGravX, sGravY, sGravZ;
     String sEast, sNorth, sDown;
+    String sAmp = "";
+    int prevAmp;
 
     String outputToData;
     String outputTitle;
@@ -118,11 +117,6 @@ public class RecordingService extends Service
         LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
 
-//        Initialises the Sample ID
-        sampleID = 0;
-        gpsSamp = 0;
-        prevSamp = 0;
-
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My WakeLock");
         wakeLock.acquire();
@@ -152,25 +146,20 @@ public class RecordingService extends Service
     //    Gets location info
     @Override
     public void onLocationChanged(Location location) {
-        latGPS = location.getLatitude();
-        longGPS = location.getLongitude();
+        sLat = String.valueOf(location.getLatitude());
+        sLong = String.valueOf(location.getLongitude());
         gpsSamp++;
+        sGPS = String.valueOf(gpsSamp);
     }
 
     @Override
-    public void onProviderDisabled(String provider) {
-
-    }
+    public void onProviderDisabled(String provider) {}
 
     @Override
-    public void onProviderEnabled(String provider) {
-
-    }
+    public void onProviderEnabled(String provider) {}
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -191,10 +180,6 @@ public class RecordingService extends Service
             sY = Float.toString(deviceValues[1]);
             sZ = Float.toString(deviceValues[2]);
 
-            sLat = String.valueOf(latGPS);
-            sLong = String.valueOf(longGPS);
-            sGPS = String.valueOf(gpsSamp);
-
             long time = System.currentTimeMillis() - startTime;
             sTime = String.valueOf(time);
 
@@ -213,34 +198,34 @@ public class RecordingService extends Service
                 sDown = Float.toString(worldValues[2]);
             }
 
-            if (magneticValues != null && gravityValues != null) {
+            if (amp != 0 && amp != prevAmp) {
+                sAmp = String.valueOf(amp);
+                prevAmp = amp;
+            } else {
+                sAmp = "";
+            }
 
+            if (magneticValues != null && gravityValues != null) {
+                titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
+                        "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise");
                 if (gpsSamp > prevSamp) {
-                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
-                            "North", "East", "Down", "GPS Sample", "Lat", "Long");
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
-                            sNorth, sEast, sDown, sGPS, sLat, sLong);
+                            sNorth, sEast, sDown, sGPS, sLat, sLong, sAmp);
                     prevSamp = gpsSamp;
                 } else {
-                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
-                            "North", "East", "Down", "GPS Sample");
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
-                            sNorth, sEast, sDown, sGPS);
+                            sNorth, sEast, sDown, sGPS,"","",sAmp);
                 }
 
             } else {
-
+                titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise");
                 if (gpsSamp > prevSamp) {
-                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long");
-                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong);
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp);
                     prevSamp = gpsSamp;
                 } else {
-                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample");
-                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS);
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, "","", sAmp);
                 }
-
             }
-
 
             outputTitle = TextUtils.join(", ", titleList);
             outputToData = "\n" + TextUtils.join(", ", outputList);
@@ -269,9 +254,6 @@ public class RecordingService extends Service
 
                 checkTime = time;
             }
-
-////            Writes to database.
-//            boolean isInserted = myDB.insertData(worldValues[0], worldValues[1], worldValues[2], latGPS, longGPS, time);
 
         } else if (mySensor.getType() == Sensor.TYPE_GRAVITY) {
 
@@ -310,7 +292,6 @@ public class RecordingService extends Service
     public void onDestroy() {
         super.onDestroy();
 
-
         LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -327,8 +308,6 @@ public class RecordingService extends Service
                 e.printStackTrace();
             }
 
-//        myDB.close();
-
             wakeLock.release();
         }
 
@@ -338,6 +317,5 @@ public class RecordingService extends Service
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 }

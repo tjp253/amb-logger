@@ -2,6 +2,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +17,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
+//import android.os.PowerManager;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
@@ -33,12 +34,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     WifiInfo wifiInfo;
 
     Intent /*compressionService,*/ uploadService, recordingService;
+    Intent audioService;
 
     SharedPreferences preferences;
     String user_ID = "User ID";
     static int userID;
 
-    private int MY_PERMISSIONS_REQUEST_GPS = 2;
+    int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
 
     public Button recordButton, initialiseButton;
     public TextView infoDisplay, versionView;
@@ -49,10 +51,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     boolean isGPSFixed;
     long myLastLocationMillis;
     Location myLastLocation;
-    long startTime;
+//    long startTime;
 
-    boolean recording, initialising;
-    static boolean compressing, moving, crashed;
+    boolean /*recording,*/ initialising;
+    static boolean recording, compressing, moving, crashed;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -98,7 +100,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordButton.setOnClickListener(this);
 
 //        Disables the Start button
-        recordButton.setEnabled(false);
+        recordButton.setEnabled(true);
 
         infoDisplay.setText(R.string.startGPS);
 
@@ -114,14 +116,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 //        Checks (and asks for) permission on app start-up
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
-//            Checks if permission is NOT granted. Asks for permission if it isn't.
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSIONS_REQUEST_GPS);
-
-            }
+            permissionCheck();
 
         }
 
@@ -129,6 +124,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         uploadService = new Intent(this, UploadService.class);
 //        compressionService = new Intent(this, CompressionService.class);
         recordingService = new Intent(this, RecordingService.class);
+        audioService = new Intent(this, AudioService.class);
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -158,6 +154,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 myLocationManager.removeUpdates(this);
             }
             stopService(recordingService);
+            stopService(audioService);
             recording = false;
             initialising = false;
             recordButton.setText(R.string.button_Start);
@@ -221,6 +218,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 myLocationManager.removeUpdates(this);
             }
             stopService(recordingService);
+            stopService(audioService);
             recording = false;
             initialising = false;
             recordButton.setText(R.string.button_Start);
@@ -233,34 +231,39 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     @Override
     public void onClick(View v) {
-        
+
         if (v == initialiseButton) {
             recording = false;
-            initialising = true;
 
-            initialiseButton.setEnabled(false);
             recordButton.setEnabled(false);
 
 //        Re-checks (and asks for) the GPS permission needed
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
-//            Checks if permission is NOT granted. Asks for permission if it isn't.
-                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
+                    permissionCheck();
 
-                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION}, MY_PERMISSIONS_REQUEST_GPS);
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
 
+                if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                        checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
+                    infoDisplay.setText(R.string.permissions);
+                    return;
                 }
 
             }
 
-//        Checks for permission before running following code
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                    && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            initialising = true;
 
-                return;
-            }
+            initialiseButton.setEnabled(false);
 
             myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
             myLocationManager.addGpsStatusListener(this);
@@ -273,8 +276,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             if (!recording) { // Start recording data
                 infoDisplay.setText(R.string.recording);
                 startService(recordingService);
+                startService(audioService);
 
-                startTime = System.currentTimeMillis();
+//                startTime = System.currentTimeMillis();
 
                 //noinspection MissingPermission
                 myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
@@ -290,6 +294,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             } else { // Stop recording data
 
                 stopService(recordingService);
+                stopService(audioService);
 
                 infoDisplay.setText(R.string.finished);
 
@@ -373,6 +378,23 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             myLocationManager.removeUpdates(this);
         }
 
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    public void permissionCheck() {
+//            Checks if GPS permission is NOT granted. Asks for permission if it isn't.
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_GPS);
+
+        }
+
+//            Checks if audio permission is NOT granted. Asks for permission if it isn't.
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_AUDIO);
+        }
     }
 
     @Override

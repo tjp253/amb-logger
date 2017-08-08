@@ -15,6 +15,8 @@
     <string name="recording">Please turn your screen off for the duration of the journey.</string>
     <string name="finished">Thank you for recording your journey.</string>
     <string name="crashed">Something went wrong with recording. Please restart the app.</string>
+    <!--<string name="gps_permission">Please grant permission to use the GPS.</string>-->
+    <string name="permissions">Please grant all permissions to enable recording.</string>
 
 
     <string name="info_display">\nPlease place the phone with the right side facing forward travel.\n --->\n </string>
