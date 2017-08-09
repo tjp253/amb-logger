@@ -93,7 +93,6 @@ public class MovingService extends IntentService {
             this.startService(uploadService);
         }
 
-
         return true;
     }
 

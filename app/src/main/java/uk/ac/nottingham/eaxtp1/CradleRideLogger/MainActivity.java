@@ -100,7 +100,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordButton.setOnClickListener(this);
 
 //        Disables the Start button
-        recordButton.setEnabled(true);
+        recordButton.setEnabled(false);
 
         infoDisplay.setText(R.string.startGPS);
 

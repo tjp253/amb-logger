@@ -134,8 +134,6 @@ public class RecordingService extends Service
 
         gzFile = new File(gzipPath);
 
-//        myDB = new DatabaseHelper(this);
-
         startTime = System.currentTimeMillis();
 
         mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
