@@ -4,7 +4,9 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -17,11 +19,12 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
-//import android.os.PowerManager;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import java.io.File;
@@ -37,6 +40,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Intent audioService;
 
     SharedPreferences preferences;
+    SharedPreferences.Editor prefEditor;
     String user_ID = "User ID";
     static int userID;
 
@@ -65,17 +69,27 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        Initialises a Unique ID for each user.
         preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
+        prefEditor = preferences.edit();
+//        Initialises a Unique ID for each user.
         if (preferences.getBoolean("firstLogin", true)) {
+
+            showDisclosure();
 
             Random random = new Random();
             int rndUserID = 10000000 + random.nextInt(90000000);
 
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putBoolean("firstLogin", false);
-            editor.putInt(user_ID, rndUserID);
-            editor.commit();
+            prefEditor.putBoolean("firstLogin", false);
+            prefEditor.putInt(user_ID, rndUserID);
+            prefEditor.commit();
+        } else {
+//        Shows Disclosure Agreement.
+//        TODO: remove the '!' below when code is finalised.
+            if (preferences.getBoolean("NotSeenDisclosure", true)) {
+//                prefEditor.putBoolean("NotSeenDisclosure", true);
+//                prefEditor.commit();
+                showDisclosure();
+            }
         }
 
         userID = preferences.getInt(user_ID, 1);
@@ -100,7 +114,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordButton.setOnClickListener(this);
 
 //        Disables the Start button
-        recordButton.setEnabled(false);
+        recordButton.setEnabled(false); // TODO: set 'false' when creating signed build.
 
         infoDisplay.setText(R.string.startGPS);
 
@@ -162,25 +176,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             initialiseButton.setEnabled(false);
             infoDisplay.setText(R.string.crashed);
         }
-
-////        Compresses all finished data.
-//        if (!recording ) {
-//            File csvFolder = new File(folderPath);
-//            File[] fileList = csvFolder.listFiles();
-//            if (csvFolder.isDirectory()) {
-//                int filesLeft = fileList.length;
-//
-//                while (filesLeft > 0) {
-//
-//                    compressing = true;
-//
-//                    this.startService(compressionService);
-//
-//                    filesLeft = filesLeft - 1;
-//                }
-//
-//            }
-//        }
 
     }
 
@@ -309,20 +304,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     myLocationManager.removeUpdates(this);
                 }
 
-////                Compress the recording.
-//                File csvFolder = new File(folderPath);
-//                File[] fileList = csvFolder.listFiles();
-//                int filesLeft = fileList.length;
-//
-//                while (filesLeft > 0) {
-//
-//                    compressing = true;
-//
-//                    this.startService(compressionService);
-//
-//                    filesLeft = filesLeft - 1;
-//                }
-
             }
             
         }
@@ -395,6 +376,44 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_AUDIO);
         }
+    }
+
+    AlertDialog ad;
+    Button butt;
+
+    public void showDisclosure() {
+
+        View checkboxView = View.inflate(this, R.layout.checkbox, null);
+        CheckBox checkBox = (CheckBox) checkboxView.findViewById(R.id.checkbox);
+        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    butt.setEnabled(true);
+                } else {
+                    butt.setEnabled(false);
+                }
+            }
+        });
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder .setTitle(R.string.ad_title)
+                .setView(checkboxView)
+                .setCancelable(false)
+                .setPositiveButton(R.string.ad_button, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int BUTTON_POSITIVE) {
+//                        Accept the disclosure agreement!
+                    }
+                });
+        ad = builder.create();
+        ad.show();
+        butt = ad.getButton(AlertDialog.BUTTON_POSITIVE);
+        butt.setEnabled(false);
+
+//        Ensure only one instance.
+        prefEditor.putBoolean("NotSeenDisclosure", false);
+        prefEditor.commit();
     }
 
     @Override

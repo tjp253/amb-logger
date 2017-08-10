@@ -15,8 +15,29 @@
     <string name="recording">Please turn your screen off for the duration of the journey.</string>
     <string name="finished">Thank you for recording your journey.</string>
     <string name="crashed">Something went wrong with recording. Please restart the app.</string>
-    <!--<string name="gps_permission">Please grant permission to use the GPS.</string>-->
     <string name="permissions">Please grant all permissions to enable recording.</string>
 
     <string name="info_display">\nPlease place the phone with the right side facing forward travel.\n --->\n </string>
+
+    <string name="ad_title">Disclosure Agreement</string>
+    <string name="ad_button">Accept</string>
+    <string name="ad_checkbox">I confirm I have read the agreement.</string>
+
+    <string name="disclosure">This is where the disclosure agreement will go once the wording has been finalised.
+        \n\nUnless the user scrolls to the bottom of the agreement and ticks the box, the \'accept\' button is disabled.
+        \n\nFor all new users, the disclosure agreement will appear when they first start the app - before any sensors have been
+        identified and before their Unique ID is assigned.
+        \n\nIn the same way the Unique ID only gets set once, the disclosure agreement will not show after the first time starting
+        the app (unless the user declines to accept, in which case they won\'t get past the agreement no matter how many times they
+        restart the app.
+        \n\n\nWhile I have looked at the Google Play guidelines and also read through the privacy policy you wrote, I am unsure what to
+        put in the final agreement as I haven\'t dealt with them before.
+        \n\n\nAs you can probably tell, I am waffling.
+        \n\n\nThis is to allow you to see how the user needs to scroll down before being able to progress.
+        \n\nTry the \'back\' button if you wish. . .
+        \n\nAny luck? The answer should be no.
+        \n\nWhile there is no way of ensuring users actually READ the agreement, this makes it slightly more likely!
+        \n\nAnd now you can check the box and accept the agreement.
+        \n</string>
+
 </resources>

@@ -37,7 +37,7 @@ public class UploadService extends IntentService {
     int jobNumber;
 
     URL url;
-    String urlString = "http://optics.eee.nottingham.ac.uk/~tp/upload.php";
+    String urlString = "https://optics.eee.nottingham.ac.uk/~tp/upload.php";
 
 
     String mainPath, recordPath, zipPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
@@ -117,7 +117,8 @@ public class UploadService extends IntentService {
 
                 RequestBody requestBody = new MultipartBody.Builder()
                         .setType(MultipartBody.FORM)
-                        .addFormDataPart("fileToUpload", fileName, RequestBody.create(MediaType.parse(parse), fileToUpload))
+                        .addFormDataPart("fileToUpload", fileName,
+                                RequestBody.create(MediaType.parse(parse), fileToUpload))
 
                         .build();
 
