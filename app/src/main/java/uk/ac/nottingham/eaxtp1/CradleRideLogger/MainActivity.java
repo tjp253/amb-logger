@@ -21,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
+//import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -36,7 +37,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     WifiManager wifiManager;
     WifiInfo wifiInfo;
 
-    Intent /*compressionService,*/ uploadService, recordingService;
+    Intent uploadService, recordingService;
     Intent audioService;
 
     SharedPreferences preferences;
@@ -55,9 +56,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     boolean isGPSFixed;
     long myLastLocationMillis;
     Location myLastLocation;
-//    long startTime;
 
-    boolean /*recording,*/ initialising;
+    boolean initialising;
     static boolean recording, compressing, moving, crashed;
 
     //    Initialise strings for the zipping
@@ -86,8 +86,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 //        Shows Disclosure Agreement.
 //        TODO: remove the '!' below when code is finalised.
             if (preferences.getBoolean("NotSeenDisclosure", true)) {
-//                prefEditor.putBoolean("NotSeenDisclosure", true);
-//                prefEditor.commit();
+//                Log.e("ID","1");
+                prefEditor.putBoolean("NotSeenDisclosure", true);
+                prefEditor.commit();
                 showDisclosure();
             }
         }
@@ -128,7 +129,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         zipPath = mainPath + "/Finished";
 
 //        Checks (and asks for) permission on app start-up
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean("NotSeenDisclosure", true)) {
 
             permissionCheck();
 
@@ -136,7 +137,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         uploadService = new Intent(this, UploadService.class);
-//        compressionService = new Intent(this, CompressionService.class);
         recordingService = new Intent(this, RecordingService.class);
         audioService = new Intent(this, AudioService.class);
 
@@ -273,8 +273,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 startService(recordingService);
                 startService(audioService);
 
-//                startTime = System.currentTimeMillis();
-
                 //noinspection MissingPermission
                 myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
                 myLocationManager.addGpsStatusListener(this);
@@ -382,7 +380,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Button butt;
 
     public void showDisclosure() {
-
+//        Log.i("METHOD", "showDisclosure");
         View checkboxView = View.inflate(this, R.layout.checkbox, null);
         CheckBox checkBox = (CheckBox) checkboxView.findViewById(R.id.checkbox);
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -404,15 +402,33 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     @Override
                     public void onClick(DialogInterface dialog, int BUTTON_POSITIVE) {
 //                        Accept the disclosure agreement!
+//                        Ensure only one instance.
+                        prefEditor.putBoolean("NotSeenDisclosure", false);
+                        prefEditor.putBoolean("FirstInstance", true);
+                        prefEditor.commit();
                     }
                 });
         ad = builder.create();
-        ad.show();
-        butt = ad.getButton(AlertDialog.BUTTON_POSITIVE);
-        butt.setEnabled(false);
 
-//        Ensure only one instance.
-        prefEditor.putBoolean("NotSeenDisclosure", false);
+        if (preferences.getBoolean("FirstInstance", true)) {
+//            Log.i("FirstInstance", "is TRUE");
+            ad.show();
+            butt = ad.getButton(AlertDialog.BUTTON_POSITIVE);
+            butt.setEnabled(false);
+            prefEditor.putBoolean("FirstInstance", false);
+            prefEditor.commit();
+        }
+
+
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+//        Log.i("METHOD", "onStop");
+//        Ensures only one instance in normal usage. App restarts differently with Ctrl-F10 in Studio...
+        prefEditor.putBoolean("FirstInstance", true);
         prefEditor.commit();
     }
 
