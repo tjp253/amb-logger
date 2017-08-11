@@ -22,6 +22,8 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 //import android.util.Log;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -48,7 +50,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
 
     public Button recordButton, initialiseButton;
-    public TextView infoDisplay, versionView;
+    public TextView instructDisplay, versionView;
 
     protected LocationManager myLocationManager;
 
@@ -95,7 +97,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         userID = preferences.getInt(user_ID, 1);
 
-        infoDisplay = (TextView) findViewById(R.id.infoDisplay);
+        instructDisplay = (TextView) findViewById(R.id.instructDisplay);
         versionView = (TextView) findViewById(R.id.versionView);
 
         String version = "Unique ID: " + String.valueOf(userID) +"\n"+ "Version: " ;
@@ -117,7 +119,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 //        Disables the Start button
         recordButton.setEnabled(false); // TODO: set 'false' when creating signed build.
 
-        infoDisplay.setText(R.string.startGPS);
+        instructDisplay.setText(R.string.startGPS);
 
         recording = false;
         initialising = false;
@@ -142,6 +144,18 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.inflateMenu(R.menu.main_menu);
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.privacyPolicy:
+                        showPolicy();
+                }
+                return false;
+            }
+        });
     }
 
     @Override
@@ -158,7 +172,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             //noinspection MissingPermission
             myLocationManager.addGpsStatusListener(this);
 
-            infoDisplay.setText(R.string.initialising);
+            instructDisplay.setText(R.string.initialising);
         }
 
         if (crashed) {
@@ -174,7 +188,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             recordButton.setText(R.string.button_Start);
             recordButton.setEnabled(false);
             initialiseButton.setEnabled(false);
-            infoDisplay.setText(R.string.crashed);
+            instructDisplay.setText(R.string.crashed);
         }
 
     }
@@ -219,7 +233,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             recordButton.setText(R.string.button_Start);
             recordButton.setEnabled(false);
             initialiseButton.setEnabled(false);
-            infoDisplay.setText(R.string.crashed);
+            instructDisplay.setText(R.string.crashed);
         }
 
     }
@@ -250,7 +264,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
-                    infoDisplay.setText(R.string.permissions);
+                    instructDisplay.setText(R.string.permissions);
                     return;
                 }
 
@@ -264,12 +278,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             myLocationManager.addGpsStatusListener(this);
 
 //        Updates text to ask user to wait for GPS fix
-            infoDisplay.setText(R.string.initialising);
+            instructDisplay.setText(R.string.initialising);
             
         } else if (v == recordButton) {
 
             if (!recording) { // Start recording data
-                infoDisplay.setText(R.string.recording);
+                instructDisplay.setText(R.string.recording);
                 startService(recordingService);
                 startService(audioService);
 
@@ -289,7 +303,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 stopService(recordingService);
                 stopService(audioService);
 
-                infoDisplay.setText(R.string.finished);
+                instructDisplay.setText(R.string.finished);
 
                 recording = false;
 
@@ -324,14 +338,14 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                         if (!recordButton.isEnabled()) {
 //                        Updates text to tell user they can start recording
-                            infoDisplay.setText(R.string.locked);
+                            instructDisplay.setText(R.string.locked);
                         }
 
                         recordButton.setEnabled(true);
                     } else {
                         recordButton.setEnabled(false);
 
-                        infoDisplay.setText(R.string.initialising);
+                        instructDisplay.setText(R.string.initialising);
                     }
 
                     break;
@@ -376,8 +390,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
     }
 
-    AlertDialog ad;
-    Button butt;
+    AlertDialog disclosureDialog, policyDialog;
+    Button adButt;
 
     public void showDisclosure() {
 //        Log.i("METHOD", "showDisclosure");
@@ -387,9 +401,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    butt.setEnabled(true);
+                    adButt.setEnabled(true);
                 } else {
-                    butt.setEnabled(false);
+                    adButt.setEnabled(false);
                 }
             }
         });
@@ -408,19 +422,31 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                         prefEditor.commit();
                     }
                 });
-        ad = builder.create();
+        disclosureDialog = builder.create();
 
         if (preferences.getBoolean("FirstInstance", true)) {
 //            Log.i("FirstInstance", "is TRUE");
-            ad.show();
-            butt = ad.getButton(AlertDialog.BUTTON_POSITIVE);
-            butt.setEnabled(false);
+            disclosureDialog.show();
+            adButt = disclosureDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            adButt.setEnabled(false);
             prefEditor.putBoolean("FirstInstance", false);
             prefEditor.commit();
         }
 
+    }
 
-
+    public void showPolicy() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder .setTitle(R.string.privacy_title)
+                .setMessage(R.string.privacy_policy)
+                .setPositiveButton(R.string.butt_policy, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int buttInt) {
+//                  Close the Privacy Policy
+                    }
+                });
+        policyDialog = builder.create();
+        policyDialog.show();
     }
 
     @Override
@@ -431,6 +457,24 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         prefEditor.putBoolean("FirstInstance", true);
         prefEditor.commit();
     }
+
+//    If true options button is required - in "App Bar"
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        getMenuInflater().inflate(R.menu.main_menu, menu);
+//        Toast.makeText(this, "Creating menu", Toast.LENGTH_SHORT).show();
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        switch (item.getItemId()) {
+//            case R.id.privacyPolicy:
+//                Toast.makeText(this, "Open the privacy policy", Toast.LENGTH_SHORT).show();
+//        }
+//
+//        return super.onOptionsItemSelected(item);
+//    }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {}

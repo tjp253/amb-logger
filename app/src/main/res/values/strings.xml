@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">CradleRide Logger</string>
 
+    <string name="id_placeholder">Unique ID + Version Number</string>
+    <string name="instruct_placeholder">Instructions</string>
+
     <string name="button_Initialise">Initialise GPS</string>
     <string name="button_Start">Start Recording</string>
     <string name="button_Stop">Stop Recording</string>
@@ -17,7 +20,7 @@
     <string name="crashed">Something went wrong with recording. Please restart the app.</string>
     <string name="permissions">Please grant all permissions to enable recording.</string>
 
-    <string name="info_display">\nPlease place the phone with the right side facing forward travel.\n --->\n </string>
+    <string name="orient_info">\nPlease place the phone with the right side facing forward travel.\n --->\n </string>
 
     <string name="ad_title">Disclosure Agreement</string>
     <string name="ad_button">Accept</string>
@@ -39,5 +42,31 @@
         \n\nWhile there is no way of ensuring users actually READ the agreement, this makes it slightly more likely!
         \n\nAnd now you can check the box and accept the agreement.
         \n</string>
+
+    <string name="menu_policy">Privacy Policy</string>
+    <string name="privacy_title">CradleRide Privacy Policy</string>
+    <string name="butt_policy">OK</string>
+
+    <string name="privacy_policy"><b>Data collection</b>
+        \n\nThe CradleRide logger app is a research tool for collecting sensor data from phones. The sensor data is not collected
+        automatically. It will only start with direct user intervention.
+
+        \n\nThe data collected depends on the features available on the phone being used, but can include:
+        \n\tAccelerometer data, sampled at the fastest rate
+        \n\tGyroscope data, sampled at the fastest rate
+        \n\tGPS position data, sampled at approximately 1Hz
+        \n\tAudio data, sampled at 100-200Hz - the highest amplitude component within the sampling time window only
+
+        \n\nA unique identifier is used per phone, so that multiple uses of the same phone can be correlated and combined.
+
+        \n\nAll data is saved on the phone locally, then after the user stops the logging session and the phone subsequently
+        enters a WiFi zone, the saved data is uploaded to our servers only.
+
+        \n\nThe data saved on our server will not be shared with any third party without further consultation with the users.
+
+        \n\nThe data from multiple logging events from the same user will be combined to produce aggregate data about the
+        environment in which the user is located, but not about the user themselves.
+
+        \n\nAll data is transmitted securely.\n</string>
 
 </resources>
