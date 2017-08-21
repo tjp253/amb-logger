@@ -225,8 +225,8 @@ public class RecordingService extends Service
                 }
             }
 
-            outputTitle = TextUtils.join(", ", titleList);
-            outputToData = "\n" + TextUtils.join(", ", outputList);
+            outputTitle = TextUtils.join(",", titleList);
+            outputToData = "\n" + TextUtils.join(",", outputList);
 
             if (sampleID == 1) {
                 try {
