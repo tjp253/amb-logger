@@ -103,6 +103,10 @@ public class UploadService extends IntentService {
 
         for (File file : fileList) {
 
+            if (!wifiConnected) {
+                onDestroy();
+            }
+
             uploadTime = System.currentTimeMillis();
             uploaded = false;
 
@@ -153,6 +157,7 @@ public class UploadService extends IntentService {
 
                 while (!uploaded) {
                     if (System.currentTimeMillis() - uploadTime > 60000) {
+                        fileName = null;
                         throw new IOException("Upload failed - a minute has passed.");
                     }
                 }
