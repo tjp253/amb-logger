@@ -87,9 +87,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         } else {
 //        Shows Disclosure Agreement.
 //        TODO: remove the '!' below when code is finalised.
-            if (preferences.getBoolean("NotSeenDisclosure", true)) {
+            if (preferences.getBoolean("NotSeenDisclosure2", true)) {
 //                Log.e("ID","1");
-                prefEditor.putBoolean("NotSeenDisclosure", true);
+                prefEditor.putBoolean("NotSeenDisclosure2", true);
                 prefEditor.commit();
                 showDisclosure();
             }
@@ -131,7 +131,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         zipPath = mainPath + "/Finished";
 
 //        Checks (and asks for) permission on app start-up
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean("NotSeenDisclosure", true)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean("NotSeenDisclosure2", true)) {
 
             permissionCheck();
 
@@ -279,7 +279,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
 //        Updates text to ask user to wait for GPS fix
             instructDisplay.setText(R.string.initialising);
-            
+
         } else if (v == recordButton) {
 
             if (!recording) { // Start recording data
@@ -297,7 +297,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 initialiseButton.setEnabled(false);
 
                 recordButton.setText(R.string.button_Stop);
-                
+
             } else { // Stop recording data
 
                 stopService(recordingService);
@@ -317,7 +317,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 }
 
             }
-            
+
         }
 
     }
@@ -417,7 +417,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     public void onClick(DialogInterface dialog, int BUTTON_POSITIVE) {
 //                        Accept the disclosure agreement!
 //                        Ensure only one instance.
-                        prefEditor.putBoolean("NotSeenDisclosure", false);
+                        prefEditor.putBoolean("NotSeenDisclosure2", false);
                         prefEditor.putBoolean("FirstInstance", true);
                         prefEditor.commit();
                     }
@@ -457,24 +457,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         prefEditor.putBoolean("FirstInstance", true);
         prefEditor.commit();
     }
-
-//    If true options button is required - in "App Bar"
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        getMenuInflater().inflate(R.menu.main_menu, menu);
-//        Toast.makeText(this, "Creating menu", Toast.LENGTH_SHORT).show();
-//        return true;
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        switch (item.getItemId()) {
-//            case R.id.privacyPolicy:
-//                Toast.makeText(this, "Open the privacy policy", Toast.LENGTH_SHORT).show();
-//        }
-//
-//        return super.onOptionsItemSelected(item);
-//    }
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {}
