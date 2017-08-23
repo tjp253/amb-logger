@@ -284,8 +284,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             if (!recording) { // Start recording data
                 instructDisplay.setText(R.string.recording);
-                startService(recordingService);
                 startService(audioService);
+                startService(recordingService);
 
                 //noinspection MissingPermission
                 myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
