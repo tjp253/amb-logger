@@ -16,6 +16,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,7 +73,7 @@ public class RecordingService extends Service
     private float[] inverse = new float[16];
 
     String sID, sX, sY, sZ;
-    String sLat, sLong, sTime, sGPS = "0";
+    String sLat, sLong, sTime, sGPS = "0", sSpeed;
     String sGravX, sGravY, sGravZ;
     String sEast, sNorth, sDown;
     String sAmp = "";
@@ -93,17 +94,28 @@ public class RecordingService extends Service
     int zipPart = 1;
     String filepath = "Recording";
     String filename = date + "-ID" + String.valueOf(userID) + "-" + zipPart + ".csv.gz";
-    String mainPath, gzipPath;
+    static String mainPath, gzipPath;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
+        crashCheck();
+
+        if (!crashed) {
+            initialiseRecording();
+        }
+    }
+
+    public void crashCheck() {
+//        if (userID == 13319625 || userID == 0) {
         if (userID == 0) {
             crashed = true;
             onDestroy();
         }
+    }
 
+    public void initialiseRecording() {
         mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         myAccelerometer = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         myGravity = mySensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
@@ -118,8 +130,10 @@ public class RecordingService extends Service
         myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My WakeLock");
-        wakeLock.acquire();
+        wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Main WakeLock");
+        if (!wakeLock.isHeld()) {
+            wakeLock.acquire();
+        }
 
         mainPath = String.valueOf(getExternalFilesDir(filepath)) + "/";
         gzipPath = mainPath + filename;
@@ -127,7 +141,7 @@ public class RecordingService extends Service
         try {
             myOutputStream = new FileOutputStream(gzipPath);
             myOutputStream = new GZIPOutputStream(myOutputStream)
-                                {{def.setLevel(Deflater.BEST_COMPRESSION);}};
+            {{def.setLevel(Deflater.BEST_COMPRESSION);}};
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -146,6 +160,7 @@ public class RecordingService extends Service
     public void onLocationChanged(Location location) {
         sLat = String.valueOf(location.getLatitude());
         sLong = String.valueOf(location.getLongitude());
+        sSpeed = String.valueOf(location.getSpeed());
         gpsSamp++;
         sGPS = String.valueOf(gpsSamp);
     }
@@ -205,10 +220,10 @@ public class RecordingService extends Service
 
             if (magneticValues != null && gravityValues != null) {
                 titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
-                        "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise");
+                        "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise", "Speed");
                 if (gpsSamp > prevSamp) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
-                            sNorth, sEast, sDown, sGPS, sLat, sLong, sAmp);
+                            sNorth, sEast, sDown, sGPS, sLat, sLong, sAmp, sSpeed);
                     prevSamp = gpsSamp;
                 } else {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
@@ -216,9 +231,9 @@ public class RecordingService extends Service
                 }
 
             } else {
-                titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise");
+                titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise", "Speed");
                 if (gpsSamp > prevSamp) {
-                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp);
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp, sSpeed);
                     prevSamp = gpsSamp;
                 } else {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, "","", sAmp);
@@ -296,22 +311,31 @@ public class RecordingService extends Service
             myLocationManager.removeUpdates(this);
         }
 
-        if (!crashed) {
-
+        if (mySensorManager != null) {
             mySensorManager.unregisterListener(this);
+        }
 
+        if (myOutputStream != null) {
             try {
                 myOutputStream.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            wakeLock.release();
         }
 
-        Intent movingService = new Intent(this, MovingService.class);
-        this.startService(movingService);
+        if (crashed) {
+            Intent stopAudio = new Intent(this, AudioService.class);
+            this.stopService(stopAudio);
+            Intent deletingService = new Intent(this, FileDeletingService.class);
+            this.startService(deletingService);
+        } else {
+            Intent movingService = new Intent(this, MovingService.class);
+            this.startService(movingService);
+        }
 
+        if (wakeLock != null) {
+            wakeLock.release();
+        }
     }
 
     @Override

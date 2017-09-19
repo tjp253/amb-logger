@@ -10,9 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.folderPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.zipPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -20,9 +18,15 @@ public class MovingService extends IntentService {
     public MovingService() { super("MovingService");
     }
 
+    String mainPath, folderPath, zipPath;
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+        mainPath = String.valueOf(getExternalFilesDir(""));
+        folderPath = mainPath + "/Recording";
+        zipPath = mainPath + "/Finished";
 
 //        Ensures there's a folder to move the recorded files to.
         File zipDirectory = new File(zipPath);

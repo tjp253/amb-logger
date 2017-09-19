@@ -53,6 +53,9 @@
         <service android:name=".RecordingService" />
         <service android:name=".MovingService" />
         <service android:name=".AudioService" />
+        <service android:name=".GPSService" />
+        <service android:name=".FileDeletingService" />
+
     </application>
 
 </manifest>

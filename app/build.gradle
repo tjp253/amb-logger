@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 24
-    buildToolsVersion "25.0.0"
+    buildToolsVersion "25.0.3"
     defaultConfig {
         applicationId "uk.ac.nottingham.eaxtp1.CradleRideLogger"
         minSdkVersion 17
         targetSdkVersion 24
-        versionCode 28
-        versionName "2.1.0"
+        versionCode 29
+        versionName "2.2.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -26,4 +26,5 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:24.2.1'
     compile 'com.squareup.okhttp3:okhttp:3.5.0'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
 }
