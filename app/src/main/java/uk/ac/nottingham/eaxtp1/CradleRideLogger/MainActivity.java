@@ -21,7 +21,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
-//import android.util.Log;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,7 +39,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     WifiInfo wifiInfo;
 
     Intent uploadService, recordingService;
-    Intent audioService;
+    Intent audioService, gpsService;
 
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
@@ -60,7 +59,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Location myLastLocation;
 
     boolean initialising;
-    static boolean recording, compressing, moving, crashed;
+    static boolean recording, compressing, moving, crashed, forcedStop;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -141,6 +140,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         uploadService = new Intent(this, UploadService.class);
         recordingService = new Intent(this, RecordingService.class);
         audioService = new Intent(this, AudioService.class);
+        gpsService = new Intent(this, GPSService.class);
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -183,12 +183,28 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             }
             stopService(recordingService);
             stopService(audioService);
+            stopService(gpsService);
             recording = false;
             initialising = false;
             recordButton.setText(R.string.button_Start);
             recordButton.setEnabled(false);
             initialiseButton.setEnabled(false);
             instructDisplay.setText(R.string.crashed);
+        }
+
+        if (forcedStop) {
+//            Log.i("Main Activity","Forced Stop - onResume");
+            instructDisplay.setText(R.string.finished);
+
+            recordButton.setText(R.string.button_Start);
+            recordButton.setEnabled(false);
+            initialiseButton.setEnabled(true);
+
+            if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                //noinspection MissingPermission
+                myLocationManager.removeUpdates(this);
+            }
+            forcedStop = false;
         }
 
     }
@@ -228,6 +244,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             }
             stopService(recordingService);
             stopService(audioService);
+            stopService(gpsService);
             recording = false;
             initialising = false;
             recordButton.setText(R.string.button_Start);
@@ -285,6 +302,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             if (!recording) { // Start recording data
                 instructDisplay.setText(R.string.recording);
                 startService(audioService);
+                startService(gpsService);
                 startService(recordingService);
 
                 //noinspection MissingPermission
@@ -293,6 +311,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                 recording = true;
                 initialising = false;
+                forcedStop = false;
 
                 initialiseButton.setEnabled(false);
 
@@ -302,6 +321,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                 stopService(recordingService);
                 stopService(audioService);
+                stopService(gpsService);
 
                 instructDisplay.setText(R.string.finished);
 

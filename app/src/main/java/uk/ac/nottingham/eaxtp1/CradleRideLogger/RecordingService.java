@@ -8,15 +8,12 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.opengl.Matrix;
-import android.os.Bundle;
+//import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.TextUtils;
-import android.util.Log;
+//import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,12 +27,17 @@ import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLat;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLong;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sSpeed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
 @SuppressWarnings({"MissingPermission", "SpellCheckingInspection"})
 public class RecordingService extends Service
-        implements SensorEventListener, LocationListener {
+        implements SensorEventListener {
     public RecordingService() {
     }
 
@@ -60,7 +62,7 @@ public class RecordingService extends Service
     Sensor myMagneticField;
 
     private long sampleID;
-    private long gpsSamp, prevSamp;
+    private long prevSamp;
 
     private float[] deviceValues = new float[4];
     private float[] worldValues = new float[3];
@@ -72,8 +74,7 @@ public class RecordingService extends Service
     private float[] worldMatrix = new float[16];
     private float[] inverse = new float[16];
 
-    String sID, sX, sY, sZ;
-    String sLat, sLong, sTime, sGPS = "0", sSpeed;
+    String sID, sX, sY, sZ, sTime;
     String sGravX, sGravY, sGravZ;
     String sEast, sNorth, sDown;
     String sAmp = "";
@@ -125,10 +126,6 @@ public class RecordingService extends Service
         mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
         mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
 
-//        Registers the Location Listener, and sets up updates
-        LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Main WakeLock");
         if (!wakeLock.isHeld()) {
@@ -155,31 +152,12 @@ public class RecordingService extends Service
         mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-    //    Gets location info
-    @Override
-    public void onLocationChanged(Location location) {
-        sLat = String.valueOf(location.getLatitude());
-        sLong = String.valueOf(location.getLongitude());
-        sSpeed = String.valueOf(location.getSpeed());
-        gpsSamp++;
-        sGPS = String.valueOf(gpsSamp);
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {}
-
-    @Override
-    public void onProviderEnabled(String provider) {}
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {}
-
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         Sensor mySensor = sensorEvent.sensor;
 
         if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-//            Increments the sample ID
+//            Increments the Sample ID
             sampleID++;
 
             deviceValues[0] = sensorEvent.values[0];
@@ -221,10 +199,10 @@ public class RecordingService extends Service
             if (magneticValues != null && gravityValues != null) {
                 titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
                         "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise", "Speed");
-                if (gpsSamp > prevSamp) {
+                if (gpsSample > prevSamp) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
                             sNorth, sEast, sDown, sGPS, sLat, sLong, sAmp, sSpeed);
-                    prevSamp = gpsSamp;
+                    prevSamp = gpsSample;
                 } else {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
                             sNorth, sEast, sDown, sGPS,"","",sAmp);
@@ -232,9 +210,9 @@ public class RecordingService extends Service
 
             } else {
                 titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise", "Speed");
-                if (gpsSamp > prevSamp) {
+                if (gpsSample > prevSamp) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp, sSpeed);
-                    prevSamp = gpsSamp;
+                    prevSamp = gpsSample;
                 } else {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, "","", sAmp);
                 }
@@ -305,12 +283,6 @@ public class RecordingService extends Service
     public void onDestroy() {
         super.onDestroy();
 
-        LocationManager myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-        if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            myLocationManager.removeUpdates(this);
-        }
-
         if (mySensorManager != null) {
             mySensorManager.unregisterListener(this);
         }
@@ -325,7 +297,9 @@ public class RecordingService extends Service
 
         if (crashed) {
             Intent stopAudio = new Intent(this, AudioService.class);
+            Intent stopGPS = new Intent(this, GPSService.class);
             this.stopService(stopAudio);
+            this.stopService(stopGPS);
             Intent deletingService = new Intent(this, FileDeletingService.class);
             this.startService(deletingService);
         } else {

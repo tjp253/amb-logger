@@ -1,10 +1,11 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-import android.app.IntentService;
+//import android.app.IntentService;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.io.File;
 
@@ -22,6 +23,8 @@ public class FileDeletingService extends Service {
         if (gzipPath != null) {
             new File(gzipPath).delete();
         }
+
+        onDestroy();
     }
 
     @Nullable
