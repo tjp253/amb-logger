@@ -299,7 +299,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         } else if (v == recordButton) {
 
-            if (!recording) { // Start recording data
+            if (!recording && !forcedStop) { // Start recording data
                 instructDisplay.setText(R.string.recording);
                 startService(audioService);
                 startService(gpsService);

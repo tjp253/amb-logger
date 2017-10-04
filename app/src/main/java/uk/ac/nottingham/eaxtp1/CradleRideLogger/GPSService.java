@@ -1,5 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +10,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.v7.app.NotificationCompat;
 //import android.util.Log;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
@@ -26,6 +28,8 @@ public class GPSService extends Service implements LocationListener {
     }
 
     PowerManager.WakeLock wakelock;
+
+    NotificationCompat.Builder builder;
 
     double lat, lon;
     static String sLat, sLong, sSpeed, sGPS = "0";
@@ -90,6 +94,7 @@ public class GPSService extends Service implements LocationListener {
                 this.stopService(stopAudio);
                 recording = false;
                 forcedStop = true;
+                stopNotification();
                 onDestroy();
             }
         } else {
@@ -101,6 +106,18 @@ public class GPSService extends Service implements LocationListener {
                 movingSamples++;
             }
         }
+    }
+
+    public void stopNotification() {
+        builder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.stop_symb)
+                        .setContentTitle("CradleRide Logger")
+                        .setContentText("Recording stopped due to lack of movement.");
+
+        NotificationManager manager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        manager.notify(1, builder.build());
     }
 
     @Override

@@ -191,7 +191,7 @@ public class UploadService extends IntentService {
 
                 NotificationManager mNotifyMgr =
                         (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                mNotifyMgr.notify(1, mBuilder.build());
+                mNotifyMgr.notify(2, mBuilder.build());
             }
 
             if (oversizedFileCount > 0) {
@@ -210,7 +210,7 @@ public class UploadService extends IntentService {
 
                 NotificationManager mNotifyMgr2 =
                         (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                mNotifyMgr2.notify(2, mBuilder2.build());
+                mNotifyMgr2.notify(3, mBuilder2.build());
             }
 
             if (failedFileCount > 0) {
@@ -229,7 +229,7 @@ public class UploadService extends IntentService {
 
                 NotificationManager mNotifyMgr3 =
                         (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                mNotifyMgr3.notify(3, mBuilder3.build());
+                mNotifyMgr3.notify(4, mBuilder3.build());
             }
         }
 
