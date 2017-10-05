@@ -33,6 +33,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLat;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLong;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sSpeed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
 @SuppressWarnings({"MissingPermission", "SpellCheckingInspection"})
@@ -75,8 +76,8 @@ public class RecordingService extends Service
     private float[] inverse = new float[16];
 
     String sID, sX, sY, sZ, sTime;
-    String sGravX, sGravY, sGravZ;
-    String sEast, sNorth, sDown;
+    String sGravX = "", sGravY = "", sGravZ = "";
+    String sEast = "", sNorth = "", sDown = "";
     String sAmp = "";
     int prevAmp;
 
@@ -119,12 +120,14 @@ public class RecordingService extends Service
     public void initialiseRecording() {
         mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         myAccelerometer = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        myGravity = mySensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-        myMagneticField = mySensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
         mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-        mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
-        mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
+
+        if (gravityPresent) {
+            myGravity = mySensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+            myMagneticField = mySensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+            mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
+            mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
+        }
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Main WakeLock");
@@ -147,9 +150,9 @@ public class RecordingService extends Service
 
         startTime = System.currentTimeMillis();
 
-        mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-        mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
-        mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
+//        mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+//        mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
+//        mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     @Override
@@ -196,9 +199,11 @@ public class RecordingService extends Service
                 sAmp = "";
             }
 
-            if (magneticValues != null && gravityValues != null) {
-                titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
-                        "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+            if (gravityPresent) {
+                if (sampleID == 1) {
+                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
+                            "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+                }
                 if (gpsSample > prevSamp) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
                             sNorth, sEast, sDown, sGPS, sLat, sLong, sAmp, sSpeed);
@@ -209,7 +214,9 @@ public class RecordingService extends Service
                 }
 
             } else {
-                titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+                if (sampleID == 1) {
+                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+                }
                 if (gpsSample > prevSamp) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp, sSpeed);
                     prevSamp = gpsSample;
@@ -218,10 +225,10 @@ public class RecordingService extends Service
                 }
             }
 
-            outputTitle = TextUtils.join(",", titleList);
             outputToData = "\n" + TextUtils.join(",", outputList);
 
             if (sampleID == 1) {
+                outputTitle = TextUtils.join(",", titleList);
                 try {
                     myOutputStream.write(outputTitle.getBytes("UTF-8"));
                 } catch (IOException e) {

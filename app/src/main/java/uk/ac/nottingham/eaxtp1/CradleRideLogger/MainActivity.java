@@ -11,6 +11,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
@@ -22,6 +26,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.Toolbar;
+//import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -59,7 +64,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Location myLastLocation;
 
     boolean initialising;
-    static boolean recording, compressing, moving, crashed, forcedStop;
+    static boolean recording, compressing, moving,
+            crashed, forcedStop, gravityPresent;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -156,6 +162,27 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 return false;
             }
         });
+
+        gravityCheck();
+    }
+
+    public void gravityCheck() {
+        SensorManager manager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        Sensor gravity = manager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        SensorEventListener listener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+//                Log.i("Main", "Gravity sensing");
+            }
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
+        if (manager.registerListener(listener, gravity, SensorManager.SENSOR_DELAY_NORMAL)) {
+            gravityPresent = true;
+            manager.unregisterListener(listener);
+        }
     }
 
     @Override
