@@ -75,6 +75,12 @@ public class UploadService extends IntentService {
 
     }
 
+    public void wifiCheck() {
+        if (!wifiConnected) {
+            onDestroy();
+        }
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
 
@@ -82,9 +88,8 @@ public class UploadService extends IntentService {
         if (recordFolder.listFiles().length > 0) {
             onDestroy();
         }
-        if (!wifiConnected) {
-            onDestroy();
-        }
+
+        wifiCheck();
 
         try {
             url = new URL(urlString);
@@ -103,9 +108,7 @@ public class UploadService extends IntentService {
 
         for (File file : fileList) {
 
-            if (!wifiConnected) {
-                onDestroy();
-            }
+            wifiCheck();
 
             uploadTime = System.currentTimeMillis();
             uploaded = false;
