@@ -10,7 +10,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
-//import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class AudioService extends Service {
     public AudioService() {
@@ -59,7 +59,7 @@ public class AudioService extends Service {
 
         initialiseTT();
 
-        timer.schedule(timerTask, 0, 10);
+        timer.schedule(timerTask, 0, 20);
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Audio WakeLock");
@@ -70,7 +70,9 @@ public class AudioService extends Service {
         timerTask = new TimerTask() {
             @Override
             public void run() {
-                amp = noiseDetector.getMaxAmplitude();
+                if (recording) {
+                    amp = noiseDetector.getMaxAmplitude();
+                }
             }
         };
     }

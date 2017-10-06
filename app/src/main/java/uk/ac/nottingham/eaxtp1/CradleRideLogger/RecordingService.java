@@ -51,7 +51,7 @@ public class RecordingService extends Service
     }
 
     int uploadLimit = 10350000; // Restricts file size to ~9.9mb
-    long startTime, /*checkTime = 1000,*/ checkDelay = 5000;
+    long startTime, checkDelay = 5000;
     Timer sizeCheckTimer;
     TimerTask sizeChecker;
     boolean nearLimit;
@@ -181,6 +181,7 @@ public class RecordingService extends Service
 
         if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 //            Increments the Sample ID
+            sTime = String.valueOf(System.currentTimeMillis() - startTime);
             sampleID++;
 
             deviceValues[0] = sensorEvent.values[0];
@@ -194,7 +195,6 @@ public class RecordingService extends Service
             sY = Float.toString(deviceValues[1]);
             sZ = Float.toString(deviceValues[2]);
 
-            sTime = String.valueOf(System.currentTimeMillis() - startTime);
 
             if ((gravityValues != null) && (magneticValues != null)) {
                 SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);

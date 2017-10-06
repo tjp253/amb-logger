@@ -200,6 +200,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             myLocationManager.addGpsStatusListener(this);
 
             instructDisplay.setText(R.string.initialising);
+
+            startService(audioService);
         }
 
         if (crashed) {
@@ -244,6 +246,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         if (initialising && !recording) {
             //noinspection MissingPermission
             myLocationManager.removeUpdates(this);
+            stopService(audioService);
         }
 
 //        Uploads files. Only when not recording.
@@ -324,11 +327,14 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 //        Updates text to ask user to wait for GPS fix
             instructDisplay.setText(R.string.initialising);
 
+            startService(audioService);
+
         } else if (v == recordButton) {
 
             if (!recording && !forcedStop) { // Start recording data
                 instructDisplay.setText(R.string.recording);
-                startService(audioService);
+//                Audio service initialises with GPS to ensure it's ready when recording starts.
+//                startService(audioService);
                 startService(gpsService);
                 startService(recordingService);
 
