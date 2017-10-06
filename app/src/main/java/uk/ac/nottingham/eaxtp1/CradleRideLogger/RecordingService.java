@@ -23,6 +23,8 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
@@ -49,7 +51,10 @@ public class RecordingService extends Service
     }
 
     int uploadLimit = 10350000; // Restricts file size to ~9.9mb
-    long startTime, checkTime = 1000, checkDelay = 5000;
+    long startTime, /*checkTime = 1000,*/ checkDelay = 5000;
+    Timer sizeCheckTimer;
+    TimerTask sizeChecker;
+    boolean nearLimit;
 
     File gzFile;
 
@@ -150,9 +155,24 @@ public class RecordingService extends Service
 
         startTime = System.currentTimeMillis();
 
-//        mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-//        mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
-//        mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
+        sizeCheckTimer = new Timer();
+
+        sizeCheckTT();
+
+        sizeCheckTimer.schedule(sizeChecker, 5000, checkDelay);
+
+    }
+
+    public void sizeCheckTT() {
+        sizeChecker = new TimerTask() {
+            @Override
+            public void run() {
+                File gzFile = new File(gzipPath);
+                if (gzFile.length() > uploadLimit) {
+                    nearLimit = true;
+                }
+            }
+        };
     }
 
     @Override
@@ -174,8 +194,7 @@ public class RecordingService extends Service
             sY = Float.toString(deviceValues[1]);
             sZ = Float.toString(deviceValues[2]);
 
-            long time = System.currentTimeMillis() - startTime;
-            sTime = String.valueOf(time);
+            sTime = String.valueOf(System.currentTimeMillis() - startTime);
 
             if ((gravityValues != null) && (magneticValues != null)) {
                 SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);
@@ -242,15 +261,10 @@ public class RecordingService extends Service
                 e.printStackTrace();
             }
 
-            if (time - checkTime > checkDelay ) {
-//                File gzFile = new File(gzipPath);
-                if (gzFile.length() > uploadLimit) {
-                    // Split the recording into a new file
-                    zipPart++;
-                    fileSplitter(zipPart);
-                }
-
-                checkTime = time;
+            if (nearLimit) {
+                zipPart++;
+                fileSplitter(zipPart);
+                nearLimit = false;
             }
 
         } else if (mySensor.getType() == Sensor.TYPE_GRAVITY) {
@@ -300,6 +314,10 @@ public class RecordingService extends Service
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        if (sizeCheckTimer != null) {
+            sizeCheckTimer.cancel();
         }
 
         if (crashed) {
