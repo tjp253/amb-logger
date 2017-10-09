@@ -32,10 +32,11 @@
         <!--\n\nIf you consent, please check the box and continue to the app.-->
     </string>
 
+    <string name="butt_ok">@android:string/ok</string>
+    <string name="butt_cancel">@android:string/cancel</string>
+
     <string name="menu_policy">Privacy Policy</string>
     <string name="privacy_title">CradleRide Privacy Policy</string>
-    <string name="butt_policy">OK</string>
-
     <string name="privacy_policy"><b>Data collection</b>
         \n\nThe CradleRide logger app is a research tool for collecting sensor data from phones. The sensor data is not collected
         automatically. It will only start with direct user intervention.
@@ -57,5 +58,12 @@
         environment in which the user is located, but not about the user themselves.
 
         \n\nAll data is transmitted securely.\n</string>
+
+    <string name="as_menu">Auto-Stop</string>
+    <string name="as_check_title">Turning Auto-Stop Off</string>
+    <string name="as_check_message">Auto-stop shuts off the app when accidentally left logging.
+        \n\nTurning off could lead to excess battery usage.</string>
+    <string name="as_on">Auto-Stop enabled</string>
+    <string name="as_off">Auto-Stop disabled</string>
 
 </resources>

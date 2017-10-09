@@ -11,8 +11,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v7.app.NotificationCompat;
-//import android.util.Log;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
@@ -35,7 +35,7 @@ public class GPSService extends Service implements LocationListener {
     static String sLat, sLong, sSpeed, sGPS = "0";
     static int gpsSample;
     private long statSamples, movingSamples;
-//    TODO: Set 'limit' to reasonable value. 5 minutes? 10 minutes?
+//    TODO: Set limit to 10*60
     long limit = 10*60;     // Number of GPS samples (seconds) before journey is considered "finished".
     float speed;
 
@@ -66,6 +66,8 @@ public class GPSService extends Service implements LocationListener {
             myLocationManager.removeUpdates(this);
         }
 
+        gpsSample = 0;
+
         if (wakelock != null && wakelock.isHeld()) {
             wakelock.release();
         }
@@ -84,10 +86,15 @@ public class GPSService extends Service implements LocationListener {
         gpsSample++;
         sGPS = String.valueOf(gpsSample);
 
+        if (autoStopOn) {
+            stationaryChecker();
+        }
+    }
+
+    public void stationaryChecker() {
         if (speed <= 2) {
             statSamples++;
             if (statSamples >= limit){
-//                Log.i("GPS Service", "Stationary for too long");
                 Intent stopRecording = new Intent(this, RecordingService.class);
                 Intent stopAudio = new Intent(this, AudioService.class);
                 this.stopService(stopRecording);
@@ -101,7 +108,6 @@ public class GPSService extends Service implements LocationListener {
             if (movingSamples > 10 || speed > 10) {
                 statSamples = 0;
                 movingSamples = 0;
-//                Log.i("GPS Service", "Fast, fast, fast.");
             } else {
                 movingSamples++;
             }

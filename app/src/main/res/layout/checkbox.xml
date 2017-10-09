@@ -27,7 +27,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="5dp"
-                android:buttonTint="#000000"
                 android:checked="false"
 
                 android:text="@string/ad_checkbox"

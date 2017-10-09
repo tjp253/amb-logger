@@ -1,8 +1,17 @@
 <!--<?xml version="1.0" encoding="utf-8"?>-->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingTop="@dimen/activity_vertical_margin">
 
     <item
         android:id="@+id/privacyPolicy"
         android:title="@string/menu_policy" />
+    <item
+        android:id="@+id/autoStop"
+        android:checkable="true"
+        android:enabled="true"
+        android:title="@string/as_menu"
+        android:visible="true"
+        app:actionLayout="@layout/switch_item"
+        app:showAsAction="never" />
 </menu>

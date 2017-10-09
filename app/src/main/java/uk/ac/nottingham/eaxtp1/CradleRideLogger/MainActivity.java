@@ -33,6 +33,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.Random;
@@ -65,7 +66,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     boolean initialising;
     static boolean recording, compressing, moving,
-            crashed, forcedStop, gravityPresent;
+            crashed, forcedStop, gravityPresent,
+            autoStopOn;
 
     //    Initialise strings for the zipping
     static String mainPath, folderPath, zipPath;
@@ -150,18 +152,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.inflateMenu(R.menu.main_menu);
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.privacyPolicy:
-                        showPolicy();
-                }
-                return false;
-            }
-        });
+        setUpToolbar();
 
         gravityCheck();
     }
@@ -443,8 +434,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
     }
 
-    AlertDialog disclosureDialog, policyDialog;
+    AlertDialog disclosureDialog, policyDialog, checkDialog;
     Button adButt;
+    MenuItem autoStopCheckbox;
 
     public void showDisclosure() {
 //        Log.i("METHOD", "showDisclosure");
@@ -492,7 +484,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder .setTitle(R.string.privacy_title)
                 .setMessage(R.string.privacy_policy)
-                .setPositiveButton(R.string.butt_policy, new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int buttInt) {
 //                  Close the Privacy Policy
@@ -500,6 +492,80 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 });
         policyDialog = builder.create();
         policyDialog.show();
+    }
+
+    public void checkAutoStopRemoval() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder .setTitle(R.string.as_check_title)
+                .setMessage(R.string.as_check_message)
+                .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+//                        Go ahead with switching it off.
+                        autoStopOn = !autoStopCheckbox.isChecked();
+                        autoStopCheckbox.setChecked(autoStopOn);
+                        prefEditor.putBoolean("AutoStop", autoStopOn);
+                        prefEditor.commit();
+                        autostopToast();
+                    }
+                })
+                .setNegativeButton(R.string.butt_cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+//                        Do nothing.
+                    }
+                });
+        checkDialog = builder.create();
+        checkDialog.show();
+    }
+
+    public void setUpToolbar() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.inflateMenu(R.menu.main_menu);
+
+        if (preferences.contains("AutoStop")) {
+            autoStopOn = preferences.getBoolean("AutoStop", true);
+        } else {
+            autoStopOn = true;
+            prefEditor.putBoolean("AutoStop", true);
+            prefEditor.commit();
+        }
+
+        autoStopCheckbox = toolbar.getMenu().findItem(R.id.autoStop);
+        autoStopCheckbox.setChecked(autoStopOn);
+
+        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.privacyPolicy:
+                        showPolicy();
+                        return true;
+                    case R.id.autoStop:
+                        if (autoStopOn) {
+                            checkAutoStopRemoval();
+                        } else {
+                            autoStopOn = !item.isChecked();
+                            item.setChecked(autoStopOn);
+                            prefEditor.putBoolean("AutoStop", autoStopOn);
+                            prefEditor.commit();
+                            autostopToast();
+                        }
+                        return true;
+                }
+                return false;
+            }
+        });
+    }
+
+    public void autostopToast() {
+        String message;
+        if (autoStopOn) {
+            message = getString(R.string.as_on);
+        } else {
+            message = getString(R.string.as_off);
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     @Override

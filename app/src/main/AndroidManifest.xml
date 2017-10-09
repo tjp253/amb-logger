@@ -49,20 +49,13 @@
         </receiver>
 
         <service android:name=".UploadService" />
-        <!-- <service android:name=".CompressionService" /> -->
         <service android:name=".RecordingService" />
         <service android:name=".MovingService" />
         <service android:name=".AudioService" />
         <service android:name=".GPSService" />
         <service android:name=".FileDeletingService" />
-        <service
-            android:name=".LoggingService"
-            android:enabled="true"
-            android:exported="true" />
-        <service
-            android:name=".IMUService"
-            android:enabled="true"
-            android:exported="true"></service>
+        <service android:name=".LoggingService" />
+        <service android:name=".IMUService" />
     </application>
 
 </manifest>
