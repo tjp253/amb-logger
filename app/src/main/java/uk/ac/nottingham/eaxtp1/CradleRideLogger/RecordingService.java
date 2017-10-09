@@ -332,6 +332,9 @@ public class RecordingService extends Service
             this.startService(movingService);
         }
 
+        gpsSample = 0;
+        prevSamp = 0;
+
         if (wakeLock != null) {
             wakeLock.release();
         }

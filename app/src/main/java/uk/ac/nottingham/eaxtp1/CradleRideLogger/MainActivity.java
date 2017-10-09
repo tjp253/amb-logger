@@ -26,7 +26,6 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.Toolbar;
-//import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -37,6 +36,8 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 @SuppressWarnings("deprecation")
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
@@ -182,48 +183,15 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
 //        Resumes GPS when initialising.
         if (initialising) {
-            initialiseButton.setEnabled(false);
-            recordButton.setEnabled(false);
-
-            //noinspection MissingPermission
-            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            //noinspection MissingPermission
-            myLocationManager.addGpsStatusListener(this);
-
-            instructDisplay.setText(R.string.initialising);
-
-            startService(audioService);
+            startInitialising();
         }
 
         if (crashed) {
-
-            if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                //noinspection MissingPermission
-                myLocationManager.removeUpdates(this);
-            }
-            stopService(recordingService);
-            stopService(audioService);
-            stopService(gpsService);
-            recording = false;
-            initialising = false;
-            recordButton.setText(R.string.button_Start);
-            recordButton.setEnabled(false);
-            initialiseButton.setEnabled(false);
-            instructDisplay.setText(R.string.crashed);
+           onCrash();
         }
 
         if (forcedStop) {
-//            Log.i("Main Activity","Forced Stop - onResume");
-            instructDisplay.setText(R.string.finished);
-
-            recordButton.setText(R.string.button_Start);
-            recordButton.setEnabled(false);
-            initialiseButton.setEnabled(true);
-
-            if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                //noinspection MissingPermission
-                myLocationManager.removeUpdates(this);
-            }
+            stopLogging();
             forcedStop = false;
         }
 
@@ -235,9 +203,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
 //        Stops GPS from draining the battery.
         if (initialising && !recording) {
-            //noinspection MissingPermission
-            myLocationManager.removeUpdates(this);
-            stopService(audioService);
+            stopListening();
+            stopAll();
         }
 
 //        Uploads files. Only when not recording.
@@ -258,32 +225,61 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
 
         if (crashed) {
-
-            if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                //noinspection MissingPermission
-                myLocationManager.removeUpdates(this);
-            }
-            stopService(recordingService);
-            stopService(audioService);
-            stopService(gpsService);
-            recording = false;
-            initialising = false;
-            recordButton.setText(R.string.button_Start);
-            recordButton.setEnabled(false);
-            initialiseButton.setEnabled(false);
-            instructDisplay.setText(R.string.crashed);
+            onCrash();
         }
 
+    }
+
+    @SuppressWarnings("MissingPermission")
+    public void startInitialising() {
+        initialising = true;
+        recording = false;
+        initialiseButton.setEnabled(false);
+        recordButton.setEnabled(false);
+
+        myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+        myLocationManager.addGpsStatusListener(this);
+
+        instructDisplay.setText(R.string.initialising);
+
+        startService(audioService);
+    }
+
+    public void onCrash() {
+        stopAll();
+        recording = false;
+        initialising = false;
+        recordButton.setText(R.string.button_Start);
+        recordButton.setEnabled(false);
+        initialiseButton.setEnabled(false);
+        instructDisplay.setText(R.string.crashed);
+    }
+
+    public void stopAll() {
+        stopService(recordingService);
+        stopService(audioService);
+        stopService(gpsService);
+    }
+
+    public void stopLogging() {
+        instructDisplay.setText(R.string.finished);
+
+        recording = false;
+
+        recordButton.setText(R.string.button_Start);
+        recordButton.setEnabled(false);
+        initialiseButton.setEnabled(true);
+    }
+
+    public void stopListening() {
+        //noinspection MissingPermission
+        myLocationManager.removeUpdates(this);
     }
 
     @Override
     public void onClick(View v) {
 
         if (v == initialiseButton) {
-            recording = false;
-
-            recordButton.setEnabled(false);
-
 //        Re-checks (and asks for) the GPS permission needed
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
@@ -308,17 +304,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             }
 
-            initialising = true;
-
-            initialiseButton.setEnabled(false);
-
-            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            myLocationManager.addGpsStatusListener(this);
-
-//        Updates text to ask user to wait for GPS fix
-            instructDisplay.setText(R.string.initialising);
-
-            startService(audioService);
+            startInitialising();
 
         } else if (v == recordButton) {
 
@@ -329,9 +315,15 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 startService(gpsService);
                 startService(recordingService);
 
-                //noinspection MissingPermission
-                myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-                myLocationManager.addGpsStatusListener(this);
+                final Timer timer = new Timer();
+                TimerTask timerTask = new TimerTask() {
+                    @Override
+                    public void run() {
+                        stopListening();
+                        timer.cancel();
+                    }
+                };
+                timer.schedule(timerTask, 1000, 1000);
 
                 recording = true;
                 initialising = false;
@@ -343,22 +335,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             } else { // Stop recording data
 
-                stopService(recordingService);
-                stopService(audioService);
-                stopService(gpsService);
+                stopAll();
 
-                instructDisplay.setText(R.string.finished);
-
-                recording = false;
-
-                recordButton.setText(R.string.button_Start);
-                recordButton.setEnabled(false);
-                initialiseButton.setEnabled(true);
-
-                if (myLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    //noinspection MissingPermission
-                    myLocationManager.removeUpdates(this);
-                }
+                stopLogging();
 
             }
 
@@ -439,7 +418,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     MenuItem autoStopCheckbox;
 
     public void showDisclosure() {
-//        Log.i("METHOD", "showDisclosure");
         View checkboxView = View.inflate(this, R.layout.checkbox, null);
         CheckBox checkBox = (CheckBox) checkboxView.findViewById(R.id.checkbox);
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -470,7 +448,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         disclosureDialog = builder.create();
 
         if (preferences.getBoolean("FirstInstance", true)) {
-//            Log.i("FirstInstance", "is TRUE");
             disclosureDialog.show();
             adButt = disclosureDialog.getButton(AlertDialog.BUTTON_POSITIVE);
             adButt.setEnabled(false);
@@ -501,7 +478,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-//                        Go ahead with switching it off.
                         autoStopOn = !autoStopCheckbox.isChecked();
                         autoStopCheckbox.setChecked(autoStopOn);
                         prefEditor.putBoolean("AutoStop", autoStopOn);
@@ -571,7 +547,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @Override
     protected void onStop() {
         super.onStop();
-//        Log.i("METHOD", "onStop");
 //        Ensures only one instance in normal usage. App restarts differently with Ctrl-F10 in Studio...
         prefEditor.putBoolean("FirstInstance", true);
         prefEditor.commit();
