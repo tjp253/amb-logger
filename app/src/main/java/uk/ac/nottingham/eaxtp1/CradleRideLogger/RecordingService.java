@@ -29,6 +29,7 @@ import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLat;
@@ -218,29 +219,54 @@ public class RecordingService extends Service
                 sAmp = "";
             }
 
+//            if (gravityPresent) {
+//                if (sampleID == 1) {
+//                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
+//                            "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+//                }
+//                if (gpsSample > prevSamp) {
+//                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
+//                            sNorth, sEast, sDown, sGPS, sLat, sLong, sAmp, sSpeed);
+//                    prevSamp = gpsSample;
+//                } else {
+//                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
+//                            sNorth, sEast, sDown, sGPS,"","",sAmp);
+//                }
+//
+//            } else {
+//                if (sampleID == 1) {
+//                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+//                }
+//                if (gpsSample > prevSamp) {
+//                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp, sSpeed);
+//                    prevSamp = gpsSample;
+//                } else {
+//                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, "","", sAmp);
+//                }
+//            }
             if (gravityPresent) {
                 if (sampleID == 1) {
                     titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
-                            "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+                            "North", "East", "Down", "GPS Sample", "Noise", "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
                 }
                 if (gpsSample > prevSamp) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
-                            sNorth, sEast, sDown, sGPS, sLat, sLong, sAmp, sSpeed);
+                            sNorth, sEast, sDown, sGPS, sAmp, gpsData);
                     prevSamp = gpsSample;
                 } else {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
-                            sNorth, sEast, sDown, sGPS,"","",sAmp);
+                            sNorth, sEast, sDown, sGPS, sAmp);
                 }
 
             } else {
                 if (sampleID == 1) {
-                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Noise", "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
                 }
                 if (gpsSample > prevSamp) {
-                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp, sSpeed);
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sAmp, gpsData);
                     prevSamp = gpsSample;
                 } else {
-                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, "","", sAmp);
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sAmp);
                 }
             }
 

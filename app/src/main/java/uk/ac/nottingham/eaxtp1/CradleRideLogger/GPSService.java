@@ -11,6 +11,10 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v7.app.NotificationCompat;
+import android.text.TextUtils;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
@@ -34,6 +38,9 @@ public class GPSService extends Service implements LocationListener {
 
     double lat, lon;
     static String sLat, sLong, sSpeed, sGPS = "0";
+    String sAcc, sAlt, sBear, sRT, sGTime;
+    static String gpsData;
+    List<String> dataList;
     static int gpsSample;
     private long statSamples, movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
@@ -86,6 +93,15 @@ public class GPSService extends Service implements LocationListener {
 
         gpsSample++;
         sGPS = String.valueOf(gpsSample);
+
+        sGTime = String.valueOf(location.getTime());
+        sAcc = String.valueOf(location.getAccuracy());
+        sAlt = String.valueOf(location.getAltitude());
+        sBear = String.valueOf(location.getBearing());
+        sRT = String.valueOf(location.getElapsedRealtimeNanos());
+
+        dataList = Arrays.asList(sLat,sLong,sSpeed,sGTime,sAcc,sAlt,sBear,sRT);
+        gpsData = TextUtils.join(",", dataList);
 
         if (autoStopOn) {
             stationaryChecker();
