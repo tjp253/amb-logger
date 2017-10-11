@@ -16,6 +16,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
 
 @SuppressWarnings("MissingPermission")
 public class GPSService extends Service implements LocationListener {
@@ -35,8 +36,8 @@ public class GPSService extends Service implements LocationListener {
     static String sLat, sLong, sSpeed, sGPS = "0";
     static int gpsSample;
     private long statSamples, movingSamples;
-//    TODO: Set limit to 10*60
-    long limit = 10*60;     // Number of GPS samples (seconds) before journey is considered "finished".
+    // Number of GPS samples (seconds) before journey is considered "finished".
+    long limit = 10*60;     //    TODO: Set limit to 10*60
     float speed;
 
 
@@ -94,7 +95,7 @@ public class GPSService extends Service implements LocationListener {
     public void stationaryChecker() {
         if (speed <= 2) {
             statSamples++;
-            if (statSamples >= limit){
+            if (statSamples >= limit && wifiConnected){
                 Intent stopRecording = new Intent(this, RecordingService.class);
                 Intent stopAudio = new Intent(this, AudioService.class);
                 this.stopService(stopRecording);
