@@ -46,7 +46,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     WifiInfo wifiInfo;
 
     Intent uploadService, recordingService;
-    Intent audioService, gpsService;
+    Intent audioService, gpsService, imuService, loggingService;
 
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
@@ -150,6 +150,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordingService = new Intent(this, RecordingService.class);
         audioService = new Intent(this, AudioService.class);
         gpsService = new Intent(this, GPSService.class);
+        imuService = new Intent(this, IMUService.class);
+        loggingService = new Intent(this, LoggingService.class);
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -257,8 +259,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     public void stopAll() {
         stopService(recordingService);
+//        stopService(loggingService);
         stopService(audioService);
         stopService(gpsService);
+//        stopService(imuService);
     }
 
     public void stopLogging() {
@@ -310,10 +314,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             if (!recording && !forcedStop) { // Start recording data
                 instructDisplay.setText(R.string.recording);
-//                Audio service initialises with GPS to ensure it's ready when recording starts.
-//                startService(audioService);
                 startService(gpsService);
                 startService(recordingService);
+//                startService(loggingService);
+//                startService(imuService);
 
                 final Timer timer = new Timer();
                 TimerTask timerTask = new TimerTask() {
