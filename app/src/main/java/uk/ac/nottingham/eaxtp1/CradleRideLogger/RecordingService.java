@@ -12,6 +12,7 @@ import android.opengl.Matrix;
 //import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 //import android.util.Log;
 
@@ -32,9 +33,6 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLat;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLong;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sSpeed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
@@ -154,13 +152,15 @@ public class RecordingService extends Service
 
         gzFile = new File(gzipPath);
 
-        startTime = System.currentTimeMillis();
+        logTitle();
 
         sizeCheckTimer = new Timer();
 
         sizeCheckTT();
 
         sizeCheckTimer.schedule(sizeChecker, 5000, checkDelay);
+
+        startTime = System.currentTimeMillis();
 
     }
 
@@ -174,6 +174,25 @@ public class RecordingService extends Service
                 }
             }
         };
+    }
+
+    public void logTitle() {
+        if (gravityPresent) {
+            titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
+                    "North", "East", "Down", "GPS Sample", "Noise",
+                    "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
+        } else {
+            titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Noise",
+                    "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
+        }
+
+        outputTitle = TextUtils.join(",", titleList);
+        try {
+            myOutputStream.write(outputTitle.getBytes("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -219,36 +238,7 @@ public class RecordingService extends Service
                 sAmp = "";
             }
 
-//            if (gravityPresent) {
-//                if (sampleID == 1) {
-//                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
-//                            "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise", "Speed");
-//                }
-//                if (gpsSample > prevSamp) {
-//                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
-//                            sNorth, sEast, sDown, sGPS, sLat, sLong, sAmp, sSpeed);
-//                    prevSamp = gpsSample;
-//                } else {
-//                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
-//                            sNorth, sEast, sDown, sGPS,"","",sAmp);
-//                }
-//
-//            } else {
-//                if (sampleID == 1) {
-//                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Lat", "Long", "Noise", "Speed");
-//                }
-//                if (gpsSample > prevSamp) {
-//                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp, sSpeed);
-//                    prevSamp = gpsSample;
-//                } else {
-//                    outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, "","", sAmp);
-//                }
-//            }
             if (gravityPresent) {
-                if (sampleID == 1) {
-                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
-                            "North", "East", "Down", "GPS Sample", "Noise", "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
-                }
                 if (gpsSample > prevSamp) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGravX, sGravY, sGravZ,
                             sNorth, sEast, sDown, sGPS, sAmp, gpsData);
@@ -259,9 +249,6 @@ public class RecordingService extends Service
                 }
 
             } else {
-                if (sampleID == 1) {
-                    titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Noise", "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
-                }
                 if (gpsSample > prevSamp) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sAmp, gpsData);
                     prevSamp = gpsSample;
@@ -271,15 +258,6 @@ public class RecordingService extends Service
             }
 
             outputToData = "\n" + TextUtils.join(",", outputList);
-
-            if (sampleID == 1) {
-                outputTitle = TextUtils.join(",", titleList);
-                try {
-                    myOutputStream.write(outputTitle.getBytes("UTF-8"));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
 
             try {
                 myOutputStream.write(outputToData.getBytes("UTF-8"));

@@ -71,7 +71,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             autoStopOn;
 
     //    Initialise strings for the zipping
-    static String mainPath, folderPath, zipPath;
+    static String mainPath, zipPath;
 
     @SuppressLint("WifiManagerLeak")
     @Override
@@ -135,7 +135,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         crashed = false;
 
         mainPath = String.valueOf(getExternalFilesDir(""));
-        folderPath = mainPath + "/Recording";
+//        folderPath = mainPath + "/Recording";
         zipPath = mainPath + "/Finished";
 
 //        Checks (and asks for) permission on app start-up
