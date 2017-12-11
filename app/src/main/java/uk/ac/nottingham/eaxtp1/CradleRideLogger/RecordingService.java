@@ -58,6 +58,7 @@ public class RecordingService extends Service
     File gzFile;
 
     PowerManager.WakeLock wakeLock;
+    boolean sentIntents;
 
     //    Sets up the SensorManager
     private SensorManager mySensorManager;
@@ -67,7 +68,7 @@ public class RecordingService extends Service
     Sensor myMagneticField;
 
     private long sampleID;
-    private long prevSamp;
+    private short prevSamp;
 
     private float[] deviceValues = new float[4];
     private float[] worldValues = new float[3];
@@ -97,7 +98,7 @@ public class RecordingService extends Service
     public String date = dateFormat.format(todaysDate);
 
     OutputStream myOutputStream;
-    int zipPart = 1;
+    byte zipPart = 1;
     String filepath = "Recording";
     String filename = date + "-ID" + String.valueOf(userID) + "-" + zipPart + ".csv.gz";
     static String mainPath, gzipPath;
@@ -179,10 +180,10 @@ public class RecordingService extends Service
     public void logTitle() {
         if (gravityPresent) {
             titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GravX", "GravY", "GravZ",
-                    "North", "East", "Down", "GPS Sample", "Noise",
+                    "North", "East", "Down", "GPS Sample", "Audio",
                     "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
         } else {
-            titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Noise",
+            titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Audio",
                     "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
         }
 
@@ -324,16 +325,20 @@ public class RecordingService extends Service
             sizeCheckTimer.cancel();
         }
 
-        if (crashed) {
-            Intent stopAudio = new Intent(this, AudioService.class);
-            Intent stopGPS = new Intent(this, GPSService.class);
-            this.stopService(stopAudio);
-            this.stopService(stopGPS);
-            Intent deletingService = new Intent(this, FileDeletingService.class);
-            this.startService(deletingService);
-        } else {
-            Intent movingService = new Intent(this, MovingService.class);
-            this.startService(movingService);
+        if (!sentIntents) {
+            if (crashed) {
+                Intent stopAudio = new Intent(this, AudioService.class);
+                Intent stopGPS = new Intent(this, GPSService.class);
+                this.stopService(stopAudio);
+                this.stopService(stopGPS);
+                Intent deletingService = new Intent(this, FileDeletingService.class);
+                this.startService(deletingService);
+            } else {
+                Intent movingService = new Intent(this, MovingService.class);
+                this.startService(movingService);
+            }
+
+            sentIntents = true;
         }
 
         gpsSample = 0;

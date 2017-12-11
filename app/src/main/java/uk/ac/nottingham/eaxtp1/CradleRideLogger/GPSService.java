@@ -41,7 +41,7 @@ public class GPSService extends Service implements LocationListener {
     String sAcc, sAlt, sBear, sRT, sGTime;
     static String gpsData;
     List<String> dataList;
-    static int gpsSample;
+    static short gpsSample;
     private long statSamples, movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
     long limit = 10*60;     //    TODO: Set limit to 10*60
