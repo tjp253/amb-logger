@@ -5,10 +5,10 @@ android {
     buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "uk.ac.nottingham.eaxtp1.CradleRideLogger"
-        minSdkVersion 21
+        minSdkVersion 17
         targetSdkVersion 25
-        versionCode 35
-        versionName "2.3.5"
+        versionCode 36
+        versionName "2.4"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

@@ -1,7 +1,14 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.annotation.SuppressLint;
 import android.app.IntentService;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +25,12 @@ public class MovingService extends IntentService {
     public MovingService() { super("MovingService");
     }
 
-    String mainPath, folderPath, zipPath;
+    String mainPath, folderPath, finishedPath;
+
+    int jobID = 24;
+    String TAG = "Moving Service";
+    private ComponentName myComponent;
+    boolean jobSent;
 
     @Override
     public void onCreate() {
@@ -26,24 +38,26 @@ public class MovingService extends IntentService {
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         folderPath = mainPath + "/Recording";
-        zipPath = mainPath + "/Finished";
+        finishedPath = mainPath + "/Finished";
 
 //        Ensures there's a folder to move the recorded files to.
-        File zipDirectory = new File(zipPath);
-        if (!zipDirectory.exists()) {
-            zipDirectory.mkdir();
+        File finishedDirectory = new File(finishedPath);
+        if (!finishedDirectory.exists()) {
+            finishedDirectory.mkdir();
         }
 
-        moveFiles(folderPath, zipPath);
+        myComponent = new ComponentName(this, UploadJobService.class);
+
+        moveFiles(folderPath, finishedPath);
 
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        moveFiles(folderPath, zipPath);
+        moveFiles(folderPath, finishedPath);
     }
 
-    public boolean moveFiles(String oldPath, String newPath) {
+    public void moveFiles(String oldPath, String newPath) {
 
         moving = true;
 
@@ -59,7 +73,7 @@ public class MovingService extends IntentService {
 
             int filesRemaining = oldFolder.listFiles().length;
             if (filesRemaining == 0) {
-                return true;
+                return;
             }
 
             try {
@@ -75,17 +89,15 @@ public class MovingService extends IntentService {
                 }
 
                 in.close();
-//                in = null;
 
                 out.flush();
                 out.close();
-//                out = null;
 
                 new File(String.valueOf(file)).delete();
 
             } catch (IOException e) {
                 e.printStackTrace();
-                return false;
+                return;
             }
 
         }
@@ -95,9 +107,31 @@ public class MovingService extends IntentService {
         if (wifiConnected) {
             Intent uploadService = new Intent(this, UploadService.class);
             this.startService(uploadService);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            buildJob();
         }
 
-        return true;
+    }
+
+    @SuppressLint("NewApi")
+    public void buildJob() {
+        if (!jobSent) {
+            JobInfo.Builder builder = new JobInfo.Builder(jobID++, myComponent)
+                    .setMinimumLatency(60*1000)     // Wait for at least a minute before executing job.
+                    .setPersisted(true)             // Keeps job in system after system reboot BUT NOT IF APP IS FORCE CLOSED
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);     // Only execute on Wi-Fi
+//                .setRequiresDeviceIdle(false);    // Don't upload while device being used (yes? no?)
+
+//        Schedule job:
+            JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+            if (js != null) {
+                js.schedule(builder.build());
+            }
+
+            Log.i(TAG, "Job " + jobID + " prepared.");
+
+            jobSent = true;
+        }
     }
 
 }

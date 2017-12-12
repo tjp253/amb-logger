@@ -2,8 +2,10 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,13 +41,17 @@ public class UploadService extends IntentService {
     URL url;
     String urlString = "https://optics.eee.nottingham.ac.uk/~tp/upload.php";
 
+    String TAG = "Upload Service";
 
-    String mainPath, recordPath, zipPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
+    String mainPath, recordPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
 
-    int uploadFileCount, oversizedFileCount, failedFileCount;
+    int uploadFileCount = 0, oversizedFileCount = 0, failedFileCount = 0;
 
     long uploadTime;
     boolean uploaded;
+
+    int filesLeft;
+    ComponentName myComponent;
 
     @Override
     public void onCreate() {
@@ -55,9 +61,12 @@ public class UploadService extends IntentService {
             onDestroy();
         }
 
+        Log.i(TAG, "Upload Service started.");
+        myComponent = new ComponentName(this, UploadJobService.class);
+
         mainPath = String.valueOf(getExternalFilesDir(""));
         recordPath = mainPath + "/Recording";
-        zipPath = mainPath + "/Finished";
+        finishedPath = mainPath + "/Finished";
         movedPath = mainPath + "/Uploaded";
         oversizedPath = mainPath + "/Oversized";
         failedPath = mainPath + "/FailedUploads";
@@ -73,12 +82,7 @@ public class UploadService extends IntentService {
     public void onDestroy() {
         super.onDestroy();
 
-    }
-
-    public void wifiCheck() {
-        if (!wifiConnected) {
-            onDestroy();
-        }
+        Log.i(TAG, "Upload Service being destroyed.");
     }
 
     @Override
@@ -86,10 +90,13 @@ public class UploadService extends IntentService {
 
         File recordFolder = new File(recordPath);
         if (recordFolder.listFiles().length > 0) {
+            Log.i(TAG, "Files are already uploaded. Abandon ship!");
             onDestroy();
         }
 
-        wifiCheck();
+        if (!wifiConnected) {
+            return;
+        }
 
         try {
             url = new URL(urlString);
@@ -99,143 +106,175 @@ public class UploadService extends IntentService {
 
         jobNumber = intent.getIntExtra("jobNumber", 1);
 
-        File sourceFolder = new File(zipPath);
+        File sourceFolder = new File(finishedPath);
         int sourceLength = sourceFolder.getParent().length();
         sourceLength = sourceLength + 9;
 
         File[] fileList = sourceFolder.listFiles();
-        int filesLeft = fileList.length;
+        filesLeft = fileList.length;
 
         for (File file : fileList) {
 
-            wifiCheck();
+            if (wifiConnected) {
 
-            uploadTime = System.currentTimeMillis();
-            uploaded = false;
+                uploaded = false;
 
-            uploadFilePath = file.getAbsolutePath();
-            fileName = uploadFilePath.substring(sourceLength);
-            parse = fileName.substring(0, fileName.length() - 2) + "/gz";
+                uploadFilePath = file.getAbsolutePath();
+                fileName = uploadFilePath.substring(sourceLength);
+                parse = fileName.substring(0, fileName.length() - 2) + "/gz";
 
-            try {
-
-                OkHttpClient okHttpClient = new OkHttpClient();
-                File fileToUpload = new File(uploadFilePath);
-
-                RequestBody requestBody = new MultipartBody.Builder()
-                        .setType(MultipartBody.FORM)
-                        .addFormDataPart("fileToUpload", fileName,
-                                RequestBody.create(MediaType.parse(parse), fileToUpload))
-
-                        .build();
-
-                Request request = new Request.Builder().url(url).post(requestBody).build();
-                Response response;
                 try {
-                    response = okHttpClient.newCall(request).execute();
-                } catch (UnknownHostException uhe) {
-                    throw new IOException("U H E");
-                } catch (SocketException se) {
-                    throw new IOException("S E");
-                }
 
-                switch (response.code()) {
-                    case 900:
-                        moveOversized(fileName);
-                        oversizedFileCount++;
-                        fileName = null;
-                        throw new IOException("File too large to upload.");
-                    case 901:
-                        uploadFileCount++;
-                        throw new IOException("File already uploaded.");
-                    case 902:
-                        moveFailed(fileName);
+                    OkHttpClient okHttpClient = new OkHttpClient();
+                    File fileToUpload = new File(uploadFilePath);
+
+                    RequestBody requestBody = new MultipartBody.Builder()
+                            .setType(MultipartBody.FORM)
+                            .addFormDataPart("fileToUpload", fileName,
+                                    RequestBody.create(MediaType.parse(parse), fileToUpload))
+
+                            .build();
+
+                    Request request = new Request.Builder().url(url).post(requestBody).build();
+                    Response response;
+                    try {
+                        response = okHttpClient.newCall(request).execute();
+                    } catch (UnknownHostException uhe) {
                         failedFileCount++;
-                        fileName = null;
-                        throw new IOException("Upload failed.");
-                    case 910:
-                        uploaded = true;
-                        uploadFileCount++;
-                }
-
-                while (!uploaded) {
-                    if (System.currentTimeMillis() - uploadTime > 60000) {
-                        fileName = null;
-                        throw new IOException("Upload failed - a minute has passed.");
+                        Log.i(TAG, "Host Connection Lost.");
+                        throw new IOException("UnknownHostException - Upload connection failed.");
+                    } catch (SocketException se) {
+                        throw new IOException("Socket Exception");
                     }
-                }
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                    switch (response.code()) {
+                        case 900:
+                            moveOversized(fileName);
+                            oversizedFileCount++;
+                            fileName = null;
+                            Log.i(TAG, "File too large to upload.");
+                            break;
+//                            throw new IOException("File too large to upload.");
+                        case 901:
+//                            uploadFileCount++;
+                            Log.i(TAG, "File already uploaded.");
+                            break;
+//                            throw new IOException("File already uploaded.");
+//                        case 902:
+//                            moveFailed(fileName);
+//                            failedFileCount++;
+//                            fileName = null;
+//                            throw new IOException("Upload failed.");
+                        case 910:
+                            uploadTime = System.currentTimeMillis();
+                            uploaded = true;
+                            uploadFileCount++;
+                            break;
+                    }
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    notificationSender();
+                    return;
+                }
 
             if (fileName != null) {
                 moveFile(fileName);
             }
 
-            filesLeft--;
-        }
+                filesLeft--;
+            }
 
 //      Displays notification once the last file has been uploaded
-        if (filesLeft == 0) {
-            if (uploadFileCount > 0) {
-                String uText;
-                if (uploadFileCount == 1) {
-                    uText = uploadFileCount + " file uploaded.";
-                } else {
-                    uText = uploadFileCount + " files uploaded.";
-                }
-
-                mBuilder =
-                        (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.upload_symb)
-                                .setContentTitle("CradleRide Logger")
-                                .setContentText(uText);
-
-                NotificationManager mNotifyMgr =
-                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                mNotifyMgr.notify(2, mBuilder.build());
+            if (filesLeft == 0) {
+                notificationSender();
             }
 
-            if (oversizedFileCount > 0) {
-                String oText;
-                if (oversizedFileCount == 1) {
-                    oText = oversizedFileCount + " file too large to upload.";
-                } else {
-                    oText = oversizedFileCount + " files too large to upload.";
-                }
-
-                mBuilder2 =
-                        (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.oversize_symb)
-                                .setContentTitle("CradleRide Logger")
-                                .setContentText(oText);
-
-                NotificationManager mNotifyMgr2 =
-                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                mNotifyMgr2.notify(3, mBuilder2.build());
-            }
-
-            if (failedFileCount > 0) {
-                String oText;
-                if (failedFileCount == 1) {
-                    oText = failedFileCount + " file failed to upload.\nPlease check UploadFailed folder.";
-                } else {
-                    oText = failedFileCount + " files too large to upload.\nPlease check UploadFailed folder.";
-                }
-
-                mBuilder3 =
-                        (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.oversize_symb)
-                                .setContentTitle("CradleRide Logger")
-                                .setContentText(oText);
-
-                NotificationManager mNotifyMgr3 =
-                        (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                mNotifyMgr3.notify(4, mBuilder3.build());
-            }
         }
 
+    }
+
+    public void notificationSender() {
+        if (uploadFileCount > 0) {
+            uploadNotification();
+        }
+
+        if (oversizedFileCount > 0) {
+            oversizedNotification();
+        }
+
+        if (failedFileCount > 0) {
+            failedNotification();
+        }
+    }
+
+    public void uploadNotification() {
+        String uText;
+        if (uploadFileCount == 1) {
+            uText = uploadFileCount + " file uploaded.";
+        } else {
+            uText = uploadFileCount + " files uploaded.";
+        }
+
+        uploadFileCount = 0;
+
+        mBuilder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.upload_symb)
+                        .setContentTitle("CradleRide Logger")
+                        .setContentText(uText);
+
+        NotificationManager mNotifyMgr =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (mNotifyMgr != null) {
+            mNotifyMgr.notify(2, mBuilder.build());
+        }
+    }
+
+    public void oversizedNotification() {
+        String oText;
+        if (oversizedFileCount == 1) {
+            oText = oversizedFileCount + " file too large to upload.";
+        } else {
+            oText = oversizedFileCount + " files too large to upload.";
+        }
+
+        oversizedFileCount = 0;
+
+        mBuilder2 =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.oversize_symb)
+                        .setContentTitle("CradleRide Logger")
+                        .setContentText(oText);
+
+        NotificationManager mNotifyMgr2 =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (mNotifyMgr2 != null) {
+            mNotifyMgr2.notify(3, mBuilder2.build());
+        }
+    }
+
+    private void failedNotification() {
+        String oText;
+        if (failedFileCount == 1) {
+            oText = failedFileCount + " file failed to upload.\nPlease check UploadFailed folder.";
+        } else {
+            oText = failedFileCount + " files too large to upload.\nPlease check UploadFailed folder.";
+        }
+
+        failedFileCount = 0;
+
+        mBuilder3 =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.oversize_symb)
+                        .setContentTitle("CradleRide Logger")
+                        .setContentText(oText);
+
+        NotificationManager mNotifyMgr3 =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (mNotifyMgr3 != null) {
+            mNotifyMgr3.notify(4, mBuilder3.build());
+        }
     }
 
     private void moveFile(String fileToMove) {
@@ -252,7 +291,7 @@ public class UploadService extends IntentService {
                 dir.mkdirs();
             }
 
-            in = new FileInputStream(zipPath + fileToMove);
+            in = new FileInputStream(finishedPath + fileToMove);
             out = new FileOutputStream(movedPath + fileToMove);
 
             byte[] buffer = new byte[1024];
@@ -267,7 +306,7 @@ public class UploadService extends IntentService {
             out.close();
 
             // delete the original file
-            new File(zipPath + fileToMove).delete();
+            new File(finishedPath + fileToMove).delete();
 
 
         } catch (Exception e) {
@@ -291,7 +330,7 @@ public class UploadService extends IntentService {
             }
 
 
-            in = new FileInputStream(zipPath + oversizeFile);
+            in = new FileInputStream(finishedPath + oversizeFile);
             out = new FileOutputStream(oversizedPath + oversizeFile);
 
             byte[] buffer = new byte[1024];
@@ -306,7 +345,7 @@ public class UploadService extends IntentService {
             out.close();
 
             // delete the original file
-            new File(zipPath + oversizeFile).delete();
+            new File(finishedPath + oversizeFile).delete();
 
 
         } catch (Exception e) {
@@ -314,42 +353,43 @@ public class UploadService extends IntentService {
         }
     }
 
-    public void moveFailed(String failedFile) {
-
-        InputStream in;
-        OutputStream out;
-
-        try {
-
-            //create output directory if it doesn't exist
-            File dir = new File (failedPath);
-            if (!dir.exists())
-            {
-                dir.mkdirs();
-            }
-
-
-            in = new FileInputStream(zipPath + failedFile);
-            out = new FileOutputStream(failedPath + failedFile);
-
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
-            }
-            in.close();
-
-            // write the output file
-            out.flush();
-            out.close();
-
-            // delete the original file
-            new File(zipPath + failedFile).delete();
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+//    Change this and the PHP for if the file is the wrong type? Though why would that be an issue???
+//    public void moveFailed(String failedFile) {
+//
+//        InputStream in;
+//        OutputStream out;
+//
+//        try {
+//
+//            //create output directory if it doesn't exist
+//            File dir = new File (failedPath);
+//            if (!dir.exists())
+//            {
+//                dir.mkdirs();
+//            }
+//
+//
+//            in = new FileInputStream(finishedPath + failedFile);
+//            out = new FileOutputStream(failedPath + failedFile);
+//
+//            byte[] buffer = new byte[1024];
+//            int read;
+//            while ((read = in.read(buffer)) != -1) {
+//                out.write(buffer, 0, read);
+//            }
+//            in.close();
+//
+//            // write the output file
+//            out.flush();
+//            out.close();
+//
+//            // delete the original file
+//            new File(finishedPath + failedFile).delete();
+//
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 
 }
