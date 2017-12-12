@@ -9,12 +9,9 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.opengl.Matrix;
-//import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
-//import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,6 +55,7 @@ public class RecordingService extends Service
     File gzFile;
 
     PowerManager.WakeLock wakeLock;
+    long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
     boolean sentIntents;
 
     //    Sets up the SensorManager
@@ -124,20 +122,24 @@ public class RecordingService extends Service
 
     public void initialiseRecording() {
         mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        myAccelerometer = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        if (mySensorManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
+            myAccelerometer = mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            mySensorManager.registerListener(this, myAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
-        if (gravityPresent) {
-            myGravity = mySensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-            myMagneticField = mySensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-            mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
-            mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
+            if (gravityPresent) {
+                myGravity = mySensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+                myMagneticField = mySensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+                mySensorManager.registerListener(this, myGravity, SensorManager.SENSOR_DELAY_FASTEST);
+                mySensorManager.registerListener(this, myMagneticField, SensorManager.SENSOR_DELAY_FASTEST);
+            }
         }
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Main WakeLock");
-        if (!wakeLock.isHeld()) {
-            wakeLock.acquire();
+        if (myPowerManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
+            wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Main WakeLock");
+            if (!wakeLock.isHeld()) {
+                wakeLock.acquire(wakelockTimeout);
+            }
         }
 
         mainPath = String.valueOf(getExternalFilesDir(filepath)) + "/";

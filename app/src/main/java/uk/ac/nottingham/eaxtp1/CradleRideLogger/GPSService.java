@@ -33,6 +33,7 @@ public class GPSService extends Service implements LocationListener {
     }
 
     PowerManager.WakeLock wakelock;
+    long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
 
     NotificationCompat.Builder builder;
 
@@ -47,7 +48,6 @@ public class GPSService extends Service implements LocationListener {
     long limit = 10*60;     //    TODO: Set limit to 10*60
     float speed;
 
-
     LocationManager myLocationManager;
 
     @Override
@@ -58,11 +58,15 @@ public class GPSService extends Service implements LocationListener {
         }
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+        if (myLocationManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
+            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+        }
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GPS WakeLock");
-        wakelock.acquire();
+        if (myPowerManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
+            wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GPS WakeLock");
+            wakelock.acquire(wakelockTimeout);
+        }
 
     }
 
@@ -140,7 +144,9 @@ public class GPSService extends Service implements LocationListener {
 
         NotificationManager manager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        manager.notify(1, builder.build());
+        if (manager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
+            manager.notify(1, builder.build());
+        }
     }
 
     @Override

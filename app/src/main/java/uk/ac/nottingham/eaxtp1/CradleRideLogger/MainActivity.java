@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -39,8 +40,12 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
+
 @SuppressWarnings("deprecation")
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
+
+    String TAG = "Main Activity";
 
     WifiManager wifiManager;
     WifiInfo wifiInfo;
@@ -70,8 +75,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             crashed, forcedStop, gravityPresent,
             autoStopOn;
 
-    //    Initialise strings for the zipping
-    static String mainPath, zipPath;
+    static String mainPath, finishedPath;
 
     @SuppressLint("WifiManagerLeak")
     @Override
@@ -136,7 +140,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         mainPath = String.valueOf(getExternalFilesDir(""));
 //        folderPath = mainPath + "/Recording";
-        zipPath = mainPath + "/Finished";
+        finishedPath = mainPath + "/Finished";
 
 //        Checks (and asks for) permission on app start-up
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean("NotSeenDisclosure2", true)) {
@@ -145,8 +149,24 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         }
 
-        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         uploadService = new Intent(this, UploadService.class);
+        if (!wifiConnected) {
+            wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            if (wifiManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
+                wifiInfo = wifiManager.getConnectionInfo();
+                if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
+                    wifiConnected = true;
+                    Log.i(TAG, "Wifi Connected.");
+
+                    File finishedFolder = new File(finishedPath);
+                    File[] finishedList = finishedFolder.listFiles();
+
+                    if (finishedList != null && finishedList.length != 0) {
+                        this.startService(uploadService);
+                    }
+                }
+            }
+        }
         recordingService = new Intent(this, RecordingService.class);
         audioService = new Intent(this, AudioService.class);
         gpsService = new Intent(this, GPSService.class);
@@ -162,20 +182,23 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     public void gravityCheck() {
         SensorManager manager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        Sensor gravity = manager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-        SensorEventListener listener = new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
+        if (manager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
+            Sensor gravity = manager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+            SensorEventListener listener = new SensorEventListener() {
+                @Override
+                public void onSensorChanged(SensorEvent event) {
 //                Log.i("Main", "Gravity sensing");
-            }
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+                }
 
+                @Override
+                public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+                }
+            };
+            if (manager.registerListener(listener, gravity, SensorManager.SENSOR_DELAY_NORMAL)) {
+                gravityPresent = true;
+                manager.unregisterListener(listener);
             }
-        };
-        if (manager.registerListener(listener, gravity, SensorManager.SENSOR_DELAY_NORMAL)) {
-            gravityPresent = true;
-            manager.unregisterListener(listener);
         }
     }
 
@@ -207,23 +230,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         if (initialising && !recording) {
             stopListening();
             stopAll();
-        }
-
-//        Uploads files. Only when not recording.
-        if (!recording && !moving) {
-            File zipFolder = new File(zipPath);
-            File[] zipList = zipFolder.listFiles();
-
-            if (zipList != null && zipList.length != 0) {
-
-                wifiInfo = wifiManager.getConnectionInfo();
-
-                if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
-
-                    this.startService(uploadService);
-
-                }
-            }
         }
 
         if (crashed) {
