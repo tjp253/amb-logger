@@ -263,12 +263,19 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         instructDisplay.setText(R.string.crashed);
     }
 
+    public void startAll() {
+        startService(gpsService);
+//                startService(recordingService);
+        startService(loggingService);
+        startService(imuService);
+    }
+
     public void stopAll() {
-        stopService(recordingService);
-//        stopService(loggingService);
+//        stopService(recordingService);
+        stopService(loggingService);
         stopService(audioService);
         stopService(gpsService);
-//        stopService(imuService);
+        stopService(imuService);
     }
 
     public void stopLogging() {
@@ -319,11 +326,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         } else if (v == recordButton) {
 
             if (!recording && !forcedStop) { // Start recording data
+                recording = true;
+                initialising = false;
+                forcedStop = false;
+
                 instructDisplay.setText(R.string.recording);
-                startService(gpsService);
-                startService(recordingService);
-//                startService(loggingService);
-//                startService(imuService);
+                startAll();
 
                 final Timer timer = new Timer();
                 TimerTask timerTask = new TimerTask() {
@@ -334,10 +342,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     }
                 };
                 timer.schedule(timerTask, 1000, 1000);
-
-                recording = true;
-                initialising = false;
-                forcedStop = false;
 
                 initialiseButton.setEnabled(false);
 

@@ -24,6 +24,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.LoggingService.logging;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
 
@@ -88,10 +89,10 @@ public class UploadService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        File recordFolder = new File(recordPath);
-        if (recordFolder.listFiles().length > 0) {
+        File finishedFolder = new File(finishedPath);
+        if (finishedFolder.listFiles().length == 0) {
             Log.i(TAG, "Files are already uploaded. Abandon ship!");
-            onDestroy();
+            return;
         }
 
         if (!wifiConnected) {
@@ -140,7 +141,7 @@ public class UploadService extends IntentService {
                     try {
                         response = okHttpClient.newCall(request).execute();
                     } catch (UnknownHostException uhe) {
-                        failedFileCount++;
+//                        failedFileCount++;
                         Log.i(TAG, "Host Connection Lost.");
                         throw new IOException("UnknownHostException - Upload connection failed.");
                     } catch (SocketException se) {

@@ -22,6 +22,7 @@ public class AudioService extends Service {
     }
 
     PowerManager.WakeLock wakeLock;
+    long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
 
     private MediaRecorder noiseDetector;
 
@@ -62,8 +63,10 @@ public class AudioService extends Service {
         timer.schedule(timerTask, 0, 20);
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Audio WakeLock");
-        wakeLock.acquire();
+        if (myPowerManager != null) {
+            wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Audio WakeLock");
+            wakeLock.acquire(wakelockTimeout);
+        }
     }
 
     public void initialiseTT() {

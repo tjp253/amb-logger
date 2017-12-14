@@ -116,10 +116,7 @@ public class GPSService extends Service implements LocationListener {
         if (speed <= 2) {
             statSamples++;
             if (statSamples >= limit && wifiConnected){
-                Intent stopRecording = new Intent(this, RecordingService.class);
-                Intent stopAudio = new Intent(this, AudioService.class);
-                this.stopService(stopRecording);
-                this.stopService(stopAudio);
+                stopOthers();
                 recording = false;
                 forcedStop = true;
                 stopNotification();
@@ -133,6 +130,17 @@ public class GPSService extends Service implements LocationListener {
                 movingSamples++;
             }
         }
+    }
+
+    public void stopOthers() {
+//        Intent stopRecording = new Intent(this, RecordingService.class);
+        Intent stopAudio = new Intent(this, AudioService.class);
+        Intent stopIMU = new Intent(this, IMUService.class);
+        Intent stopLogging = new Intent(this, LoggingService.class);
+//        this.stopService(stopRecording);
+        this.stopService(stopAudio);
+        this.stopService(stopIMU);
+        this.stopService(stopLogging);
     }
 
     public void stopNotification() {

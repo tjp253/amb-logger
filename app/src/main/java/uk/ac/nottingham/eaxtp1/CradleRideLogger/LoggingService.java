@@ -22,24 +22,10 @@ import java.util.TimerTask;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLat;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sLong;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sSpeed;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sD;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sE;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sGX;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sGY;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sGZ;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sN;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sX;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sY;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sZ;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.sampleTime;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
 public class LoggingService extends Service {
@@ -51,9 +37,15 @@ public class LoggingService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    int loggingFrequency = 200;     // Set the frequency in Hz
+    String TAG = "Logging Service";
+
+    int loggingPeriod = 5;     // Set the logging period in seconds
 
     PowerManager.WakeLock wakelock;
+    long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
+    boolean sentIntents;
+
+    static boolean logging;
 
     Timer logTimer, sizeCheckTimer;
     TimerTask loggingTask, sizeCheckingTask;
@@ -64,17 +56,12 @@ public class LoggingService extends Service {
 
     File gzFile;
 
-    int id;
-    String sID, /*sX, sY, sZ,*/ sTime;
-//    String sGX, sGY, sGZ;
-//    String sEast, sNorth, sDown;
-    String sAmp = "";
-    int prevAmp;
-    long prevSample;
+    String outputTitle;
 
-    String outputToData, outputTitle;
+    List<String> titleList;
+    int qSize;
 
-    List<String> outputList, titleList;
+    boolean writingToFile;
 
     //    Creates a string of the current date and time
     @SuppressLint("SimpleDateFormat")
@@ -88,11 +75,15 @@ public class LoggingService extends Service {
     String filename = date + "-ID" + String.valueOf(userID) + "-" + zipPart + ".csv.gz";
     static String mainPath, gzipPath;
 
-    static boolean newSample;
+    StringBuilder stringBuilder = new StringBuilder("");
+    String toFile;
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        Log.i(TAG, "Created.");
+        logging = true;
 
         crashCheck();
 
@@ -128,11 +119,13 @@ public class LoggingService extends Service {
 
         logTimer = new Timer();
         loggingTT();
-        logTimer.schedule(loggingTask, 0, 1000/loggingFrequency);
+        logTimer.schedule(loggingTask, 1000 * loggingPeriod, 1000 * loggingPeriod);
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Logging WakeLock");
-        wakelock.acquire();
+        if (myPowerManager != null) {
+            wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Logging WakeLock");
+            wakelock.acquire(wakelockTimeout);
+        }
 
         sizeCheckTimer = new Timer();
         sizeCheckTT();
@@ -142,13 +135,15 @@ public class LoggingService extends Service {
     public void logTitle() {
         if (gravityPresent) {
             titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GX", "GY", "GZ",
-                    "North", "East", "Down", "GPS Sample", "Lat", "Long", "Noise", "Speed");
+                    "North", "East", "Down", "GPS Sample", "Audio",
+                    "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
         } else {
-            titleList = Arrays.asList("id", "X", "Y", "Z", "Time",
-                    "GPS Sample", "Lat", "Long", "Noise", "Speed");
+            titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Audio",
+                    "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
         }
 
         outputTitle = TextUtils.join(",", titleList);
+        outputTitle = outputTitle + "\n";
 
         try {
             myOutputStream.write(outputTitle.getBytes("UTF-8"));
@@ -161,54 +156,37 @@ public class LoggingService extends Service {
         loggingTask = new TimerTask() {
             @Override
             public void run() {
-//                sampleTime = sampleTime + 5;
-                if (newSample) {
-                    newSample = false;
-                    id++;
-                    sID = String.valueOf(id);
-                    sTime = String.valueOf(sampleTime);
-
-                    if (amp != 0 && amp != prevAmp) {
-                        sAmp = String.valueOf(amp);
-                        prevAmp = amp;
-                    } else {
-                        sAmp = "";
-                    }
-
-                    if (gravityPresent) {
-                        if (gpsSample > prevSample) {
-                            outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGX, sGY, sGZ,
-                                    sN, sE, sD, sGPS, sLat, sLong, sAmp, sSpeed);
-                            prevSample = gpsSample;
-                        } else {
-                            outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGX, sGY, sGZ,
-                                    sN, sE, sD, sGPS, "", "", sAmp);
-                        }
-                    } else {
-                        if (gpsSample > prevSample) {
-                            outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, sLat, sLong, sAmp, sSpeed);
-                            prevSample = gpsSample;
-                        } else {
-                            outputList = Arrays.asList(sID, sX, sY, sZ, sTime, sGPS, "", "", sAmp);
-                        }
-                    }
-
-                    outputToData = "\n" + TextUtils.join(",", outputList);
-
-                    try {
-                        myOutputStream.write(outputToData.getBytes("UTF-8"));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    if (nearLimit) {
-                        zipPart++;
-                        nearLimit = false;
-                        fileSplitter(zipPart);
-                    }
+                if (recording) {
+                    writingToFile = true;
+                    writeToFile();
+                    writingToFile = false;
                 }
             }
         };
+    }
+
+    public void writeToFile() {
+        stringBuilder.setLength(0);
+
+        qSize = myQ.size();
+
+        for (int i = 0; i < qSize; i++) {
+            stringBuilder.append(myQ.remove());
+        }
+
+        toFile = stringBuilder.toString();
+
+        try {
+            myOutputStream.write(toFile.getBytes("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (nearLimit) {
+            zipPart++;
+            nearLimit = false;
+            fileSplitter(zipPart);
+        }
     }
 
     public void sizeCheckTT() {
@@ -238,14 +216,28 @@ public class LoggingService extends Service {
 
         gzFile = new File(gzipPath);
 
+        Log.i(TAG, "fileSplitter: Split File");
+
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
+//        noinspection StatementWithEmptyBody
+        while (writingToFile) {
+//            Wait it out.
+        }
+
         if (logTimer != null) {
             logTimer.cancel();
+            logTimer.purge();
+            logTimer = null;
+        }
+
+        if (myQ.size() > 0) {
+            Log.i(TAG, "Writing final outputs.");
+            writeToFile();
         }
 
         if (myOutputStream != null) {
@@ -260,27 +252,33 @@ public class LoggingService extends Service {
             sizeCheckTimer.cancel();
         }
 
-        if (crashed) {
+        if (!sentIntents) {
+            if (crashed) {
 
-            Intent stopAudio = new Intent(this, AudioService.class);
-            Intent stopGPS = new Intent(this, GPSService.class);
-            Intent stopIMU = new Intent(this, IMUService.class);
-            this.stopService(stopAudio);
-            this.stopService(stopGPS);
-            this.stopService(stopIMU);
+                Intent stopAudio = new Intent(this, AudioService.class);
+                Intent stopGPS = new Intent(this, GPSService.class);
+                Intent stopIMU = new Intent(this, IMUService.class);
+                this.stopService(stopAudio);
+                this.stopService(stopGPS);
+                this.stopService(stopIMU);
 
-            Intent deleteCrashFile = new Intent(this, MovingService.class);
-            this.startService(deleteCrashFile);
+                Intent deletingService = new Intent(this, FileDeletingService.class);
+                this.startService(deletingService);
 
-        } else {
+            } else {
 
-            Intent movingService = new Intent(this, MovingService.class);
-            this.startService(movingService);
+                Intent movingService = new Intent(this, MovingService.class);
+                this.startService(movingService);
 
+            }
+            sentIntents = true;
         }
 
-        if (wakelock != null) {
+        if (wakelock != null && wakelock.isHeld()) {
             wakelock.release();
         }
+
+        logging = false;
+        Log.i(TAG, "Destroyed!");
     }
 }

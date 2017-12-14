@@ -30,7 +30,7 @@ public class MovingService extends IntentService {
     int jobID = 24;
     String TAG = "Moving Service";
     private ComponentName myComponent;
-    boolean jobSent;
+    boolean jobSent, sentUploadIntent;
 
     @Override
     public void onCreate() {
@@ -104,11 +104,14 @@ public class MovingService extends IntentService {
 
         moving = false;
 
-        if (wifiConnected) {
-            Intent uploadService = new Intent(this, UploadService.class);
-            this.startService(uploadService);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-            buildJob();
+        if (!sentUploadIntent) {
+            if (wifiConnected) {
+                Intent uploadService = new Intent(this, UploadService.class);
+                this.startService(uploadService);
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                buildJob();
+            }
+            sentUploadIntent = true;
         }
 
     }

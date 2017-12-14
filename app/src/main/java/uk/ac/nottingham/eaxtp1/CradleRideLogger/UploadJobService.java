@@ -7,6 +7,8 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
+import java.io.File;
+
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class UploadJobService extends JobService {
     public UploadJobService() {
@@ -28,9 +30,18 @@ public class UploadJobService extends JobService {
 
         Log.i(TAG, "Starting Upload Job " + params.getJobId());
 
-        startService(uploadService);
+        String finishedPath = String.valueOf(getExternalFilesDir("")) + "/Finished";
+        File finishedFolder = new File(finishedPath);
+        if (finishedFolder.listFiles().length > 0) {
 
-        return true;
+            Log.i(TAG, "No files to upload. Abandon ship!");
+
+            startService(uploadService);
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

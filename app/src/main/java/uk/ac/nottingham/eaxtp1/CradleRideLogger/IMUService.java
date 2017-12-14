@@ -10,8 +10,17 @@ import android.hardware.SensorManager;
 import android.opengl.Matrix;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.text.TextUtils;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.LoggingService.newSample;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
 
@@ -25,14 +34,22 @@ public class IMUService extends Service implements SensorEventListener {
     }
 
     PowerManager.WakeLock wakeLock;
+    long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
 
     SensorManager manager;
     Sensor accelerometer, gravity, magnetic;
 
-    static String sX, sY, sZ;
-    static String sGX, sGY, sGZ, sE, sN, sD;
+    private long sampleID;
+    private short prevSamp;
+
+    String sID, sX, sY, sZ, sampleTime;
+    String sGX = "", sGY = "", sGZ = "", sE = "", sN = "", sD = "";
+    List<String> outputList;
+    String toQueue;
     long startTime;
-    static long sampleTime;
+
+    String sAmp = "";
+    int prevAmp;
 
     private float[] deviceValues = new float[4];
     private float[] worldValues = new float[3];
@@ -44,9 +61,13 @@ public class IMUService extends Service implements SensorEventListener {
     private float[] worldMatrix = new float[16];
     private float[] inverse = new float[16];
 
+    static Queue<String> myQ = new LinkedList<>();
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+
 
         if(crashed) {
             onDestroy();
@@ -57,23 +78,26 @@ public class IMUService extends Service implements SensorEventListener {
 
     public void initialiseIMU() {
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        if (manager != null) {
+            accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+            manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
 
-        accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+            if (gravityPresent) {
+                gravity = manager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+                magnetic = manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+                manager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_FASTEST);
+                manager.registerListener(this, magnetic, SensorManager.SENSOR_DELAY_FASTEST);
 
-        if (gravityPresent) {
-            gravity = manager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-            magnetic = manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-            manager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_FASTEST);
-            manager.registerListener(this, magnetic, SensorManager.SENSOR_DELAY_FASTEST);
-
-            deviceValues[3] = 0;
+                deviceValues[3] = 0;
+            }
         }
 
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "IMU WakeLock");
-        if (!wakeLock.isHeld()) {
-            wakeLock.acquire();
+        if (myPowerManager != null) {
+            wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "IMU WakeLock");
+            if (!wakeLock.isHeld()) {
+                wakeLock.acquire(wakelockTimeout);
+            }
         }
 
         startTime = System.currentTimeMillis();
@@ -84,8 +108,8 @@ public class IMUService extends Service implements SensorEventListener {
         Sensor sensor = event.sensor;
 
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            sampleTime = System.currentTimeMillis() - startTime;
-            newSample = true;
+            sampleTime = String.valueOf(System.currentTimeMillis() - startTime);
+            sampleID++;
 
             if (gravityPresent) {
 
@@ -102,15 +126,13 @@ public class IMUService extends Service implements SensorEventListener {
                 worldValues[1] = worldMatrix[1];
                 worldValues[2] = worldMatrix[2];
 
-                sE = Float.toString(worldValues[0]);
-                sN = Float.toString(worldValues[1]);
-                sD = Float.toString(worldValues[2]);
-
                 sX = Float.toString(deviceValues[0]);
                 sY = Float.toString(deviceValues[1]);
                 sZ = Float.toString(deviceValues[2]);
 
-
+                sE = Float.toString(worldValues[0]);
+                sN = Float.toString(worldValues[1]);
+                sD = Float.toString(worldValues[2]);
 
             } else {
 
@@ -119,6 +141,38 @@ public class IMUService extends Service implements SensorEventListener {
                 sZ = Float.toString(event.values[2]);
 
             }
+
+            if (amp != 0 && amp != prevAmp) {
+                sAmp = String.valueOf(amp);
+                prevAmp = amp;
+            } else {
+                sAmp = "";
+            }
+
+            sID = String.valueOf(sampleID);
+
+            if (gravityPresent) {
+                if (gpsSample > prevSamp) {
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGX, sGY, sGZ,
+                            sN, sE, sD, sGPS, sAmp, gpsData);
+                    prevSamp = gpsSample;
+                } else {
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGX, sGY, sGZ,
+                            sN, sE, sD, sGPS, sAmp);
+                }
+
+            } else {
+                if (gpsSample > prevSamp) {
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGPS, sAmp, gpsData);
+                    prevSamp = gpsSample;
+                } else {
+                    outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGPS, sAmp);
+                }
+            }
+
+            toQueue = TextUtils.join(",", outputList) + "\n";
+
+            myQ.add(toQueue);
 
         } else if (sensor.getType() == Sensor.TYPE_GRAVITY) {
 
