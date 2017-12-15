@@ -1,10 +1,10 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.File;
@@ -24,7 +24,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.LoggingService.logging;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
 
@@ -35,7 +34,7 @@ public class UploadService extends IntentService {
         super("UploadService");
     }
 
-    NotificationCompat.Builder mBuilder, mBuilder2, mBuilder3;
+    Notification.Builder mBuilder, mBuilder2, mBuilder3;
 
     int jobNumber;
 
@@ -219,11 +218,10 @@ public class UploadService extends IntentService {
 
         uploadFileCount = 0;
 
-        mBuilder =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.upload_symb)
-                        .setContentTitle("CradleRide Logger")
-                        .setContentText(uText);
+        mBuilder = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.upload_symb)
+                .setContentTitle("CradleRide Logger")
+                .setContentText(uText);
 
         NotificationManager mNotifyMgr =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -242,11 +240,10 @@ public class UploadService extends IntentService {
 
         oversizedFileCount = 0;
 
-        mBuilder2 =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.oversize_symb)
-                        .setContentTitle("CradleRide Logger")
-                        .setContentText(oText);
+        mBuilder2 = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.oversize_symb)
+                .setContentTitle("CradleRide Logger")
+                .setContentText(oText);
 
         NotificationManager mNotifyMgr2 =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -265,11 +262,10 @@ public class UploadService extends IntentService {
 
         failedFileCount = 0;
 
-        mBuilder3 =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.oversize_symb)
-                        .setContentTitle("CradleRide Logger")
-                        .setContentText(oText);
+        mBuilder3 = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.oversize_symb)
+                .setContentTitle("CradleRide Logger")
+                .setContentText(oText);
 
         NotificationManager mNotifyMgr3 =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

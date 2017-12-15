@@ -42,7 +42,6 @@ import java.util.TimerTask;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
 
-@SuppressWarnings("deprecation")
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
 
     String TAG = "Main Activity";
@@ -109,8 +108,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         userID = preferences.getInt(user_ID, 1);
 
-        instructDisplay = (TextView) findViewById(R.id.instructDisplay);
-        versionView = (TextView) findViewById(R.id.versionView);
+        instructDisplay = findViewById(R.id.instructDisplay);
+        versionView = findViewById(R.id.versionView);
 
         String version = "Unique ID: " + String.valueOf(userID) +"\n"+ "Version: " ;
 //        Gets the versionName from the app gradle to display.
@@ -122,8 +121,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
         versionView.setText(version);
 
-        initialiseButton = (Button) findViewById(R.id.button_Initialise);
-        recordButton = (Button) findViewById(R.id.button_Record);
+        initialiseButton = findViewById(R.id.button_Initialise);
+        recordButton = findViewById(R.id.button_Record);
 
         initialiseButton.setOnClickListener(this);
         recordButton.setOnClickListener(this);
@@ -433,7 +432,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     public void showDisclosure() {
         View checkboxView = View.inflate(this, R.layout.checkbox, null);
-        CheckBox checkBox = (CheckBox) checkboxView.findViewById(R.id.checkbox);
+        CheckBox checkBox = checkboxView.findViewById(R.id.checkbox);
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -510,7 +509,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     }
 
     public void setUpToolbar() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.inflateMenu(R.menu.main_menu);
 
         if (preferences.contains("AutoStop")) {

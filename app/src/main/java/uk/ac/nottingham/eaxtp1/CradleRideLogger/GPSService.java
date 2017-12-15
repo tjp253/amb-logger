@@ -1,5 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
@@ -10,7 +11,6 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 
 import java.util.Arrays;
@@ -35,7 +35,7 @@ public class GPSService extends Service implements LocationListener {
     PowerManager.WakeLock wakelock;
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
 
-    NotificationCompat.Builder builder;
+    Notification.Builder builder;
 
     double lat, lon;
     static String sLat, sLong, sSpeed, sGPS = "0";
@@ -144,11 +144,10 @@ public class GPSService extends Service implements LocationListener {
     }
 
     public void stopNotification() {
-        builder =
-                (NotificationCompat.Builder) new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.stop_symb)
-                        .setContentTitle("CradleRide Logger")
-                        .setContentText("Recording stopped due to lack of movement.");
+        builder = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.stop_symb)
+                .setContentTitle("CradleRide Logger")
+                .setContentText("Recording stopped due to lack of movement.");
 
         NotificationManager manager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
