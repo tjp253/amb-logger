@@ -25,7 +25,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class UploadService extends IntentService {

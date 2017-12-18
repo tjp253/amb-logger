@@ -20,7 +20,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
 @SuppressWarnings("MissingPermission")
 public class GPSService extends Service implements LocationListener {

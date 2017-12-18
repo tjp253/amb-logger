@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnected;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
 public class MovingService extends IntentService {
     public MovingService() { super("MovingService");

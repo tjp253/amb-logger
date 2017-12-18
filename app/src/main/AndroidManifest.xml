@@ -16,7 +16,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Permissions for the Broadcast Receiver -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Permission for recording sound -->
@@ -43,7 +42,7 @@
         </activity>
 
         <receiver
-            android:name=".WifiReceiver"
+            android:name=".NetworkReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

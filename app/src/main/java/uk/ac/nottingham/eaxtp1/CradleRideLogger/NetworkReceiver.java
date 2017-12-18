@@ -7,11 +7,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
-public class WifiReceiver extends BroadcastReceiver {
-    public WifiReceiver() {
+public class NetworkReceiver extends BroadcastReceiver {
+    public NetworkReceiver() {
     }
 
-    String TAG = "Wifi Receiver";
+    String TAG = "Network Receiver";
 
     static boolean wifiConnected = false;
 
