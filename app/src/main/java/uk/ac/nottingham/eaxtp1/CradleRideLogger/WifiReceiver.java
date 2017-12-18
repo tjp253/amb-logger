@@ -3,6 +3,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
@@ -21,23 +22,27 @@ public class WifiReceiver extends BroadcastReceiver {
 
         Intent uploadService = new Intent(context, UploadService.class);
 
-        NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+//        NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 
-        if (info != null && info.isConnected() && !wifiConnected) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            NetworkInfo info = cm.getActiveNetworkInfo();
 
-            wifiConnected = true;
+            if (info != null && info.getType() == ConnectivityManager.TYPE_WIFI && !wifiConnected) {
 
-            Log.i(TAG, "Wifi connected.");
+                wifiConnected = true;
 
-        } else if (info != null && !info.isConnected() && wifiConnected) {
+                Log.i(TAG, "Wifi connected.");
 
-            wifiConnected = false;
+            } else if (info != null && info.getType() != ConnectivityManager.TYPE_WIFI && wifiConnected) {
 
-            Log.i(TAG, "Wifi not connected.");
+                wifiConnected = false;
 
-            context.stopService(uploadService);
+                Log.i(TAG, "Wifi not connected.");
+
+                context.stopService(uploadService);
+            }
         }
-
     }
 
 }

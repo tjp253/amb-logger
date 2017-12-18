@@ -19,8 +19,8 @@ import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -45,9 +45,6 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiReceiver.wifiConnecte
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
 
     String TAG = "Main Activity";
-
-    WifiManager wifiManager;
-    WifiInfo wifiInfo;
 
     Intent uploadService, recordingService;
     Intent audioService, gpsService, imuService, loggingService;
@@ -150,10 +147,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         uploadService = new Intent(this, UploadService.class);
         if (!wifiConnected) {
-            wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-            if (wifiManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
-                wifiInfo = wifiManager.getConnectionInfo();
-                if (wifiInfo != null && wifiInfo.getNetworkId() != -1) {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null) {
+                NetworkInfo info = cm.getActiveNetworkInfo();
+                if (info != null && info.getType() == ConnectivityManager.TYPE_WIFI) {
                     wifiConnected = true;
                     Log.i(TAG, "Wifi Connected.");
 

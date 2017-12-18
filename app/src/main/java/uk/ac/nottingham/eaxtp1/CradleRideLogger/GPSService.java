@@ -38,9 +38,9 @@ public class GPSService extends Service implements LocationListener {
     Notification.Builder builder;
 
     double lat, lon;
-    static String sLat, sLong, sSpeed, sGPS = "0";
+    String sLat, sLong, sSpeed;
     String sAcc, sAlt, sBear, sRT, sGTime;
-    static String gpsData;
+    static String gpsData, sGPS = "0";
     List<String> dataList;
     static short gpsSample;
     private long statSamples, movingSamples;
