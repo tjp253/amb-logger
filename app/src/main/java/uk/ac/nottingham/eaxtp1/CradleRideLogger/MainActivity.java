@@ -268,10 +268,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     public void stopAll() {
 //        stopService(recordingService);
-        stopService(loggingService);
+        stopService(imuService);
         stopService(audioService);
         stopService(gpsService);
-        stopService(imuService);
+        stopService(loggingService);
     }
 
     public void stopLogging() {

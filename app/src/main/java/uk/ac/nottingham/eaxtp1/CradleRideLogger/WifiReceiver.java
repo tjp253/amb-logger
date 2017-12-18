@@ -5,14 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
 import android.util.Log;
 
 public class WifiReceiver extends BroadcastReceiver {
     public WifiReceiver() {
     }
 
-    //    String mainPath, finishedPath;
     String TAG = "Wifi Receiver";
 
     static boolean wifiConnected = false;
@@ -21,8 +19,6 @@ public class WifiReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         Intent uploadService = new Intent(context, UploadService.class);
-
-//        NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm != null) {

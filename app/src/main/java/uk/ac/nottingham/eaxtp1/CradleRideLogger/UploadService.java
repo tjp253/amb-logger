@@ -57,10 +57,6 @@ public class UploadService extends IntentService {
     public void onCreate() {
         super.onCreate();
 
-        while (moving) {
-            onDestroy();
-        }
-
         Log.i(TAG, "Upload Service started.");
         myComponent = new ComponentName(this, UploadJobService.class);
 
@@ -87,6 +83,10 @@ public class UploadService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+
+        if (moving) {
+            return;
+        }
 
         File finishedFolder = new File(finishedPath);
         if (finishedFolder.listFiles().length == 0) {

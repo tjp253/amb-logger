@@ -240,6 +240,8 @@ public class LoggingService extends Service {
             writeToFile();
         }
 
+        myQ.clear();
+
         if (myOutputStream != null) {
             try {
                 myOutputStream.close();
