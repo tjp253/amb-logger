@@ -1,10 +1,15 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.annotation.SuppressLint;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.File;
@@ -52,6 +57,8 @@ public class UploadService extends IntentService {
 
     int filesLeft;
     ComponentName myComponent;
+    int jobID = 253;
+    boolean jobSent;
 
     @Override
     public void onCreate() {
@@ -85,7 +92,18 @@ public class UploadService extends IntentService {
     protected void onHandleIntent(Intent intent) {
 
         if (moving) {
-            return;
+            try {
+                Thread.sleep(5000);     // Wait for 5 seconds to finish moving files. Rather than kill straight away.
+            } catch (Exception e) {
+                Log.i(TAG, "Doesn't like sleeping..");
+                return;
+            }
+            if (moving) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    buildJob();             // If moving is taking AGES, generate job to upload later.
+                }
+                return;
+            }
         }
 
         File finishedFolder = new File(finishedPath);
@@ -350,43 +368,25 @@ public class UploadService extends IntentService {
         }
     }
 
-//    Change this and the PHP for if the file is the wrong type? Though why would that be an issue???
-//    public void moveFailed(String failedFile) {
-//
-//        InputStream in;
-//        OutputStream out;
-//
-//        try {
-//
-//            //create output directory if it doesn't exist
-//            File dir = new File (failedPath);
-//            if (!dir.exists())
-//            {
-//                dir.mkdirs();
-//            }
-//
-//
-//            in = new FileInputStream(finishedPath + failedFile);
-//            out = new FileOutputStream(failedPath + failedFile);
-//
-//            byte[] buffer = new byte[1024];
-//            int read;
-//            while ((read = in.read(buffer)) != -1) {
-//                out.write(buffer, 0, read);
-//            }
-//            in.close();
-//
-//            // write the output file
-//            out.flush();
-//            out.close();
-//
-//            // delete the original file
-//            new File(finishedPath + failedFile).delete();
-//
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
+    @SuppressLint("NewApi")
+    public void buildJob() {
+        if (!jobSent) {
+            JobInfo.Builder builder = new JobInfo.Builder(jobID++, myComponent)
+                    .setMinimumLatency(60*1000)     // Wait for at least a minute before executing job.
+                    .setPersisted(true)             // Keeps job in system after system reboot BUT NOT IF APP IS FORCE CLOSED
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);     // Only execute on Wi-Fi
+//                .setRequiresDeviceIdle(false);    // Don't upload while device being used (yes? no?)
+
+//        Schedule job:
+            JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+            if (js != null) {
+                js.schedule(builder.build());
+            }
+
+            Log.i(TAG, "Job " + jobID + " prepared.");
+
+            jobSent = true;
+        }
+    }
 
 }

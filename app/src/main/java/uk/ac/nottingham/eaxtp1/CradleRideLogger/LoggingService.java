@@ -17,11 +17,13 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
@@ -171,7 +173,13 @@ public class LoggingService extends Service {
         qSize = myQ.size();
 
         for (int i = 0; i < qSize; i++) {
-            stringBuilder.append(myQ.remove());
+            try {
+                stringBuilder.append(myQ.remove());
+            } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
+                i++;
+                Log.i(TAG, "Queue empty. Supposed size: " + qSize + ". Remove attempt number: " + i + ".");
+                break;
+            }
         }
 
         toFile = stringBuilder.toString();
@@ -238,9 +246,11 @@ public class LoggingService extends Service {
         if (myQ.size() > 0) {
             Log.i(TAG, "Writing final outputs.");
             writeToFile();
+            myQ.clear();
         }
 
-        myQ.clear();
+        // Clear the GPS data for the next recording.
+        gpsData = "";
 
         if (myOutputStream != null) {
             try {

@@ -52,7 +52,7 @@ public class IMUService extends Service implements SensorEventListener {
     int prevAmp;
 
     private float[] deviceValues = new float[4];
-    private float[] worldValues = new float[3];
+    float fN, fE, fD;
     private float[] gravityValues = new float[3];
     private float[] magneticValues = new float[3];
     //    Matrices for converting from device to world coordinates
@@ -117,22 +117,27 @@ public class IMUService extends Service implements SensorEventListener {
                 deviceValues[1] = event.values[1];
                 deviceValues[2] = event.values[2];
 
+
                 SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);
 
                 Matrix.invertM(inverse, 0, rMatrix, 0);
                 Matrix.multiplyMV(worldMatrix, 0, inverse, 0, deviceValues, 0);
 
-                worldValues[0] = worldMatrix[0];
-                worldValues[1] = worldMatrix[1];
-                worldValues[2] = worldMatrix[2];
+                fE = worldMatrix[0];
+                fN = worldMatrix[1];
+                fD = worldMatrix[2];
 
                 sX = Float.toString(deviceValues[0]);
                 sY = Float.toString(deviceValues[1]);
                 sZ = Float.toString(deviceValues[2]);
 
-                sE = Float.toString(worldValues[0]);
-                sN = Float.toString(worldValues[1]);
-                sD = Float.toString(worldValues[2]);
+                sE = Float.toString(fE);
+                sN = Float.toString(fN);
+                sD = Float.toString(fD);
+
+                if (fE==fN && fE==fD && fE==0) {
+                    sE = "";    sN = "";    sD = "";
+                }
 
             } else {
 

@@ -40,6 +40,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
@@ -260,6 +261,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     }
 
     public void startAll() {
+        myQ.clear();
         startService(gpsService);
 //                startService(recordingService);
         startService(loggingService);
