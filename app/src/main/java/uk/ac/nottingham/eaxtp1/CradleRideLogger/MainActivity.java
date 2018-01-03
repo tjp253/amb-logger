@@ -47,7 +47,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     String TAG = "Main Activity";
 
-    Intent uploadService, recordingService;
+    Intent uploadService;//, recordingService;
     Intent audioService, gpsService, imuService, loggingService;
 
     SharedPreferences preferences;
@@ -164,11 +164,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 }
             }
         }
-        recordingService = new Intent(this, RecordingService.class);
-        audioService = new Intent(this, AudioService.class);
-        gpsService = new Intent(this, GPSService.class);
-        imuService = new Intent(this, IMUService.class);
-        loggingService = new Intent(this, LoggingService.class);
+//        recordingService = new Intent(getApplicationContext(), RecordingService.class);
+        audioService = new Intent(getApplicationContext(), AudioService.class);
+        gpsService = new Intent(getApplicationContext(), GPSService.class);
+        imuService = new Intent(getApplicationContext(), IMUService.class);
+        loggingService = new Intent(getApplicationContext(), LoggingService.class);
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 

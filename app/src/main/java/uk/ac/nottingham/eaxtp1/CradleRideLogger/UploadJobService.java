@@ -21,7 +21,7 @@ public class UploadJobService extends JobService {
     public void onCreate() {
         super.onCreate();
 
-        uploadService = new Intent(this, UploadService.class);
+        uploadService = new Intent(getApplicationContext(), UploadService.class);
 
     }
 

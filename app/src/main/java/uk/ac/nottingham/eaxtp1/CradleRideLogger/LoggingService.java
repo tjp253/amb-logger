@@ -267,19 +267,19 @@ public class LoggingService extends Service {
         if (!sentIntents) {
             if (crashed) {
 
-                Intent stopAudio = new Intent(this, AudioService.class);
-                Intent stopGPS = new Intent(this, GPSService.class);
-                Intent stopIMU = new Intent(this, IMUService.class);
+                Intent stopAudio = new Intent(getApplicationContext(), AudioService.class);
+                Intent stopGPS = new Intent(getApplicationContext(), GPSService.class);
+                Intent stopIMU = new Intent(getApplicationContext(), IMUService.class);
                 this.stopService(stopAudio);
                 this.stopService(stopGPS);
                 this.stopService(stopIMU);
 
-                Intent deletingService = new Intent(this, FileDeletingService.class);
+                Intent deletingService = new Intent(getApplicationContext(), FileDeletingService.class);
                 this.startService(deletingService);
 
             } else {
 
-                Intent movingService = new Intent(this, MovingService.class);
+                Intent movingService = new Intent(getApplicationContext(), MovingService.class);
                 this.startService(movingService);
 
             }

@@ -105,7 +105,7 @@ public class MovingService extends IntentService {
 
         if (!sentUploadIntent) {
             if (wifiConnected) {
-                Intent uploadService = new Intent(this, UploadService.class);
+                Intent uploadService = new Intent(getApplicationContext(), UploadService.class);
                 this.startService(uploadService);
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 buildJob();
