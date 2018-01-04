@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -36,10 +37,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
@@ -57,19 +62,21 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
 
-    public Button recordButton, initialiseButton;
+    Timer shutoffTimer, timeoutTimer, positioningTimer;
+
+    public Button recordButton;
     public TextView instructDisplay, versionView;
 
     protected LocationManager myLocationManager;
 
-//    Sets up variables for the GPS fix-check
-    boolean isGPSFixed;
+    //    Sets up variables for the GPS fix-check
+    boolean gpsFixed;
     long myLastLocationMillis;
     Location myLastLocation;
 
-    boolean initialising;
+    boolean initialising, positioned;
     static boolean recording, compressing, moving,
-            crashed, forcedStop, gravityPresent,
+            crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
             autoStopOn;
 
     static String mainPath, finishedPath;
@@ -119,14 +126,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
         versionView.setText(version);
 
-        initialiseButton = findViewById(R.id.button_Initialise);
         recordButton = findViewById(R.id.button_Record);
-
-        initialiseButton.setOnClickListener(this);
         recordButton.setOnClickListener(this);
 
 //        Disables the Start button
-        recordButton.setEnabled(false); // TODO: set 'false' when creating signed build.
+        recordButton.setEnabled(true); // TODO: set 'false' when creating signed build.
 
         instructDisplay.setText(R.string.startGPS);
 
@@ -136,7 +140,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         crashed = false;
 
         mainPath = String.valueOf(getExternalFilesDir(""));
-//        folderPath = mainPath + "/Recording";
         finishedPath = mainPath + "/Finished";
 
 //        Checks (and asks for) permission on app start-up
@@ -164,7 +167,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 }
             }
         }
-//        recordingService = new Intent(getApplicationContext(), RecordingService.class);
         audioService = new Intent(getApplicationContext(), AudioService.class);
         gpsService = new Intent(getApplicationContext(), GPSService.class);
         imuService = new Intent(getApplicationContext(), IMUService.class);
@@ -203,13 +205,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onResume() {
         super.onResume();
 
-//        Resumes GPS when initialising.
-        if (initialising) {
-            startInitialising();
-        }
+////        Resumes GPS when initialising.
+//        if (initialising) {
+//            startInitialising();
+//        }
 
         if (crashed) {
-           onCrash();
+            onCrash();
         }
 
         if (forcedStop) {
@@ -223,11 +225,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onPause() {
         super.onPause();
 
-//        Stops GPS from draining the battery.
-        if (initialising && !recording) {
-            stopListening();
-            stopAll();
-        }
+////        Stops GPS from draining the battery.
+//        if (initialising && !recording) {
+//            stopInitialising();
+//        }
 
         if (crashed) {
             onCrash();
@@ -239,7 +240,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     public void startInitialising() {
         initialising = true;
         recording = false;
-        initialiseButton.setEnabled(false);
         recordButton.setEnabled(false);
 
         myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
@@ -248,42 +248,75 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         instructDisplay.setText(R.string.initialising);
 
         startService(audioService);
+
+        gpsTimeOut();
+
+        allowPositioning();
+    }
+
+    public void stopInitialising() {
+        stopListening();
+        if (positioningTimer != null) {
+            positioningTimer.cancel();
+        }
+        stopAll();
     }
 
     public void onCrash() {
         stopAll();
-        recording = false;
         initialising = false;
         recordButton.setText(R.string.button_Start);
         recordButton.setEnabled(false);
-        initialiseButton.setEnabled(false);
         instructDisplay.setText(R.string.crashed);
     }
 
     public void startAll() {
-        myQ.clear();
+        recording = true;
+        initialising = false;
+        forcedStop = false;
+
+        instructDisplay.setText(R.string.recording);
+
+//        myQ.clear();
+//      Remove all elements from the queue.
+        for (int i = 0; i < myQ.size(); i++) {
+            try {
+                myQ.remove();
+            } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
+                Log.i(TAG, "Queue empty.");
+                break;
+            }
+        }
+
         startService(gpsService);
-//                startService(recordingService);
         startService(loggingService);
         startService(imuService);
+
+        recordButton.setText(R.string.button_Stop);
+        recordButton.setEnabled(true);
+
+        gpsShutOff();
+
+        if (timeoutTimer != null) {
+            timeoutTimer.cancel();
+        }
     }
 
     public void stopAll() {
-//        stopService(recordingService);
         stopService(imuService);
         stopService(audioService);
         stopService(gpsService);
         stopService(loggingService);
+
+        recording = false;
+        positioned = false;
     }
 
     public void stopLogging() {
         instructDisplay.setText(R.string.finished);
 
-        recording = false;
-
         recordButton.setText(R.string.button_Start);
-        recordButton.setEnabled(false);
-        initialiseButton.setEnabled(true);
+        recordButton.setEnabled(true);
     }
 
     public void stopListening() {
@@ -294,56 +327,34 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @Override
     public void onClick(View v) {
 
-        if (v == initialiseButton) {
-//        Re-checks (and asks for) the GPS permission needed
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-                if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                        checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
-                    permissionCheck();
-
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                        checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                        checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
-                    instructDisplay.setText(R.string.permissions);
-                    return;
-                }
-
-            }
-
-            startInitialising();
-
-        } else if (v == recordButton) {
+        if (v == recordButton) {
 
             if (!recording && !forcedStop) { // Start recording data
-                recording = true;
-                initialising = false;
-                forcedStop = false;
+                //        Re-checks (and asks for) the GPS permission needed
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
-                instructDisplay.setText(R.string.recording);
-                startAll();
+                    if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
+                        permissionCheck();
 
-                final Timer timer = new Timer();
-                TimerTask timerTask = new TimerTask() {
-                    @Override
-                    public void run() {
-                        stopListening();
-                        timer.cancel();
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
-                };
-                timer.schedule(timerTask, 1000, 1000);
 
-                initialiseButton.setEnabled(false);
+                    if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
+                        instructDisplay.setText(R.string.permissions);
+                        return;
+                    }
 
-                recordButton.setText(R.string.button_Stop);
+                }
+
+                startInitialising();
 
             } else { // Stop recording data
 
@@ -361,36 +372,68 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     public void onGpsStatusChanged(int event) {
 
         if (initialising) {
-            initialiseButton.setEnabled(false);
 
 //        Ensures the GPS is fixed before the user starts recording
             switch (event) {
                 case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
                     if (myLastLocation != null)
-                        isGPSFixed = (SystemClock.elapsedRealtime() - myLastLocationMillis) < 3000;
+                        gpsFixed = (SystemClock.elapsedRealtime() - myLastLocationMillis) < 3000;
 
-                    if (isGPSFixed) {
+                    if (gpsFixed && positioned) {
 
-                        if (!recordButton.isEnabled()) {
-//                        Updates text to tell user they can start recording
-                            instructDisplay.setText(R.string.locked);
-                        }
+                        startAll();
 
-                        recordButton.setEnabled(true);
                     } else {
-                        recordButton.setEnabled(false);
-
                         instructDisplay.setText(R.string.initialising);
                     }
 
                     break;
                 case GpsStatus.GPS_EVENT_FIRST_FIX:
 
-                    isGPSFixed = true;
+                    gpsFixed = true;
 
                     break;
             }
         }
+    }
+
+//    Allow time for phone positioning before recording - less cut-off needed in analysis?
+    public void allowPositioning() {
+        positioningTimer = new Timer();
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                positioned = true;
+            }
+        };
+        positioningTimer.schedule(timerTask, 10*1000);  // Allow ten seconds to position phone before recording data.
+    }
+
+//    Stop listening to GPS in Main Activity after 1 second. Allows GPS Service to get running while still locked.
+    public void gpsShutOff() {
+        shutoffTimer = new Timer();
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                stopListening();
+//                shutoffTimer.cancel();
+            }
+        };
+        shutoffTimer.schedule(timerTask, 1000);
+    }
+
+//    Cancels recording if the GPS can't get a fix within a reasonable time.
+    public void gpsTimeOut() {
+        timeoutTimer = new Timer();
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (initialising && !recording) {
+                    stopInitialising();
+                }
+            }
+        };
+        timeoutTimer.schedule(timerTask, 60*1000);
     }
 
     @Override
@@ -401,6 +444,20 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         myLastLocationMillis = SystemClock.elapsedRealtime();
 
         myLastLocation = location;
+
+        if (gpsFixed && !recording) {
+            String sLat = String.valueOf(location.getLatitude());
+            String sLong = String.valueOf(location.getLongitude());
+            String sSpeed = String.valueOf(location.getSpeed());
+            String sGTime = String.valueOf(location.getTime());
+            String sAcc = String.valueOf(location.getAccuracy());
+            String sAlt = String.valueOf(location.getAltitude());
+            String sBear = String.valueOf(location.getBearing());
+            String sRT = String.valueOf(location.getElapsedRealtimeNanos());
+
+            List<String> dataList = Arrays.asList(sLat,sLong,sSpeed,sGTime,sAcc,sAlt,sBear,sRT);
+            gpsData = TextUtils.join(",", dataList);
+        }
 
         if (crashed) {
             myLocationManager.removeUpdates(this);
@@ -494,7 +551,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                         autoStopCheckbox.setChecked(autoStopOn);
                         prefEditor.putBoolean("AutoStop", autoStopOn);
                         prefEditor.commit();
-                        autostopToast();
+                        autoStopToast();
                     }
                 })
                 .setNegativeButton(R.string.butt_cancel, new DialogInterface.OnClickListener() {
@@ -537,7 +594,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                             item.setChecked(autoStopOn);
                             prefEditor.putBoolean("AutoStop", autoStopOn);
                             prefEditor.commit();
-                            autostopToast();
+                            autoStopToast();
                         }
                         return true;
                 }
@@ -546,7 +603,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         });
     }
 
-    public void autostopToast() {
+    public void autoStopToast() {
         String message;
         if (autoStopOn) {
             message = getString(R.string.as_on);
