@@ -8,19 +8,14 @@
     <string name="button_Start">Start Recording</string>
     <string name="button_Stop">Stop Recording</string>
 
-    <string name="button_Pothole">Pothole</string>
-    <string name="button_SurfaceBad">Bad Surface</string>
-    <string name="button_SurfaceGood">Good Surface</string>
-
-    <string name="startGPS">Please start the GPS receiver.</string>
-    <string name="initialising">Please wait for the GPS to fix your location.</string>
-    <string name="locked">The GPS is locked. Please start recording your journey.</string>
-    <string name="recording">Please turn your screen off for the duration of the journey.</string>
+    <string name="startGPS">Please start the recording and place your phone in position.</string>
+    <string name="failed">GPS failed to lock on. \n\nPlease try again.</string>
+    <string name="recording">Please ensure your phone is in position. \nPlease do not touch your phone during the journey.<!--\nYou may turn your screen off for the journey.--></string>
     <string name="finished">Thank you for recording your journey.</string>
     <string name="crashed">Something went wrong with recording. Please restart the app.</string>
     <string name="permissions">Please grant all permissions to enable recording.</string>
 
-    <string name="orient_info">\nPlease place the phone with the right side facing forward travel.\n --->\n </string>
+    <string name="orient_info">\n\nPlease place the phone with the right side facing forward travel.\n --->\n </string>
 
     <string name="ad_title">Disclosure Agreement</string>
     <string name="ad_button">Accept</string>
@@ -29,7 +24,6 @@
     <string name="disclosure">This app collects GPS, accelerometer, gyroscope, magnetometer and peak audio data from the
         phone when the app is running and the user has requested logging be started.
         \n\nThe data collected is sent securely to our server for analysis and use in a research project.
-        <!--\n\nIf you consent, please check the box and continue to the app.-->
     </string>
 
     <string name="butt_ok">@android:string/ok</string>

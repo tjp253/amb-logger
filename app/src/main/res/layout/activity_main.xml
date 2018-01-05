@@ -37,7 +37,7 @@
         android:id="@+id/instructDisplay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:height="120dp"
+        android:height="140dp"
         android:text="@string/instruct_placeholder"
         android:textSize="30sp" />
 
@@ -50,15 +50,15 @@
 
 
     <TextView
-        android:text="@string/orient_info"
-        android:layout_width="match_parent"
         android:id="@+id/orientDisplay"
-        android:rotation="0"
-        android:textSize="24sp"
-        android:textAlignment="center"
-
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight=".15"
-        android:layout_height="wrap_content" />
+        android:rotation="0"
+        android:text="@string/orient_info"
+
+        android:textAlignment="center"
+        android:textSize="24sp" />
 
     <!--<Button-->
         <!--android:id="@+id/button_Initialise"-->

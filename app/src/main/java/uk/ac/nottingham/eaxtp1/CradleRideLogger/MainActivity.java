@@ -237,7 +237,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
         myLocationManager.addGpsStatusListener(this);
 
-        instructDisplay.setText(R.string.initialising);
+        instructDisplay.setText(R.string.recording);
 
         startService(audioService);
 
@@ -267,7 +267,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         initialising = false;
         forcedStop = false;
 
-        instructDisplay.setText(R.string.recording);
+//        instructDisplay.setText(R.string.recording);
         startService(audioService);
         startService(gpsService);
         startService(loggingService);
@@ -363,9 +363,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                     if (gpsFixed && positioned) {
                         startAll();
-                    } else {
+                    } /*else {
                         instructDisplay.setText(R.string.initialising);
-                    }
+                    }*/
 
                     break;
                 case GpsStatus.GPS_EVENT_FIRST_FIX:
@@ -391,7 +391,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
 //    Cancels recording if the GPS can't get a fix within a reasonable time.
     public void gpsTimeOut() {
-        timeoutTimer = new CountDownTimer(60*1000, 60*1000) {
+        timeoutTimer = new CountDownTimer(60*1000, 60*1000) {   // TODO: Set to 60 seconds.
             public void onTick(long millisUntilFinished) {}
 
             @Override
@@ -399,6 +399,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 if (initialising && !recording) {
                     Log.i(TAG, "GPS Timed Out");
                     stopInitialising();
+                    instructDisplay.setText(R.string.failed);
                 }
             }
         }.start();
