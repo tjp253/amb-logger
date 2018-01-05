@@ -61,13 +61,13 @@ public class IMUService extends Service implements SensorEventListener {
     private float[] worldMatrix = new float[16];
     private float[] inverse = new float[16];
 
-    static Queue<String> myQ = new LinkedList<>();
+    static Queue<String> myQ;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-
+        myQ = new LinkedList<>();
 
         if(crashed) {
             onDestroy();

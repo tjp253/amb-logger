@@ -57,8 +57,13 @@ public class GPSService extends Service implements LocationListener {
             onDestroy();
         }
 
-        gpsSample = 1;
-        sGPS = "1";
+        if (gpsData != null && !gpsData.equals("")) {
+            gpsSample = 1;
+            sGPS = "1";
+        } else {
+            gpsSample = 0;
+            sGPS = "";
+        }
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (myLocationManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning

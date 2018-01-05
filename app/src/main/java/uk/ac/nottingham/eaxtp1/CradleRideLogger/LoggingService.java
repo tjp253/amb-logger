@@ -171,15 +171,16 @@ public class LoggingService extends Service {
         stringBuilder.setLength(0);
 
         qSize = myQ.size();
+        try {
 
-        for (int i = 0; i < qSize; i++) {
-            try {
+            for (int i = 0; i < qSize; i++) {
                 stringBuilder.append(myQ.remove());
-            } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
-                i++;
-                Log.i(TAG, "Queue empty. Supposed size: " + qSize + ". Remove attempt number: " + i + ".");
-                break;
             }
+
+        } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
+
+            Log.i(TAG, "Queue empty. Supposed size: " + qSize /*+ ". Remove attempt number: " + i */+ ".");
+            e.getMessage();
         }
 
         toFile = stringBuilder.toString();
@@ -246,8 +247,8 @@ public class LoggingService extends Service {
         if (myQ.size() > 0) {
             Log.i(TAG, "Writing final outputs.");
             writeToFile();
-            myQ.clear();
         }
+        myQ = null;
 
         // Clear the GPS data for the next recording.
         gpsData = "";
