@@ -4,18 +4,19 @@
     <string name="id_placeholder">Unique ID + Version Number</string>
     <string name="instruct_placeholder">Instructions</string>
 
-    <string name="button_Initialise">Initialise GPS</string>
-    <string name="button_Start">Start Recording</string>
-    <string name="button_Stop">Stop Recording</string>
+    <string name="butt_init">Initialising GPS</string>
+    <string name="butt_start">Start Recording</string>
+    <string name="butt_stop">Stop Recording</string>
 
     <string name="startGPS">Please start the recording and place your phone in position.</string>
     <string name="failed">GPS failed to lock on. \n\nPlease try again.</string>
-    <string name="recording">Please ensure your phone is in position. \nPlease do not touch your phone during the journey.<!--\nYou may turn your screen off for the journey.--></string>
+    <string name="initialising">Recording will start shortly.</string>
+    <string name="recording">Please do not touch your phone during the journey.</string>
     <string name="finished">Thank you for recording your journey.</string>
-    <string name="crashed">Something went wrong with recording. Please restart the app.</string>
+    <string name="crashed">Something went wrong with recording. \n\nPlease restart the app.</string>
     <string name="permissions">Please grant all permissions to enable recording.</string>
 
-    <string name="orient_info">\n\nPlease place the phone with the right side facing forward travel.\n --->\n </string>
+    <string name="orient_info">\n\n\n Align arrow with forward travel.\n\n --->\n </string>
 
     <string name="ad_title">Disclosure Agreement</string>
     <string name="ad_button">Accept</string>

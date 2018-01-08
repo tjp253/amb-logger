@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:orientation="vertical"
@@ -41,13 +42,38 @@
         android:text="@string/instruct_placeholder"
         android:textSize="30sp" />
 
-    <Button
-        android:id="@+id/button_Record"
+    <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.25"
-        android:text="@string/button_Start" />
+        android:layout_weight=".25">
 
+        <Button
+            android:id="@+id/button_Record"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+
+            android:text="@string/butt_start"
+            tools:layout_editor_absoluteX="16dp"
+            tools:layout_editor_absoluteY="640dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ProgressBar
+            android:id="@+id/initProgress"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="@+id/button_Record"
+            app:layout_constraintEnd_toEndOf="@+id/button_Record"
+            app:layout_constraintStart_toStartOf="@+id/button_Record"
+            app:layout_constraintTop_toTopOf="@+id/button_Record" />
+    </android.support.constraint.ConstraintLayout>
 
     <TextView
         android:id="@+id/orientDisplay"

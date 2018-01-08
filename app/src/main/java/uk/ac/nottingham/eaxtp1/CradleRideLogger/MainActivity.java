@@ -25,6 +25,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -34,6 +35,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,7 +59,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     String user_ID = "User ID";
     static int userID;
 
-    int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
+    final int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
 
     CountDownTimer timeoutTimer, positioningTimer;
 
@@ -70,8 +72,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     boolean gpsFixed;
     long myLastLocationMillis;
     Location myLastLocation;
+    private ProgressBar loadingAn;
 
-    boolean initialising, positioned;
+    boolean initialising, positioned, buttPressed, gGranted, aGranted;
     static boolean recording, compressing, moving,
             crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
             autoStopOn;
@@ -173,6 +176,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         setUpToolbar();
 
+        loadingAn = findViewById(R.id.initProgress);
+        loadingAn.setVisibility(View.GONE);
+
         gravityCheck();
     }
 
@@ -233,11 +239,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         initialising = true;
         recording = false;
         recordButton.setEnabled(false);
+        recordButton.setText(R.string.butt_init);
+        loadingAn.setVisibility(View.VISIBLE);
         gpsData = "";
         myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
         myLocationManager.addGpsStatusListener(this);
 
-        instructDisplay.setText(R.string.recording);
+        instructDisplay.setText(R.string.initialising);
 
         startService(audioService);
 
@@ -257,7 +265,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     public void onCrash() {
         stopAll();
         initialising = false;
-        recordButton.setText(R.string.button_Start);
+        recordButton.setText(R.string.butt_start);
         recordButton.setEnabled(false);
         instructDisplay.setText(R.string.crashed);
     }
@@ -266,14 +274,15 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recording = true;
         initialising = false;
         forcedStop = false;
+        loadingAn.setVisibility(View.GONE);
 
-//        instructDisplay.setText(R.string.recording);
+        instructDisplay.setText(R.string.recording);
         startService(audioService);
         startService(gpsService);
         startService(loggingService);
         startService(imuService);
 
-        recordButton.setText(R.string.button_Stop);
+        recordButton.setText(R.string.butt_stop);
         recordButton.setEnabled(true);
 
         if (timeoutTimer != null) {
@@ -296,7 +305,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     public void stopLogging() {
         instructDisplay.setText(R.string.finished);
 
-        recordButton.setText(R.string.button_Start);
+        recordButton.setText(R.string.butt_start);
         recordButton.setEnabled(true);
     }
 
@@ -312,43 +321,32 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             if (!recording && !forcedStop) { // Start recording data
                 //        Re-checks (and asks for) the GPS permission needed
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                        !(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                                checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) ) {
 
-                    if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
-                        permissionCheck();
+                    buttPressed = true;
 
-                        try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    permissionCheck();
 
-                    if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                            checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                            checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)) {
-                        instructDisplay.setText(R.string.permissions);
-                        return;
-                    }
-
-                }
+            } else {
 
                 startInitialising();    // TODO: Uncomment startInitialising() and comment out startAll()
 //                startAll();
-
-            } else { // Stop recording data
-
-                stopAll();
-
-                stopLogging();
-
             }
+
+        } else { // Stop recording data
+
+            stopAll();
+
+            stopLogging();
 
         }
 
     }
+
+}
 
     @Override
     public void onGpsStatusChanged(int event) {
@@ -415,17 +413,17 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             myLastLocation = location;
 
-                String sLat = String.valueOf(location.getLatitude());
-                String sLong = String.valueOf(location.getLongitude());
-                String sSpeed = String.valueOf(location.getSpeed());
-                String sGTime = String.valueOf(location.getTime());
-                String sAcc = String.valueOf(location.getAccuracy());
-                String sAlt = String.valueOf(location.getAltitude());
-                String sBear = String.valueOf(location.getBearing());
-                String sRT = String.valueOf(location.getElapsedRealtimeNanos());
+            String sLat = String.valueOf(location.getLatitude());
+            String sLong = String.valueOf(location.getLongitude());
+            String sSpeed = String.valueOf(location.getSpeed());
+            String sGTime = String.valueOf(location.getTime());
+            String sAcc = String.valueOf(location.getAccuracy());
+            String sAlt = String.valueOf(location.getAltitude());
+            String sBear = String.valueOf(location.getBearing());
+            String sRT = String.valueOf(location.getElapsedRealtimeNanos());
 
-                List<String> dataList = Arrays.asList(sLat, sLong, sSpeed, sGTime, sAcc, sAlt, sBear, sRT);
-                gpsData = TextUtils.join(",", dataList);
+            List<String> dataList = Arrays.asList(sLat, sLong, sSpeed, sGTime, sAcc, sAlt, sBear, sRT);
+            gpsData = TextUtils.join(",", dataList);
 
         } else {
             myLocationManager.removeUpdates(this);
@@ -447,6 +445,25 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_AUDIO);
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_GPS:
+                gGranted = (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
+                break;
+            case PERMISSION_AUDIO:
+                aGranted = (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
+                break;
+        }
+
+        if ( !(gGranted && aGranted) && buttPressed ) {
+            instructDisplay.setText(R.string.permissions);
+        } else if (buttPressed) {
+            startInitialising();
+        }
+        buttPressed = false;
     }
 
     AlertDialog disclosureDialog, policyDialog, checkDialog;
