@@ -141,11 +141,9 @@ public class GPSService extends Service implements LocationListener {
     }
 
     public void stopOthers() {
-//        Intent stopRecording = new Intent(this, RecordingService.class);
         Intent stopAudio = new Intent(this, AudioService.class);
         Intent stopIMU = new Intent(this, IMUService.class);
         Intent stopLogging = new Intent(this, LoggingService.class);
-//        this.stopService(stopRecording);
         this.stopService(stopAudio);
         this.stopService(stopIMU);
         this.stopService(stopLogging);

@@ -27,7 +27,7 @@ public class MovingService extends IntentService {
     String mainPath, folderPath, finishedPath;
 
     int jobID = 24;
-    String TAG = "Moving Service";
+    String TAG = "CRL_MovingService";
     private ComponentName myComponent;
     boolean jobSent, sentUploadIntent;
 

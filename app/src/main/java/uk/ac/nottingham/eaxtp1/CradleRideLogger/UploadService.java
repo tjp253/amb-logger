@@ -46,9 +46,9 @@ public class UploadService extends IntentService {
     URL url;
     String urlString = "https://optics.eee.nottingham.ac.uk/~tp/upload.php";
 
-    String TAG = "Upload Service";
+    String TAG = "CRL_UploadService";
 
-    String mainPath, recordPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
+    String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
 
     int uploadFileCount = 0, oversizedFileCount = 0, failedFileCount = 0;
 
@@ -68,7 +68,6 @@ public class UploadService extends IntentService {
         myComponent = new ComponentName(this, UploadJobService.class);
 
         mainPath = String.valueOf(getExternalFilesDir(""));
-        recordPath = mainPath + "/Recording";
         finishedPath = mainPath + "/Finished";
         movedPath = mainPath + "/Uploaded";
         oversizedPath = mainPath + "/Oversized";

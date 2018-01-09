@@ -39,7 +39,7 @@ public class LoggingService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    String TAG = "Logging Service";
+    String TAG = "CRL_LoggingService";
 
     int loggingPeriod = 5;     // Set the logging period in seconds
 
@@ -75,7 +75,7 @@ public class LoggingService extends Service {
     int zipPart = 1;
     String filepath = "Recording";
     String filename = date + "-ID" + String.valueOf(userID) + "-" + zipPart + ".csv.gz";
-    static String mainPath, gzipPath;
+    String mainPath, gzipPath;
 
     StringBuilder stringBuilder = new StringBuilder("");
     String toFile;
@@ -275,8 +275,9 @@ public class LoggingService extends Service {
                 this.stopService(stopGPS);
                 this.stopService(stopIMU);
 
-                Intent deletingService = new Intent(getApplicationContext(), FileDeletingService.class);
-                this.startService(deletingService);
+                if (gzipPath != null) {
+                    new File(gzipPath).delete();
+                }
 
             } else {
 

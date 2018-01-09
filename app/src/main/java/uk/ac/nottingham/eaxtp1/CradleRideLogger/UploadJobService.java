@@ -15,7 +15,7 @@ public class UploadJobService extends JobService {
     }
 
     Intent uploadService;
-    String TAG = "Job Service";
+    String TAG = "CRL_JobService";
 
     @Override
     public void onCreate() {
@@ -30,7 +30,7 @@ public class UploadJobService extends JobService {
 
         Log.i(TAG, "Starting Upload Job " + params.getJobId());
 
-        String finishedPath = String.valueOf(getExternalFilesDir("")) + "/Finished";
+        String finishedPath = String.valueOf(getExternalFilesDir("Finished"));
         File finishedFolder = new File(finishedPath);
         if (finishedFolder.listFiles().length > 0) {
 

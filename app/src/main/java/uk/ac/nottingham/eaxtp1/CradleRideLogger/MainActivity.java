@@ -49,9 +49,9 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConne
 
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
 
-    String TAG = "Main Activity";
+    String TAG = "CRL_MainActivity";
 
-    Intent uploadService;//, recordingService;
+    Intent uploadService;
     Intent audioService, gpsService, imuService, loggingService;
 
     SharedPreferences preferences;
@@ -74,12 +74,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Location myLastLocation;
     private ProgressBar loadingAn;
 
-    boolean initialising, positioned, buttPressed, gGranted, aGranted;
+    boolean initialising, positioned, buttPressed, gGranted, aGranted, cancelGPS;
     static boolean recording, compressing, moving,
             crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
             autoStopOn;
-
-    static String mainPath, finishedPath;
 
     @SuppressLint("WifiManagerLeak")
     @Override
@@ -104,7 +102,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 //        Shows Disclosure Agreement.
 //        TODO: remove the '!' below when code is finalised.
             if (preferences.getBoolean("NotSeenDisclosure2", true)) {
-//                Log.e("ID","1");
                 prefEditor.putBoolean("NotSeenDisclosure2", true);
                 prefEditor.commit();
                 showDisclosure();
@@ -129,18 +126,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordButton = findViewById(R.id.button_Record);
         recordButton.setOnClickListener(this);
 
-//        Disables the Start button
-//        recordButton.setEnabled(true);
-
         instructDisplay.setText(R.string.startGPS);
 
         recording = false;
         initialising = false;
         compressing = false;
         crashed = false;
-
-        mainPath = String.valueOf(getExternalFilesDir(""));
-        finishedPath = mainPath + "/Finished";
 
 //        Checks (and asks for) permission on app start-up
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean("NotSeenDisclosure2", true)) {
@@ -158,7 +149,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     wifiConnected = true;
                     Log.i(TAG, "Wifi Connected.");
 
-                    File finishedFolder = new File(finishedPath);
+                    File finishedFolder = new File(String.valueOf(getExternalFilesDir("Finished")));
                     File[] finishedList = finishedFolder.listFiles();
 
                     if (finishedList != null && finishedList.length != 0) {
@@ -223,11 +214,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onPause() {
         super.onPause();
 
-////        Stops GPS from draining the battery.
-//        if (initialising && !recording) {
-//            stopInitialising();
-//        }
-
         if (crashed) {
             onCrash();
         }
@@ -236,8 +222,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     @SuppressWarnings("MissingPermission")
     public void startInitialising() {
-        initialising = true;
-        recording = false;
+        initialising = true;     recording = false;
+        positioned = false;
         recordButton.setEnabled(false);
         recordButton.setText(R.string.butt_init);
         loadingAn.setVisibility(View.VISIBLE);
@@ -249,9 +235,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         startService(audioService);
 
-        gpsTimeOut();
-
-        allowPositioning();
+        gpsTimer();
     }
 
     public void stopInitialising() {
@@ -271,6 +255,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     }
 
     public void startAll() {
+        Log.i(TAG, "startAll");
         recording = true;
         initialising = false;
         forcedStop = false;
@@ -288,6 +273,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         if (timeoutTimer != null) {
             timeoutTimer.cancel();
         }
+
+        gpsRemoval();
     }
 
     public void stopAll() {
@@ -360,10 +347,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                         gpsFixed = (SystemClock.elapsedRealtime() - myLastLocationMillis) < 3000;
 
                     if (gpsFixed && positioned) {
+                        Log.i(TAG, "Fixed and in Position");
                         startAll();
-                    } /*else {
-                        instructDisplay.setText(R.string.initialising);
-                    }*/
+                    }
 
                     break;
                 case GpsStatus.GPS_EVENT_FIRST_FIX:
@@ -376,28 +362,35 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     }
 
 //    Allow time for phone positioning before recording - less cut-off needed in analysis?
-    public void allowPositioning() {
-        positioningTimer = new CountDownTimer(10*1000,10*1000) {
+    public void gpsRemoval() {
+        positioningTimer = new CountDownTimer(1000,1000) {
             public void onTick(long millisUntilFinished) {}
 
             @Override
             public void onFinish() {
-                positioned = true;
+                Log.i(TAG, "Stop GPS");
+                cancelGPS = true;
             }
         }.start();
     }
 
-//    Cancels recording if the GPS can't get a fix within a reasonable time.
-    public void gpsTimeOut() {
-        timeoutTimer = new CountDownTimer(60*1000, 60*1000) {   // TODO: Set to 60 seconds.
-            public void onTick(long millisUntilFinished) {}
+    public void gpsTimer() {
+        timeoutTimer = new CountDownTimer(60*1000, 10*1000) {   // TODO: Set to 60 seconds.
+
+            public void onTick(long millisUntilFinished) {
+                if (millisUntilFinished <= 50 * 1000) {
+                    Log.i(TAG, "Positioned");
+                    positioned = true;          // Allow time for phone positioning before recording
+                }
+            }
 
             @Override
             public void onFinish() {
                 if (initialising && !recording) {
                     Log.i(TAG, "GPS Timed Out");
-                    stopInitialising();
+                    stopInitialising();     // Cancels recording if the GPS can't get a fix within a reasonable time.
                     instructDisplay.setText(R.string.failed);
+                    recordButton.setText(R.string.butt_start);
                 }
             }
         }.start();
@@ -406,27 +399,29 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @Override
     public void onLocationChanged(Location location) {
 
-        if (!recording && !crashed) {
+        if (!cancelGPS && !crashed) {
             if (location == null) return;
 
-            myLastLocationMillis = SystemClock.elapsedRealtime();
+            if (!recording) {
+                myLastLocationMillis = SystemClock.elapsedRealtime();
 
-            myLastLocation = location;
+                myLastLocation = location;
 
-            String sLat = String.valueOf(location.getLatitude());
-            String sLong = String.valueOf(location.getLongitude());
-            String sSpeed = String.valueOf(location.getSpeed());
-            String sGTime = String.valueOf(location.getTime());
-            String sAcc = String.valueOf(location.getAccuracy());
-            String sAlt = String.valueOf(location.getAltitude());
-            String sBear = String.valueOf(location.getBearing());
-            String sRT = String.valueOf(location.getElapsedRealtimeNanos());
+                String sLat = String.valueOf(location.getLatitude());
+                String sLong = String.valueOf(location.getLongitude());
+                String sSpeed = String.valueOf(location.getSpeed());
+                String sGTime = String.valueOf(location.getTime());
+                String sAcc = String.valueOf(location.getAccuracy());
+                String sAlt = String.valueOf(location.getAltitude());
+                String sBear = String.valueOf(location.getBearing());
+                String sRT = String.valueOf(location.getElapsedRealtimeNanos());
 
-            List<String> dataList = Arrays.asList(sLat, sLong, sSpeed, sGTime, sAcc, sAlt, sBear, sRT);
-            gpsData = TextUtils.join(",", dataList);
-
+                List<String> dataList = Arrays.asList(sLat, sLong, sSpeed, sGTime, sAcc, sAlt, sBear, sRT);
+                gpsData = TextUtils.join(",", dataList);
+            }
         } else {
             myLocationManager.removeUpdates(this);
+            cancelGPS = false;
         }
     }
 

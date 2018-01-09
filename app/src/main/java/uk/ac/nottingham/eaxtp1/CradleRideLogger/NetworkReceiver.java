@@ -11,7 +11,7 @@ public class NetworkReceiver extends BroadcastReceiver {
     public NetworkReceiver() {
     }
 
-    String TAG = "Network Receiver";
+    String TAG = "CRL_NetworkReceiver";
 
     static boolean wifiConnected = false;
 
