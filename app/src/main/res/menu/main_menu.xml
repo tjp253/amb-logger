@@ -6,12 +6,18 @@
     <item
         android:id="@+id/privacyPolicy"
         android:title="@string/menu_policy" />
+
     <item
         android:id="@+id/autoStop"
         android:checkable="true"
         android:enabled="true"
         android:title="@string/as_menu"
-        android:visible="true"
-        app:actionLayout="@layout/switch_item"
-        app:showAsAction="never" />
+        android:visible="true" />
+
+    <item
+        android:id="@+id/delayTime"
+        android:title="@string/pos_delay" />
+    <item
+        android:id="@+id/timeOutItem"
+        android:title="timeOutItem" />
 </menu>

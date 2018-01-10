@@ -61,4 +61,6 @@
     <string name="as_on">Auto-Stop enabled</string>
     <string name="as_off">Auto-Stop disabled</string>
 
+    <string name="pos_delay">Start Delay</string>
+
 </resources>

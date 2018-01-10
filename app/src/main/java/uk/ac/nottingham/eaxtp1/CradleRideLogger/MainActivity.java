@@ -35,6 +35,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.NumberPicker;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,7 +57,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
-    String user_ID = "User ID";
+    AlertDialog disclosureDialog, policyDialog, checkDialog, delayDialog;
+    Button adButt;
+    MenuItem autoStopCheckbox, buttDelay, buttTimeout;
+    final String keyDelay = "DelayTime", keyAS = "AutoStop", keyTimeout = "GPS Timeout";
+    final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
+    int timeDelay, newValue, posDelay, timeOut;
+    boolean delayNotTimeout;
     static int userID;
 
     final int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
@@ -88,21 +95,21 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
         prefEditor = preferences.edit();
 //        Initialises a Unique ID for each user.
-        if (preferences.getBoolean("firstLogin", true)) {
+        if (preferences.getBoolean(keyFirst, true)) {
 
             showDisclosure();
 
             Random random = new Random();
             int rndUserID = 10000000 + random.nextInt(90000000);
 
-            prefEditor.putBoolean("firstLogin", false);
+            prefEditor.putBoolean(keyFirst, false);
             prefEditor.putInt(user_ID, rndUserID);
             prefEditor.commit();
         } else {
 //        Shows Disclosure Agreement.
 //        TODO: remove the '!' below when code is finalised.
-            if (preferences.getBoolean("NotSeenDisclosure2", true)) {
-                prefEditor.putBoolean("NotSeenDisclosure2", true);
+            if (preferences.getBoolean(keyDisc, true)) {
+                prefEditor.putBoolean(keyDisc, true);
                 prefEditor.commit();
                 showDisclosure();
             }
@@ -134,7 +141,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         crashed = false;
 
 //        Checks (and asks for) permission on app start-up
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean("NotSeenDisclosure2", true)) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean(keyDisc, true)) {
 
             permissionCheck();
 
@@ -234,7 +241,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         instructDisplay.setText(R.string.initialising);
 
         startService(audioService);
-
+        Log.i(TAG, "startInitialising");
         gpsTimer();
     }
 
@@ -375,10 +382,18 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     }
 
     public void gpsTimer() {
-        timeoutTimer = new CountDownTimer(60*1000, 10*1000) {   // TODO: Set to 60 seconds.
+        if (timeDelay == 0) {
+            Log.i(TAG, "Positioned");
+            positioned = true;
+            posDelay = 60;
+        } else {
+            posDelay = timeDelay;
+        }
+
+        timeoutTimer = new CountDownTimer(timeOut*1000, posDelay*1000) {
 
             public void onTick(long millisUntilFinished) {
-                if (millisUntilFinished <= 50 * 1000) {
+                if (millisUntilFinished <= (timeOut-timeDelay) * 1000 && !positioned) {
                     Log.i(TAG, "Positioned");
                     positioned = true;          // Allow time for phone positioning before recording
                 }
@@ -461,12 +476,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         buttPressed = false;
     }
 
-    AlertDialog disclosureDialog, policyDialog, checkDialog;
-    Button adButt;
-    MenuItem autoStopCheckbox;
-
     public void showDisclosure() {
-        View checkboxView = View.inflate(this, R.layout.checkbox, null);
+        View checkboxView = View.inflate(this, R.layout.disclosure, null);
         CheckBox checkBox = checkboxView.findViewById(R.id.checkbox);
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -488,18 +499,18 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     public void onClick(DialogInterface dialog, int BUTTON_POSITIVE) {
 //                        Accept the disclosure agreement!
 //                        Ensure only one instance.
-                        prefEditor.putBoolean("NotSeenDisclosure2", false);
-                        prefEditor.putBoolean("FirstInstance", true);
+                        prefEditor.putBoolean(keyDisc, false);
+                        prefEditor.putBoolean(keyInst, true);
                         prefEditor.commit();
                     }
                 });
         disclosureDialog = builder.create();
 
-        if (preferences.getBoolean("FirstInstance", true)) {
+        if (preferences.getBoolean(keyInst, true)) {
             disclosureDialog.show();
             adButt = disclosureDialog.getButton(AlertDialog.BUTTON_POSITIVE);
             adButt.setEnabled(false);
-            prefEditor.putBoolean("FirstInstance", false);
+            prefEditor.putBoolean(keyInst, false);
             prefEditor.commit();
         }
 
@@ -528,7 +539,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     public void onClick(DialogInterface dialog, int which) {
                         autoStopOn = !autoStopCheckbox.isChecked();
                         autoStopCheckbox.setChecked(autoStopOn);
-                        prefEditor.putBoolean("AutoStop", autoStopOn);
+                        prefEditor.putBoolean(keyAS, autoStopOn);
                         prefEditor.commit();
                         autoStopToast();
                     }
@@ -543,20 +554,110 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         checkDialog.show();
     }
 
+    public void timePicker() {
+        if (delayNotTimeout) {
+            newValue = timeDelay;
+        } else {
+            newValue = timeOut;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View delayView = View.inflate(this, R.layout.delay_picker, null);
+        builder .setTitle("Start Delay")
+                .setView(delayView)
+                .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (delayNotTimeout) {
+                            if (timeDelay != newValue) {
+                                timeDelay = newValue;
+                                changeDelay();
+                            }
+                        } else {
+                            if (timeOut != newValue) {
+                                timeOut = newValue;
+                                changeTimeout();
+                            }
+                        }
+                    }
+                })
+                .setNegativeButton(R.string.butt_cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+
+        NumberPicker dP = delayView.findViewById(R.id.numberPicker);
+        if (delayNotTimeout) {
+            dP.setMinValue(0);
+            dP.setMaxValue(timeOut - 1);
+            dP.setValue(timeDelay);
+        } else {
+            dP.setMinValue(30);
+            dP.setMaxValue(300);
+            dP.setValue(timeOut);
+        }
+        dP.setWrapSelectorWheel(false);
+        dP.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
+            @Override
+            public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+                newValue = newVal;
+            }
+        });
+
+        delayDialog = builder.create();
+        delayDialog.show();
+
+    }
+
+    public void changeDelay() {
+        prefEditor.putInt(keyDelay, timeDelay);
+        prefEditor.commit();
+        buttDelay.setTitle("Start Delay: " + timeDelay + " seconds.");
+    }
+
+    public void changeTimeout() {
+        prefEditor.putInt(keyTimeout, timeOut);
+        prefEditor.commit();
+        buttTimeout.setTitle("GPS Timeout: " + timeOut + " seconds.");
+        if (timeDelay >= timeOut) {
+            timeDelay = timeOut - 1;
+            changeDelay();
+        }
+    }
+
     public void setUpToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.inflateMenu(R.menu.main_menu);
 
-        if (preferences.contains("AutoStop")) {
-            autoStopOn = preferences.getBoolean("AutoStop", true);
+        if (preferences.contains(keyAS)) {
+            autoStopOn = preferences.getBoolean(keyAS, true);
         } else {
             autoStopOn = true;
-            prefEditor.putBoolean("AutoStop", true);
+            prefEditor.putBoolean(keyAS, true);
             prefEditor.commit();
         }
 
         autoStopCheckbox = toolbar.getMenu().findItem(R.id.autoStop);
         autoStopCheckbox.setChecked(autoStopOn);
+
+        buttDelay = toolbar.getMenu().findItem(R.id.delayTime);
+        buttTimeout = toolbar.getMenu().findItem(R.id.timeOutItem);
+
+        if (preferences.contains(keyDelay)) {
+            timeDelay = preferences.getInt(keyDelay, 10);
+        } else {
+            timeDelay = 10;
+        }
+        changeDelay();
+
+        if (preferences.contains(keyTimeout)) {
+            timeOut = preferences.getInt(keyTimeout, 60);
+        } else {
+            timeOut = 60;
+        }
+        changeTimeout();
 
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
@@ -571,10 +672,18 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                         } else {
                             autoStopOn = !item.isChecked();
                             item.setChecked(autoStopOn);
-                            prefEditor.putBoolean("AutoStop", autoStopOn);
+                            prefEditor.putBoolean(keyAS, autoStopOn);
                             prefEditor.commit();
                             autoStopToast();
                         }
+                        return true;
+                    case R.id.delayTime:
+                        delayNotTimeout = true;
+                        timePicker();
+                        return true;
+                    case R.id.timeOutItem:
+                        delayNotTimeout = false;
+                        timePicker();
                         return true;
                 }
                 return false;
@@ -597,7 +706,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onStart() {
         super.onStart();
         if (!initialising && !recording) {
-            Log.i(TAG, "onStart: Removing GPS.");
             stopListening();
             stopAll();
         }
@@ -607,7 +715,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onStop() {
         super.onStop();
 //        Ensures only one instance in normal usage. App restarts differently with Ctrl-F10 in Studio...
-        prefEditor.putBoolean("FirstInstance", true);
+        prefEditor.putBoolean(keyInst, true);
         prefEditor.commit();
     }
 
