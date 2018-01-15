@@ -5,6 +5,9 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -83,7 +86,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Location myLastLocation;
     private ProgressBar loadingAn;
 
-    boolean initialising, positioned, buttPressed, gGranted, aGranted, cancelGPS;
+    boolean initialising, positioned, buttPressed, gGranted, aGranted, cancelGPS, displayOn;
     static boolean recording, compressing, moving,
             crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
             autoStopOn;
@@ -210,7 +213,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @Override
     protected void onResume() {
         super.onResume();
-
+        if (notMan != null) {
+            notMan.cancel(notID);
+        }
+        displayOn = true;
         if (crashed) {
             onCrash();
         }
@@ -225,6 +231,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @Override
     protected void onPause() {
         super.onPause();
+        displayOn = false;
 
         if (crashed) {
             onCrash();
@@ -399,7 +406,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             posDelay = timeDelay;
         }
 
-        timeoutTimer = new CountDownTimer(timeOut*1000, posDelay*1000) {
+        timeoutTimer = new CountDownTimer(timeOut*1000, posDelay*1000) {    // TODO: Set to timeOut & posDelay
 
             public void onTick(long millisUntilFinished) {
                 if (millisUntilFinished <= (timeOut-timeDelay) * 1000 && !positioned) {
@@ -414,6 +421,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     Log.i(TAG, "GPS Timed Out");
                     stopInitialising();     // Cancels recording if the GPS can't get a fix within a reasonable time.
                     instructDisplay.setText(R.string.failed);
+                    if (!displayOn) {
+                        gpsFailNotify();
+                    }
                 }
             }
         }.start();
@@ -707,6 +717,31 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             message = getString(R.string.as_off);
         }
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    NotificationManager notMan;     int notID = 25392;
+    Notification.Builder notBuild;
+    Intent restartApp;
+    PendingIntent goToApp;
+    public void gpsFailNotify() {
+        restartApp = new Intent(this, MainActivity.class)
+                .setAction(Intent.ACTION_VIEW)
+                .addCategory(Intent.CATEGORY_LAUNCHER)
+                .putExtra("clicked", true);
+
+        goToApp = PendingIntent.getActivity(this, 0, restartApp, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        notBuild = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.info_symb)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(getString(R.string.failed))
+                .setContentIntent(goToApp)
+                .setAutoCancel(true);
+
+        notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (notMan != null) {
+            notMan.notify(notID, notBuild.build());
+        }
     }
 
 //    Stops all services if left on incorrectly (by AndroidStudio, usually)
