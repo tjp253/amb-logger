@@ -1,6 +1,5 @@
 <!--<?xml version="1.0" encoding="utf-8"?>-->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingTop="@dimen/activity_vertical_margin">
 
     <item
@@ -16,8 +15,9 @@
 
     <item
         android:id="@+id/delayTime"
-        android:title="@string/pos_delay" />
+        android:title="@string/menu_delay" />
     <item
         android:id="@+id/timeOutItem"
-        android:title="timeOutItem" />
+        android:title="@string/menu_timeout" />
+
 </menu>

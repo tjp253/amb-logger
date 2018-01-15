@@ -60,17 +60,19 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     AlertDialog disclosureDialog, policyDialog, checkDialog, delayDialog;
     Button adButt;
     MenuItem autoStopCheckbox, buttDelay, buttTimeout;
+//    Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
     final String keyDelay = "DelayTime", keyAS = "AutoStop", keyTimeout = "GPS Timeout";
     final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
+
     int timeDelay, newValue, posDelay, timeOut;
     boolean delayNotTimeout;
     static int userID;
 
     final int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
 
-    CountDownTimer timeoutTimer, positioningTimer;
+    CountDownTimer timeoutTimer, removalTimer;
 
-    public Button recordButton;
+    public Button recordButt, cancelButt;
     public TextView instructDisplay, versionView;
 
     protected LocationManager myLocationManager;
@@ -120,7 +122,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         instructDisplay = findViewById(R.id.instructDisplay);
         versionView = findViewById(R.id.versionView);
 
-        String version = "Unique ID: " + String.valueOf(userID) +"\n"+ "Version: " ;
+        String version = getString(R.string.id_string) + String.valueOf(userID) + getString(R.string.version_string) ;
 //        Gets the versionName from the app gradle to display.
         try {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
@@ -130,8 +132,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
         versionView.setText(version);
 
-        recordButton = findViewById(R.id.button_Record);
-        recordButton.setOnClickListener(this);
+        recordButt = findViewById(R.id.button_Record);
+        recordButt.setOnClickListener(this);
+        cancelButt = findViewById(R.id.butt_Cancel);
+        cancelButt.setOnClickListener(this);
+        cancelButt.setVisibility(View.GONE);
 
         instructDisplay.setText(R.string.startGPS);
 
@@ -231,9 +236,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     public void startInitialising() {
         initialising = true;     recording = false;
         positioned = false;
-        recordButton.setEnabled(false);
-        recordButton.setText(R.string.butt_init);
-        loadingAn.setVisibility(View.VISIBLE);
+        recordButt.setEnabled(false);
+        recordButt.setText(R.string.butt_init);
+        loadingAn.setVisibility(View.VISIBLE);      cancelButt.setVisibility(View.VISIBLE);
         gpsData = "";
         myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
         myLocationManager.addGpsStatusListener(this);
@@ -246,18 +251,19 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     }
 
     public void stopInitialising() {
+        loadingAn.setVisibility(View.GONE);     cancelButt.setVisibility(View.GONE);
         stopListening();
-        if (positioningTimer != null) {
-            positioningTimer.cancel();
+        if (timeoutTimer != null) {
+            timeoutTimer.cancel();
         }
         stopAll();
+        recordButt.setText(R.string.butt_start);
     }
 
     public void onCrash() {
         stopAll();
         initialising = false;
-        recordButton.setText(R.string.butt_start);
-        recordButton.setEnabled(false);
+        recordButt.setEnabled(false);
         instructDisplay.setText(R.string.crashed);
     }
 
@@ -266,7 +272,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recording = true;
         initialising = false;
         forcedStop = false;
-        loadingAn.setVisibility(View.GONE);
+        loadingAn.setVisibility(View.GONE);     cancelButt.setVisibility(View.GONE);
 
         instructDisplay.setText(R.string.recording);
         startService(audioService);
@@ -274,8 +280,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         startService(loggingService);
         startService(imuService);
 
-        recordButton.setText(R.string.butt_stop);
-        recordButton.setEnabled(true);
+        recordButt.setText(R.string.butt_stop);
+        recordButt.setEnabled(true);
 
         if (timeoutTimer != null) {
             timeoutTimer.cancel();
@@ -293,14 +299,14 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recording = false;
         positioned = false;
 
-        recordButton.setEnabled(true);
+        recordButt.setText(R.string.butt_start);
+        recordButt.setEnabled(true);
     }
 
     public void stopLogging() {
         instructDisplay.setText(R.string.finished);
 
-        recordButton.setText(R.string.butt_start);
-        recordButton.setEnabled(true);
+        recordButt.setEnabled(true);
     }
 
     public void stopListening() {
@@ -311,7 +317,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @Override
     public void onClick(View v) {
 
-        if (v == recordButton) {
+        if (v == recordButt) {
 
             if (!recording && !forcedStop) { // Start recording data
                 //        Re-checks (and asks for) the GPS permission needed
@@ -338,7 +344,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         }
 
-    }
+    } else if (v == cancelButt && !recording) {
+            stopInitialising();
+            instructDisplay.setText(R.string.startGPS);
+        }
 
 }
 
@@ -370,7 +379,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
 //    Allow time for phone positioning before recording - less cut-off needed in analysis?
     public void gpsRemoval() {
-        positioningTimer = new CountDownTimer(1000,1000) {
+        removalTimer = new CountDownTimer(1000,1000) {
             public void onTick(long millisUntilFinished) {}
 
             @Override
@@ -405,7 +414,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     Log.i(TAG, "GPS Timed Out");
                     stopInitialising();     // Cancels recording if the GPS can't get a fix within a reasonable time.
                     instructDisplay.setText(R.string.failed);
-                    recordButton.setText(R.string.butt_start);
                 }
             }
         }.start();
@@ -614,13 +622,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     public void changeDelay() {
         prefEditor.putInt(keyDelay, timeDelay);
         prefEditor.commit();
-        buttDelay.setTitle("Start Delay: " + timeDelay + " seconds.");
+        buttDelay.setTitle(getString(R.string.menu_delay) + timeDelay + getString(R.string.menu_seconds) );
     }
 
     public void changeTimeout() {
         prefEditor.putInt(keyTimeout, timeOut);
         prefEditor.commit();
-        buttTimeout.setTitle("GPS Timeout: " + timeOut + " seconds.");
+        buttTimeout.setTitle(getString(R.string.menu_timeout) + timeOut + getString(R.string.menu_seconds) );
         if (timeDelay >= timeOut) {
             timeDelay = timeOut - 1;
             changeDelay();

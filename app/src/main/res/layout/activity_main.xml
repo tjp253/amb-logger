@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
@@ -13,107 +13,99 @@
     tools:context="uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity"
     android:weightSum="1">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_weight=".05"
-        android:orientation="horizontal">
+    <TextView
+        android:id="@+id/versionView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/version_string"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/versionView"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="@string/id_placeholder" />
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="26dp"
-            android:layout_gravity="top|clip_vertical|start"
-            android:background="@android:color/transparent" />
-
-    </LinearLayout>
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="wrap_content"
+        android:layout_height="26dp"
+        android:layout_gravity="top|clip_vertical|start"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintBottom_toBottomOf="@+id/versionView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/versionView" />
 
     <TextView
         android:id="@+id/instructDisplay"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:height="140dp"
+        android:layout_height="140dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+
+        android:layout_marginTop="8dp"
         android:text="@string/instruct_placeholder"
-        android:textSize="30sp" />
+        android:textSize="30sp"
+        app:layout_constraintBottom_toTopOf="@+id/button_Record"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/versionView" />
 
-    <android.support.constraint.ConstraintLayout
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/button_Record"
+        android:layout_width="0dp"
+        android:layout_height="80dp"
+
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/butt_start"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ProgressBar
+        android:id="@+id/initProgress"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight=".25">
-
-        <Button
-            android:id="@+id/button_Record"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-
-            android:text="@string/butt_start"
-            tools:layout_editor_absoluteX="16dp"
-            tools:layout_editor_absoluteY="640dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ProgressBar
-            android:id="@+id/initProgress"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_centerHorizontal="true"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/button_Record"
-            app:layout_constraintEnd_toEndOf="@+id/button_Record"
-            app:layout_constraintStart_toStartOf="@+id/button_Record"
-            app:layout_constraintTop_toTopOf="@+id/button_Record" />
-    </android.support.constraint.ConstraintLayout>
+        android:layout_centerHorizontal="true"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/button_Record"
+        app:layout_constraintEnd_toEndOf="@+id/button_Record"
+        app:layout_constraintStart_toStartOf="@+id/button_Record"
+        app:layout_constraintTop_toTopOf="@+id/button_Record" />
 
     <TextView
         android:id="@+id/orientDisplay"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight=".15"
+        android:layout_height="0dp"
+
+        android:layout_marginBottom="40dp"
+
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
         android:rotation="0"
         android:text="@string/orient_info"
-
         android:textAlignment="center"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button_Record" />
 
-    <!--<Button-->
-        <!--android:id="@+id/button_Initialise"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_weight=".25"-->
-        <!--android:text="@string/button_Initialise" />-->
+    <Button
+        android:id="@+id/butt_Cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="@string/butt_cancel"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-
-    <!--<LinearLayout-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_weight=".25"-->
-        <!--android:orientation="horizontal">-->
-
-        <!--<Button-->
-            <!--android:id="@+id/button_Pothole"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:layout_weight="0.5"-->
-            <!--android:text="@string/button_Pothole" />-->
-
-        <!--<Button-->
-            <!--android:id="@+id/button_Surface"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:layout_weight="0.5"-->
-            <!--android:text="@string/button_SurfaceBad" />-->
-
-    <!--</LinearLayout>-->
-
-</LinearLayout>
+</android.support.constraint.ConstraintLayout>

@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">CradleRide Logger</string>
 
-    <string name="id_placeholder">Unique ID + Version Number</string>
+    <string name="id_string">Unique ID: \t</string>
+    <string name="version_string">\nVersion: \t</string>
     <string name="instruct_placeholder">Instructions</string>
 
     <string name="butt_init">Initialising GPS</string>
@@ -16,7 +17,7 @@
     <string name="crashed">Something went wrong with recording. \n\nPlease restart the app.</string>
     <string name="permissions">Please grant all permissions to enable recording.</string>
 
-    <string name="orient_info">\n\n\n Align arrow with forward travel.\n\n --->\n </string>
+    <string name="orient_info">Align arrow with forward travel.\n\n ---> </string>
 
     <string name="ad_title">Disclosure Agreement</string>
     <string name="ad_button">Accept</string>
@@ -61,6 +62,8 @@
     <string name="as_on">Auto-Stop enabled</string>
     <string name="as_off">Auto-Stop disabled</string>
 
-    <string name="pos_delay">Start Delay</string>
+    <string name="menu_delay">Start Delay: \t</string>
+    <string name="menu_timeout">GPS Timeout: \t</string>
+    <string name="menu_seconds">\t seconds.</string>
 
 </resources>
