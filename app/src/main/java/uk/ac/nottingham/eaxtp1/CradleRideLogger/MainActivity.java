@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Random;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
@@ -62,10 +63,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     SharedPreferences.Editor prefEditor;
     AlertDialog disclosureDialog, policyDialog, checkDialog, delayDialog;
     Button adButt;
-    MenuItem autoStopCheckbox, buttDelay, buttTimeout;
-//    Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
+    MenuItem autoStopCheckbox, buttDelay, buttTimeout, testCheck, initB4Test;
+    // Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
     final String keyDelay = "DelayTime", keyAS = "AutoStop", keyTimeout = "GPS Timeout";
     final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
+
+    final String testPref = "TestingMode", initPref = "StillInitialise";
+    boolean testing, initTest, testMode = false;  // TODO: Set 'testMode' to false.
 
     int timeDelay, newValue, posDelay, timeOut;
     boolean delayNotTimeout;
@@ -247,8 +251,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         recordButt.setText(R.string.butt_init);
         loadingAn.setVisibility(View.VISIBLE);      cancelButt.setVisibility(View.VISIBLE);
         gpsData = "";
-        myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-        myLocationManager.addGpsStatusListener(this);
+        if (!testing) {
+            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            myLocationManager.addGpsStatusListener(this);
+        }
 
         instructDisplay.setText(R.string.initialising);
 
@@ -275,7 +281,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     }
 
     public void startAll() {
-        Log.i(TAG, "startAll");
+//        Log.i(TAG, "startAll");
         recording = true;
         initialising = false;
         forcedStop = false;
@@ -283,7 +289,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         instructDisplay.setText(R.string.recording);
         startService(audioService);
-        startService(gpsService);
+        if (!testing) {
+            startService(gpsService);
+        } else {
+            sGPS = "";
+        }
         startService(loggingService);
         startService(imuService);
 
@@ -337,26 +347,29 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                     permissionCheck();
 
-            } else {
+                } else {
 
-                startInitialising();    // TODO: Uncomment startInitialising() and comment out startAll()
-//                startAll();
+                    if (!testing || initTest) {
+                        startInitialising();
+                    } else {
+                        startAll();
+                    }
+                }
+
+            } else { // Stop recording data
+
+                stopAll();
+
+                stopLogging();
+
             }
 
-        } else { // Stop recording data
-
-            stopAll();
-
-            stopLogging();
-
-        }
-
-    } else if (v == cancelButt && !recording) {
+        } else if (v == cancelButt && !recording) {
             stopInitialising();
             instructDisplay.setText(R.string.startGPS);
         }
 
-}
+    }
 
     @Override
     public void onGpsStatusChanged(int event) {
@@ -384,7 +397,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
     }
 
-//    Allow time for phone positioning before recording - less cut-off needed in analysis?
+    // Allow time for phone positioning before recording - less cut-off needed in analysis?
     public void gpsRemoval() {
         removalTimer = new CountDownTimer(1000,1000) {
             public void onTick(long millisUntilFinished) {}
@@ -412,6 +425,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 if (millisUntilFinished <= (timeOut-timeDelay) * 1000 && !positioned) {
                     Log.i(TAG, "Positioned");
                     positioned = true;          // Allow time for phone positioning before recording
+                    if (testing) {
+                        startAll();
+                    }
                 }
             }
 
@@ -557,8 +573,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                     public void onClick(DialogInterface dialog, int which) {
                         autoStopOn = !autoStopCheckbox.isChecked();
                         autoStopCheckbox.setChecked(autoStopOn);
-                        prefEditor.putBoolean(keyAS, autoStopOn);
-                        prefEditor.commit();
+                        prefEditor.putBoolean(keyAS, autoStopOn).commit();
                         autoStopToast();
                     }
                 })
@@ -630,14 +645,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     }
 
     public void changeDelay() {
-        prefEditor.putInt(keyDelay, timeDelay);
-        prefEditor.commit();
+        prefEditor.putInt(keyDelay, timeDelay).commit();
         buttDelay.setTitle(getString(R.string.menu_delay) + timeDelay + getString(R.string.menu_seconds) );
     }
 
     public void changeTimeout() {
-        prefEditor.putInt(keyTimeout, timeOut);
-        prefEditor.commit();
+        prefEditor.putInt(keyTimeout, timeOut).commit();
         buttTimeout.setTitle(getString(R.string.menu_timeout) + timeOut + getString(R.string.menu_seconds) );
         if (timeDelay >= timeOut) {
             timeDelay = timeOut - 1;
@@ -653,8 +666,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             autoStopOn = preferences.getBoolean(keyAS, true);
         } else {
             autoStopOn = true;
-            prefEditor.putBoolean(keyAS, true);
-            prefEditor.commit();
+            prefEditor.putBoolean(keyAS, true).commit();
         }
 
         autoStopCheckbox = toolbar.getMenu().findItem(R.id.autoStop);
@@ -677,6 +689,22 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
         changeTimeout();
 
+        if (testMode) {
+            testCheck = toolbar.getMenu().findItem(R.id.testingItem);
+            testCheck.setVisible(true);
+            if (preferences.contains(testPref)) {
+                testing = preferences.getBoolean(testPref, false);
+            }
+            testingMode();
+
+            initB4Test = toolbar.getMenu().findItem(R.id.testInitItem);
+            initB4Test.setVisible(true);
+            if (preferences.contains(initPref)) {
+                initTest = preferences.getBoolean(initPref, false);
+            }
+            testInitMode();
+        }
+
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -690,8 +718,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                         } else {
                             autoStopOn = !item.isChecked();
                             item.setChecked(autoStopOn);
-                            prefEditor.putBoolean(keyAS, autoStopOn);
-                            prefEditor.commit();
+                            prefEditor.putBoolean(keyAS, autoStopOn).commit();
                             autoStopToast();
                         }
                         return true;
@@ -703,10 +730,42 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                         delayNotTimeout = false;
                         timePicker();
                         return true;
+                    case R.id.testingItem:
+                        testing = !item.isChecked();
+                        testingMode();
+                        return true;
+                    case R.id.testInitItem:
+                        initTest = !item.isChecked();
+                        testInitMode();
+                        return true;
                 }
                 return false;
             }
         });
+    }
+
+    public void testingMode() {
+        prefEditor.putBoolean(testPref, testing).commit();
+        testCheck.setChecked(testing);
+        String message;
+        if (testing) {
+            message = getString(R.string.test_on);
+        } else {
+            message = getString(R.string.test_off);
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    public void testInitMode() {
+        prefEditor.putBoolean(initPref, initTest).commit();
+        initB4Test.setChecked(initTest);
+        String message;
+        if (initTest) {
+            message = getString(R.string.test_init_on);
+        } else {
+            message = getString(R.string.test_init_off);
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
     public void autoStopToast() {
@@ -732,7 +791,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         goToApp = PendingIntent.getActivity(this, 0, restartApp, PendingIntent.FLAG_UPDATE_CURRENT);
 
         notBuild = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.info_symb)
+                .setSmallIcon(R.drawable.ambulance_symb)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(R.string.failed))
                 .setContentIntent(goToApp)
@@ -744,7 +803,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
     }
 
-//    Stops all services if left on incorrectly (by AndroidStudio, usually)
+    // Stops all services if left on incorrectly (by AndroidStudio, usually)
     @Override
     protected void onStart() {
         super.onStart();
@@ -758,8 +817,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onStop() {
         super.onStop();
 //        Ensures only one instance in normal usage. App restarts differently with Ctrl-F10 in Studio...
-        prefEditor.putBoolean(keyInst, true);
-        prefEditor.commit();
+        prefEditor.putBoolean(keyInst, true).commit();
     }
 
     @Override
