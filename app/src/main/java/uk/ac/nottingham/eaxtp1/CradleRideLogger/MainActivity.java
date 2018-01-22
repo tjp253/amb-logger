@@ -90,7 +90,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Location myLastLocation;
     private ProgressBar loadingAn;
 
-    boolean initialising, positioned, buttPressed, gGranted, aGranted, cancelGPS, displayOn;
+    boolean initialising, positioned, buttPressed, gGranted, aGranted, cancelGPS, displayOn, notifying;
     static boolean recording, compressing, moving,
             crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
             autoStopOn;
@@ -217,10 +217,16 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @Override
     protected void onResume() {
         super.onResume();
+
         if (notMan != null) {
             notMan.cancel(notID);
         }
         displayOn = true;
+
+        if (notifying) {
+            notifyRecording(false);
+        }
+
         if (crashed) {
             onCrash();
         }
@@ -236,6 +242,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onPause() {
         super.onPause();
         displayOn = false;
+
+        if (recording && !notifying) {
+            notifyRecording(true);
+        }
 
         if (crashed) {
             onCrash();
@@ -305,6 +315,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         }
 
         gpsRemoval();
+
+        if (!displayOn && !notifying) {
+            notifyRecording(true);
+        }
     }
 
     public void stopAll() {
@@ -318,6 +332,10 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         recordButt.setText(R.string.butt_start);
         recordButt.setEnabled(true);
+
+        if (notifying) {
+            notifyRecording(false);
+        }
     }
 
     public void stopLogging() {
@@ -778,8 +796,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
-    NotificationManager notMan;     int notID = 25392;
-    Notification.Builder notBuild;
+    NotificationManager notMan, notMan2;     int notID = 2525, notID2 = 252525;
+    Notification.Builder notBuild, notBuild2;
     Intent restartApp;
     PendingIntent goToApp;
     public void gpsFailNotify() {
@@ -791,7 +809,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         goToApp = PendingIntent.getActivity(this, 0, restartApp, PendingIntent.FLAG_UPDATE_CURRENT);
 
         notBuild = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.ambulance_symb)
+                .setSmallIcon(R.drawable.info_symb)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(R.string.failed))
                 .setContentIntent(goToApp)
@@ -800,6 +818,27 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (notMan != null) {
             notMan.notify(notID, notBuild.build());
+        }
+    }
+
+    public void notifyRecording(boolean on) {
+        if (on) {
+            notBuild2 = new Notification.Builder(this)
+                    .setSmallIcon(R.drawable.ambulance_symb)
+                    .setContentTitle(getString(R.string.app_name))
+                    .setContentText(getString(R.string.recording_data));
+
+            notMan2 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        }
+
+        if (notMan2 != null) {
+            if (on) {
+                notMan2.notify(notID2, notBuild2.build());
+                notifying = true;
+            } else {
+                notMan2.cancel(notID2);
+                notifying = false;
+            }
         }
     }
 

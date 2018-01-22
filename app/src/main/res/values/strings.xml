@@ -73,4 +73,6 @@
     <string name="test_init_on">Initialising on.</string>
     <string name="test_init_off">Initialising off.</string>
 
+    <string name="recording_data">Journey being recorded. Please do not move the phone.</string>
+
 </resources>
