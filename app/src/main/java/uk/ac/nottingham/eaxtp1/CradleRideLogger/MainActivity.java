@@ -696,7 +696,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         if (preferences.contains(keyDelay)) {
             timeDelay = preferences.getInt(keyDelay, 10);
         } else {
-            timeDelay = 10;
+            timeDelay = 0;
         }
         changeDelay();
 
@@ -796,7 +796,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
-    NotificationManager notMan, notMan2;     int notID = 2525, notID2 = 252525;
+    static NotificationManager notMan, notMan2;     int notID = 2525, notID2 = 252525;
     Notification.Builder notBuild, notBuild2;
     Intent restartApp;
     PendingIntent goToApp;

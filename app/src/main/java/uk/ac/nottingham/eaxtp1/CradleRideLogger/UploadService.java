@@ -40,6 +40,8 @@ public class UploadService extends IntentService {
     }
 
     Notification.Builder mBuilder, mBuilder2, mBuilder3;
+    static NotificationManager nm1, nm2, nm3;
+    int id1 = 2, id2 = 3, id3 = 4;
 
     int jobNumber;
 
@@ -51,9 +53,6 @@ public class UploadService extends IntentService {
     String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
 
     int uploadFileCount = 0, oversizedFileCount = 0, failedFileCount = 0;
-
-    long uploadTime;
-    boolean uploaded;
 
     int filesLeft;
     ComponentName myComponent;
@@ -72,6 +71,16 @@ public class UploadService extends IntentService {
         movedPath = mainPath + "/Uploaded";
         oversizedPath = mainPath + "/Oversized";
         failedPath = mainPath + "/FailedUploads";
+
+        if (nm1 != null) {
+            nm1.cancel(id1);
+        }
+        if (nm2 != null) {
+            nm2.cancel(id2);
+        }
+        if (nm3 != null) {
+            nm3.cancel(id3);
+        }
 
     }
 
@@ -134,8 +143,6 @@ public class UploadService extends IntentService {
 
             if (wifiConnected) {
 
-                uploaded = false;
-
                 uploadFilePath = file.getAbsolutePath();
                 fileName = uploadFilePath.substring(sourceLength);
                 parse = fileName.substring(0, fileName.length() - 2) + "/gz";
@@ -171,21 +178,15 @@ public class UploadService extends IntentService {
                             fileName = null;
                             Log.i(TAG, "File too large to upload.");
                             break;
-//                            throw new IOException("File too large to upload.");
                         case 901:
-//                            uploadFileCount++;
                             Log.i(TAG, "File already uploaded.");
                             break;
-//                            throw new IOException("File already uploaded.");
-//                        case 902:
-//                            moveFailed(fileName);
-//                            failedFileCount++;
-//                            fileName = null;
-//                            throw new IOException("Upload failed.");
                         case 910:
-                            uploadTime = System.currentTimeMillis();
-                            uploaded = true;
                             uploadFileCount++;
+                            break;
+                        default:
+                            fileName = null;
+                            failedFileCount++;
                             break;
                     }
 
@@ -240,10 +241,9 @@ public class UploadService extends IntentService {
                 .setContentTitle("CradleRide Logger")
                 .setContentText(uText);
 
-        NotificationManager mNotifyMgr =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (mNotifyMgr != null) {
-            mNotifyMgr.notify(2, mBuilder.build());
+        nm1 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (nm1 != null) {
+            nm1.notify(id1, mBuilder.build());
         }
     }
 
@@ -262,19 +262,18 @@ public class UploadService extends IntentService {
                 .setContentTitle("CradleRide Logger")
                 .setContentText(oText);
 
-        NotificationManager mNotifyMgr2 =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (mNotifyMgr2 != null) {
-            mNotifyMgr2.notify(3, mBuilder2.build());
+        nm2 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (nm2 != null) {
+            nm2.notify(id2, mBuilder2.build());
         }
     }
 
     private void failedNotification() {
         String oText;
         if (failedFileCount == 1) {
-            oText = failedFileCount + " file failed to upload.\nPlease check UploadFailed folder.";
+            oText = failedFileCount + " file failed to upload.\nPlease check the Finished folder.";
         } else {
-            oText = failedFileCount + " files too large to upload.\nPlease check UploadFailed folder.";
+            oText = failedFileCount + " files too large to upload.\nPlease check the Finished folder.";
         }
 
         failedFileCount = 0;
@@ -284,10 +283,9 @@ public class UploadService extends IntentService {
                 .setContentTitle("CradleRide Logger")
                 .setContentText(oText);
 
-        NotificationManager mNotifyMgr3 =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (mNotifyMgr3 != null) {
-            mNotifyMgr3.notify(4, mBuilder3.build());
+        nm3 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (nm3 != null) {
+            nm3.notify(id3, mBuilder3.build());
         }
     }
 

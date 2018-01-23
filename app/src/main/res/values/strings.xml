@@ -5,13 +5,13 @@
     <string name="version_string">\nVersion: \t</string>
     <string name="instruct_placeholder">Instructions</string>
 
-    <string name="butt_init">Initialising GPS</string>
+    <string name="butt_init">Searching for GPS</string>
     <string name="butt_start">Start Recording</string>
     <string name="butt_stop">Stop Recording</string>
 
     <string name="startGPS">Please start the recording and place your phone in position.</string>
     <string name="failed">GPS failed to lock on. \n\nPlease try again.</string>
-    <string name="initialising">Recording will start shortly.</string>
+    <string name="initialising">Once GPS is locked, recording will start automatically.</string>
     <string name="recording">Please do not touch your phone during the journey.</string>
     <string name="finished">Thank you for recording your journey.</string>
     <string name="crashed">Something went wrong with recording. \n\nPlease restart the app.</string>
