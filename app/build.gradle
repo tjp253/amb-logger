@@ -7,8 +7,8 @@ android {
         applicationId "uk.ac.nottingham.eaxtp1.CradleRideLogger"
         minSdkVersion 17
         targetSdkVersion 26
-        versionCode 41
-        versionName "3.0.1"
+        versionCode 42
+        versionName "3.0.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

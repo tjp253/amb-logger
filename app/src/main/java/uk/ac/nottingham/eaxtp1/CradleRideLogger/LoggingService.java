@@ -52,13 +52,13 @@ public class LoggingService extends Service {
     Timer logTimer, sizeCheckTimer;
     TimerTask loggingTask, sizeCheckingTask;
 
-    int uploadLimit = 10350000; // Restricts file size to ~9.9mb
-    long /*sampleTime,*/ checkDelay = 5000;
+    int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
+    long checkDelay = 5000;
     boolean nearLimit;
 
-    File gzFile;
-
-    String outputTitle;
+    File gzFile, endFile;
+    boolean multiFile;
+    String outputTitle, endName;
 
     List<String> titleList;
     int qSize;
@@ -179,7 +179,7 @@ public class LoggingService extends Service {
 
         } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
 
-            Log.i(TAG, "Queue empty. Supposed size: " + qSize /*+ ". Remove attempt number: " + i */+ ".");
+            Log.i(TAG, "Queue empty. Supposed size: " + qSize + ".");
             e.getMessage();
         }
 
@@ -195,6 +195,7 @@ public class LoggingService extends Service {
             zipPart++;
             nearLimit = false;
             fileSplitter(zipPart);
+            multiFile = true;
         }
     }
 
@@ -260,6 +261,14 @@ public class LoggingService extends Service {
                 e.printStackTrace();
             }
         }
+
+        if (!multiFile) {
+            endName = gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + ".csv.gz";
+        } else {
+            endName = gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + "-" + zipPart + "-END" + ".csv.gz";
+        }
+        endFile = new File(endName);
+        gzFile.renameTo(endFile);
 
         if (sizeCheckTimer != null) {
             sizeCheckTimer.cancel();
