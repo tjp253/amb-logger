@@ -20,7 +20,6 @@ public class NetworkReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (!WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(intent.getAction())) return;   // Stop AndroidStudio warning me!
 
-        Log.i(TAG, intent.getAction());
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm != null) {
             NetworkInfo info = cm.getActiveNetworkInfo();

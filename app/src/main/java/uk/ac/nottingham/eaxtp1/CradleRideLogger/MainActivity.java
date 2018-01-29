@@ -69,7 +69,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
 
     final String testPref = "TestingMode", initPref = "StillInitialise";
-    boolean testing, initTest, testMode = false;  // TODO: Set 'testMode' to false.
+    boolean initTest, testMode = false;  // TODO: Set 'testMode' to false.
+    static boolean testing;
 
     int timeDelay, newValue, posDelay, timeOut;
     boolean delayNotTimeout;

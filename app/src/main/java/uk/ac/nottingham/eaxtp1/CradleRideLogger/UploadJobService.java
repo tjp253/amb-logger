@@ -34,12 +34,11 @@ public class UploadJobService extends JobService {
         File finishedFolder = new File(finishedPath);
         if (finishedFolder.listFiles().length > 0) {
 
-            Log.i(TAG, "No files to upload. Abandon ship!");
-
             startService(uploadService);
 
             return true;
         } else {
+            Log.i(TAG, "No files to upload. Abandon ship!");
             return false;
         }
     }
