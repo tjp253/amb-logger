@@ -1,5 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class AudioService extends Service {
@@ -40,6 +42,13 @@ public class AudioService extends Service {
         } else {
             prepAudio();
         }
+
+        Notification notification = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ambulance_symb)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(getString(R.string.recording_data)).build();
+
+        startForeground(foreID, notification);
 
     }
 

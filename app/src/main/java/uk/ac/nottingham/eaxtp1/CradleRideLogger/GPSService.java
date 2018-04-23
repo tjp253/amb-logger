@@ -19,6 +19,7 @@ import java.util.List;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
@@ -75,6 +76,13 @@ public class GPSService extends Service implements LocationListener {
             wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GPS WakeLock");
             wakelock.acquire(wakelockTimeout);
         }
+
+        Notification notification = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ambulance_symb)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(getString(R.string.recording_data)).build();
+
+        startForeground(foreID, notification);
 
     }
 

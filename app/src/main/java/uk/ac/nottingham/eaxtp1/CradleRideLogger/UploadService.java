@@ -29,6 +29,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
@@ -42,8 +43,6 @@ public class UploadService extends IntentService {
     Notification.Builder mBuilder, mBuilder2, mBuilder3;
     static NotificationManager nm1, nm2, nm3;
     int id1 = 2, id2 = 3, id3 = 4;
-
-    int jobNumber;
 
     URL url;
     String urlString = "https://optics.eee.nottingham.ac.uk/~tp/upload.php";
@@ -82,6 +81,13 @@ public class UploadService extends IntentService {
             nm3.cancel(id3);
         }
 
+        Notification notification = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ambulance_symb)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText("Uploading files.").build();
+
+        startForeground(foreID, notification);
+
     }
 
     @Override
@@ -98,6 +104,10 @@ public class UploadService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        handleUploads();
+    }
+    
+    public void handleUploads() {
 
         if (moving) {
             try {
@@ -129,8 +139,6 @@ public class UploadService extends IntentService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        jobNumber = intent.getIntExtra("jobNumber", 1);
 
         File sourceFolder = new File(finishedPath);
         int sourceLength = sourceFolder.getParent().length();

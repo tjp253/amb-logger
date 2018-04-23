@@ -1,6 +1,8 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +28,7 @@ import java.util.zip.GZIPOutputStream;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
@@ -92,6 +95,13 @@ public class LoggingService extends Service {
         if (!crashed) {
             initialiseLogging();
         }
+
+        Notification notification = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ambulance_symb)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(getString(R.string.recording_data)).build();
+
+        startForeground(foreID, notification);
     }
 
     public void crashCheck() {
@@ -239,39 +249,41 @@ public class LoggingService extends Service {
 //            Wait it out.
         }
 
-        if (logTimer != null) {
-            logTimer.cancel();
-            logTimer.purge();
-            logTimer = null;
-        }
-
-        if (myQ.size() > 0) {
-            Log.i(TAG, "Writing final outputs.");
-            writeToFile();
-        }
-        myQ = null;
-
-        // Clear the GPS data for the next recording.
-        gpsData = "";
-
-        if (myOutputStream != null) {
-            try {
-                myOutputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (!crashed) {
+            if (logTimer != null) {
+                logTimer.cancel();
+                logTimer.purge();
+                logTimer = null;
             }
-        }
 
-        if (!multiFile) {
-            endName = gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + ".csv.gz";
-        } else {
-            endName = gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + "-" + zipPart + "-END" + ".csv.gz";
-        }
-        endFile = new File(endName);
-        gzFile.renameTo(endFile);
+            if (myQ.size() > 0) {
+                Log.i(TAG, "Writing final outputs.");
+                writeToFile();
+            }
+            myQ = null;
 
-        if (sizeCheckTimer != null) {
-            sizeCheckTimer.cancel();
+            // Clear the GPS data for the next recording.
+            gpsData = "";
+
+            if (myOutputStream != null) {
+                try {
+                    myOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (!multiFile) {
+                endName = gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + ".csv.gz";
+            } else {
+                endName = gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + "-" + zipPart + "-END" + ".csv.gz";
+            }
+            endFile = new File(endName);
+            gzFile.renameTo(endFile);
+
+            if (sizeCheckTimer != null) {
+                sizeCheckTimer.cancel();
+            }
         }
 
         if (!sentIntents) {

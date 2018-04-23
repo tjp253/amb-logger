@@ -1,5 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +23,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.testing;
 
@@ -75,6 +77,13 @@ public class IMUService extends Service implements SensorEventListener {
         } else {
             initialiseIMU();
         }
+
+        Notification notification = new Notification.Builder(this)
+                .setSmallIcon(R.drawable.ambulance_symb)
+                .setContentTitle(getString(R.string.app_name))
+                .setContentText(getString(R.string.recording_data)).build();
+
+        startForeground(foreID, notification);
     }
 
     public void initialiseIMU() {
