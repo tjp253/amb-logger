@@ -75,4 +75,24 @@
 
     <string name="recording_data">Journey being recorded. Please do not move the phone.</string>
 
+    <!--Below is for CenTre Neonatal Transport only-->
+
+    <string name="centre_ntt">\u0020- CenTre</string>
+
+    <string name="ambTit">\nPlease select current ambulance</string>
+    <string name="amb1">8912</string>
+    <string name="amb2">8915</string>
+    <string name="amb3">4223</string>
+    <string name="amb4">4224</string>
+    <string name="optOther">Other</string>
+    <string name="entAmb">Please enter the ambulance ID</string>
+    <string name="entButt">Enter</string>
+
+    <string name="trollTit">\nPlease select current trolley</string>
+    <string name="tro1">NORTH 1</string>
+    <string name="tro2">NORTH 2</string>
+    <string name="tro3">SOUTH 1</string>
+    <string name="tro4">SOUTH 2</string>
+    <string name="entTroll">Please enter the trolley ID</string>
+
 </resources>

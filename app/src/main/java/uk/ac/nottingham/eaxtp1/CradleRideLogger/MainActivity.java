@@ -54,6 +54,13 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConne
 
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
 
+    final String testPref = "TestingMode", initPref = "StillInitialise";
+    boolean initTest, testMode = false;  // TODO: Set 'testMode' to false.
+    static boolean testing;
+
+    boolean ambMode = true;
+    static String amb, troll;
+
     String TAG = "CRL_MainActivity";
 
     Intent uploadService;
@@ -67,10 +74,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     // Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
     final String keyDelay = "DelayTime", keyAS = "AutoStop", keyTimeout = "GPS Timeout";
     final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
-
-    final String testPref = "TestingMode", initPref = "StillInitialise";
-    boolean initTest, testMode = false;  // TODO: Set 'testMode' to false.
-    static boolean testing;
 
     int timeDelay, newValue, posDelay, timeOut;
     boolean delayNotTimeout;
@@ -138,6 +141,9 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         } catch (Exception e) {
             e.printStackTrace();
         }
+        if (ambMode) {
+            version += getString(R.string.centre_ntt);
+        }
         versionView.setText(version);
 
         recordButt = findViewById(R.id.button_Record);
@@ -158,6 +164,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             permissionCheck();
 
+        }
+
+        if (ambMode) {
+            Intent ambSelect = new Intent(this, AmbSelect.class);
+            startActivity(ambSelect);
         }
 
         uploadService = new Intent(this, UploadService.class);
