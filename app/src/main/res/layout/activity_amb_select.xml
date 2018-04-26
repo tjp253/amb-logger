@@ -14,6 +14,7 @@
         android:layout_marginStart="8dp"
         android:text="@string/ambTit"
         android:textAlignment="center"
+        android:textAllCaps="true"
         android:textSize="32sp"
         app:layout_constraintBottom_toTopOf="@+id/opt1"
         app:layout_constraintEnd_toEndOf="parent"

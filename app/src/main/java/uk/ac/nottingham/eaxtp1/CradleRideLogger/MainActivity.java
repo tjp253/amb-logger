@@ -55,13 +55,14 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConne
 public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
 
     final String testPref = "TestingMode", initPref = "StillInitialise";
-    boolean initTest, testMode = false;  // TODO: Set 'testMode' to false.
+    boolean initTest, testMode = BuildConfig.FLAVOR.equals("shaker");
     static boolean testing;
 
-    boolean ambMode = true;
+    boolean ambMode = BuildConfig.FLAVOR.equals("ambulance");
     static String amb, troll;
 
     String TAG = "CRL_MainActivity";
+    static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
 
     Intent uploadService;
     Intent audioService, gpsService, imuService, loggingService;
@@ -94,7 +95,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Location myLastLocation;
     private ProgressBar loadingAn;
 
-    boolean initialising, positioned, buttPressed, gGranted, aGranted, cancelGPS, displayOn;
+    boolean initialising, positioned, buttPressed, cancelGPS, displayOn;
     static boolean recording, compressing, moving,
             crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
             autoStopOn;
@@ -104,6 +105,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        instructDisplay = findViewById(R.id.instructDisplay);
 
         preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
         prefEditor = preferences.edit();
@@ -125,14 +128,19 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                 prefEditor.putBoolean(keyDisc, true);
                 prefEditor.commit();
                 showDisclosure();
+            } else {
+                //        Checks (and asks for) permission on app start-up
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                    permissionCheck();
+
+                }
             }
         }
 
         userID = preferences.getInt(user_ID, 1);
 
-        instructDisplay = findViewById(R.id.instructDisplay);
         versionView = findViewById(R.id.versionView);
-
         String version = getString(R.string.id_string) + String.valueOf(userID) + getString(R.string.version_string) ;
 //        Gets the versionName from the app gradle to display.
         try {
@@ -140,9 +148,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             version = version + packageInfo.versionName;
         } catch (Exception e) {
             e.printStackTrace();
-        }
-        if (ambMode) {
-            version += getString(R.string.centre_ntt);
         }
         versionView.setText(version);
 
@@ -158,18 +163,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         initialising = false;
         compressing = false;
         crashed = false;
-
-//        Checks (and asks for) permission on app start-up
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean(keyDisc, true)) {
-
-            permissionCheck();
-
-        }
-
-        if (ambMode) {
-            Intent ambSelect = new Intent(this, AmbSelect.class);
-            startActivity(ambSelect);
-        }
 
         uploadService = new Intent(this, UploadService.class);
         if (!wifiConnected) {
@@ -200,6 +193,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         loadingAn = findViewById(R.id.initProgress);
         loadingAn.setVisibility(View.GONE);
+
+        if (ambMode) {
+            Intent ambSelect = new Intent(this, AmbSelect.class);
+            startActivity(ambSelect);
+        }
 
         gravityCheck();
     }
@@ -506,21 +504,17 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_GPS:
-                gGranted = (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
-                break;
-            case PERMISSION_AUDIO:
-                aGranted = (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED);
-                break;
-        }
-
-        if ( !(gGranted && aGranted) && buttPressed ) {
+        if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (requestCode == PERMISSION_GPS) {
+                permissionCheck();
+            } else {
+                if (buttPressed) {
+                    startInitialising();
+                }
+            }
+        } else {
             instructDisplay.setText(R.string.permissions);
-        } else if (buttPressed) {
-            startInitialising();
         }
-        buttPressed = false;
     }
 
     public void showDisclosure() {
@@ -559,6 +553,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             adButt.setEnabled(false);
             prefEditor.putBoolean(keyInst, false);
             prefEditor.commit();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean(keyDisc, true)) {
+
+                permissionCheck();
+
+            }
         }
 
     }
@@ -791,7 +791,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
-    static NotificationManager notMan;     int notID = 2525;  static int foreID = 1992;
+    static NotificationManager notMan;     int notID = 2525;
     Notification.Builder notBuild;
     Intent restartApp;
     PendingIntent goToApp;

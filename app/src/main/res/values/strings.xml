@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">CradleRide Logger</string>
 
     <string name="id_string">Unique ID: \t</string>
     <string name="version_string">\nVersion: \t</string>
