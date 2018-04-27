@@ -3,6 +3,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Editable;
@@ -14,6 +15,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.amb;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambExtra;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.emerge;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.patOnBoard;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.trans;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.troll;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.pat;
 
@@ -54,10 +60,34 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
             @Override
             public void onFinish() {
-                changeButts();
+                if (!recording) {
+                    changeButts();
+                } else {
+                    setupQuestion(false);
+                }
             }
         };
 
+        if (recording) {
+            butt3.setVisibility(View.INVISIBLE);
+            butt4.setVisibility(View.INVISIBLE);
+            buttOther.setText(R.string.butt_cancel);
+            patient = patOnBoard;
+            setupQuestion(patOnBoard);
+        }
+
+    }
+
+    public void setupQuestion(boolean bool) {
+        if (bool) {
+            titleView.setText(R.string.transTit);
+            butt1.setText(R.string.transReasonOne);
+            butt2.setText(R.string.transReasonTwo);
+        } else {
+            titleView.setText(R.string.emergeTit);
+            butt1.setText(R.string.yesButt);
+            butt2.setText(R.string.noButt);
+        }
     }
 
     @Override
@@ -92,97 +122,127 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     public void storeAmb(int optionNo) {
         buttPause.start();
-        if (trolley) {
-            switch (optionNo) {
-                case 1: troll = getString(R.string.tro1);   break;
-                case 2: troll = getString(R.string.tro2);   break;
-                case 3: troll = getString(R.string.tro3);   break;
-                case 4: troll = getString(R.string.tro4);   break;
+        if (!recording) {
+            if (trolley) {
+                switch (optionNo) {
+                    case 1: troll = getString(R.string.tro1);   break;
+                    case 2: troll = getString(R.string.tro2);   break;
+                    case 3: troll = getString(R.string.tro3);   break;
+                    case 4: troll = getString(R.string.tro4);   break;
+                }
+            } else if (patient) {
+                switch (optionNo) {
+                    case 1: pat = getString(R.string.yesButt);  patOnBoard = true;  break;
+                    case 2: pat = getString(R.string.noButt);   break;
+                }
+                finish();
+            } else {
+                switch (optionNo) {
+                    case 1: amb = getString(R.string.amb1); break;
+                    case 2: amb = getString(R.string.amb2); break;
+                    case 3: amb = getString(R.string.amb3); break;
+                    case 4: amb = getString(R.string.amb4); break;
+                }
             }
-        } else if (patient) {
-            switch (optionNo) {
-                case 1: pat = getString(R.string.yesButt);  break;
-                case 2: pat = getString(R.string.noButt);   break;
-            }
-            finish();
         } else {
-            switch (optionNo) {
-                case 1: amb = getString(R.string.amb1); break;
-                case 2: amb = getString(R.string.amb2); break;
-                case 3: amb = getString(R.string.amb3); break;
-                case 4: amb = getString(R.string.amb4); break;
+            if (patient) {
+                switch (optionNo) {
+                    case 1: trans = getString(R.string.transReasonOne); break;
+                    case 2: trans = getString(R.string.transReasonTwo); break;
+                    case 5: finish();   break;
+                }
+                patient = false;
+            } else {
+                switch (optionNo) {
+                    case 1: emerge = getString(R.string.yesButt); break;
+                    case 2: emerge = getString(R.string.noButt); break;
+                    case 5: finish();   break;
+                }
+                sendIntentBack();
             }
         }
     }
 
+    public void sendIntentBack() {
+        Intent returnIntent = new Intent().putExtra(ambExtra, true);
+        setResult(Activity.RESULT_OK, returnIntent);
+        finish();
+    }
+
     public void getOther() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View inputView = View.inflate(this, R.layout.amb_input, null);
-        if (!trolley) {
-            intOne = R.id.ambInput;
-            intTwo = R.id.trollInput;
+        if (recording) {
+            storeAmb(5);
         } else {
-            intOne = R.id.trollInput;
-            intTwo = R.id.ambInput;
-        }
-        final EditText input = inputView.findViewById(intOne);
-        final EditText input2 = inputView.findViewById(intTwo);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            View inputView = View.inflate(this, R.layout.amb_input, null);
+            if (!trolley) {
+                intOne = R.id.ambInput;
+                intTwo = R.id.trollInput;
+            } else {
+                intOne = R.id.trollInput;
+                intTwo = R.id.ambInput;
+            }
+            final EditText input = inputView.findViewById(intOne);
+            final EditText input2 = inputView.findViewById(intTwo);
 
-        if (!trolley) {
-            input2.setVisibility(View.INVISIBLE);
-            builder .setMessage(R.string.entAmb)
-                    .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            amb = input.getText().toString();
-                            changeButts();
-                        }
-                    });
-        } else {
-            input2.setVisibility(View.INVISIBLE);
-            builder .setMessage(R.string.entTroll)
-                    .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            troll = input.getText().toString();
+            if (!trolley) {
+                input2.setVisibility(View.INVISIBLE);
+                builder.setMessage(R.string.entAmb)
+                        .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                amb = input.getText().toString();
+                                changeButts();
+                            }
+                        });
+            } else {
+                input2.setVisibility(View.INVISIBLE);
+                builder.setMessage(R.string.entTroll)
+                        .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                troll = input.getText().toString();
 //                            finish();
-                        }
-                    });
+                            }
+                        });
+            }
+
+            builder.setView(inputView)
+                    .setCancelable(false).create();
+
+            inAlert = builder.show();
+
+            final Button inButt = inAlert.getButton(AlertDialog.BUTTON_POSITIVE);
+            inButt.setEnabled(false);
+
+            input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (hasFocus) {
+                        inAlert.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                    }
+                }
+            });
+
+            input.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (s.length() > 3) {
+                        inButt.setEnabled(true);
+                    } else {
+                        inButt.setEnabled(false);
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
+            });
         }
-
-        builder .setView(inputView)
-                .setCancelable(false).create();
-
-        inAlert = builder.show();
-
-        final Button inButt = inAlert.getButton(AlertDialog.BUTTON_POSITIVE);
-        inButt.setEnabled(false);
-
-        input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus) {
-                    inAlert.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-                }
-            }
-        });
-
-        input.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() > 3) {
-                    inButt.setEnabled(true);
-                } else {
-                    inButt.setEnabled(false);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
     }
 
     @Override

@@ -98,4 +98,19 @@
     <string name="yesButt">yes</string>
     <string name="noButt">no</string>
 
+    <string name="transTit">What was the operational reason for the transfer?</string>
+    <string name="transReasonOne">Uplift</string>
+    <string name="transReasonTwo">Repatriation or Capacity</string>
+
+    <string name="emergeTit">Were blue lights and/or sirens used at any time?</string>
+
+    <array name="transReasons">
+        <item>@string/transReasonOne</item>
+        <item>@string/transReasonTwo</item>
+    </array>
+    <array name="emergeReasons">
+        <item>@string/yesButt</item>
+        <item>@string/noButt</item>
+    </array>
+
 </resources>

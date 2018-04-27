@@ -59,7 +59,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     static boolean testing;
 
     boolean ambMode = BuildConfig.FLAVOR.equals("ambulance");
-    static String amb, troll, pat;
+    Intent ambSelect;   final int ambInt = 1132;    final static String ambExtra = "EndLogging";
+    static String amb, troll, pat, trans, emerge;  static boolean patOnBoard;
 
     String TAG = "CRL_MainActivity";
     static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
@@ -186,7 +187,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         loadingAn.setVisibility(View.GONE);
 
         if (ambMode) {
-            Intent ambSelect = new Intent(this, AmbSelect.class);
+            ambSelect = new Intent(this, AmbSelect.class);
             startActivity(ambSelect);
         }
 
@@ -366,10 +367,14 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
             } else { // Stop recording data
 
-                stopAll();
+                if (ambMode) {
+                    startActivityForResult(ambSelect, ambInt);
+//                    checkReasonEtc(patOnBoard);
+                } else {
+                    stopAll();
 
-                stopLogging();
-
+                    stopLogging();
+                }
             }
 
         } else if (v == cancelButt && !recording) {
@@ -822,6 +827,13 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         if (!initialising && !recording) {
             stopListening();
             stopAll();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == ambInt && resultCode == RESULT_OK && data.getBooleanExtra(ambExtra, false)) {
+            stopAll();  stopLogging();
         }
     }
 
