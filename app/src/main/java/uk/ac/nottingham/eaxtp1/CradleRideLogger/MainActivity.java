@@ -59,7 +59,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     static boolean testing;
 
     boolean ambMode = BuildConfig.FLAVOR.equals("ambulance");
-    static String amb, troll;
+    static String amb, troll, pat;
 
     String TAG = "CRL_MainActivity";
     static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
@@ -121,21 +121,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             prefEditor.putBoolean(keyFirst, false);
             prefEditor.putInt(user_ID, rndUserID);
             prefEditor.commit();
-        } else {
+        } else if (preferences.getBoolean(keyDisc, true)) {
 //        Shows Disclosure Agreement.
 //        TODO: remove the '!' below when code is finalised.
-            if (preferences.getBoolean(keyDisc, true)) {
                 prefEditor.putBoolean(keyDisc, true);
                 prefEditor.commit();
                 showDisclosure();
-            } else {
-                //        Checks (and asks for) permission on app start-up
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-                    permissionCheck();
-
-                }
-            }
         }
 
         userID = preferences.getInt(user_ID, 1);
@@ -227,6 +218,12 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean(keyDisc, true)) {
+
+            permissionCheck();
+
+        }
 
         if (notMan != null) {
             notMan.cancel(notID);
@@ -543,6 +540,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
                         prefEditor.putBoolean(keyDisc, false);
                         prefEditor.putBoolean(keyInst, true);
                         prefEditor.commit();
+
+                        permissionCheck();
                     }
                 });
         disclosureDialog = builder.create();
@@ -554,11 +553,11 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             prefEditor.putBoolean(keyInst, false);
             prefEditor.commit();
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean(keyDisc, true)) {
-
-                permissionCheck();
-
-            }
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean(keyDisc, true)) {
+//
+//                permissionCheck();
+//
+//            }
         }
 
     }

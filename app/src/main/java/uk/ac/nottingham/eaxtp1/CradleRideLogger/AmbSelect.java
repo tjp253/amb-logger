@@ -15,13 +15,14 @@ import android.widget.TextView;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.amb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.troll;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.pat;
 
 public class AmbSelect extends Activity implements View.OnClickListener {
 
     Button butt1, butt2, butt3, butt4, buttOther;
     TextView titleView;
 
-    boolean trolley;
+    boolean trolley, patient;
     int intOne, intTwo;
 
     CountDownTimer buttPause;
@@ -62,51 +63,55 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.opt1:
-                storeAmb(1);
-                break;
-            case R.id.opt2:
-                storeAmb(2);
-                break;
-            case R.id.opt3:
-                storeAmb(3);
-                break;
-            case R.id.opt4:
-                storeAmb(4);
-                break;
-            case R.id.optOther:
-                getOther();
-                break;
+            case R.id.opt1: storeAmb(1);    break;
+            case R.id.opt2: storeAmb(2);    break;
+            case R.id.opt3: storeAmb(3);    break;
+            case R.id.opt4: storeAmb(4);    break;
+            case R.id.optOther: getOther(); break;
         }
-
     }
 
     public void changeButts() {
+        if (!trolley) {
             trolley = true;
             titleView.setText(R.string.trollTit);
             butt1.setText(R.string.tro1);
             butt2.setText(R.string.tro2);
             butt3.setText(R.string.tro3);
             butt4.setText(R.string.tro4);
+        } else {
+            trolley = false;    patient = true;
+            titleView.setText(R.string.patTit);
+            butt1.setText(R.string.yesButt);
+            butt2.setText(R.string.noButt);
+            butt3.setVisibility(View.INVISIBLE);
+            butt4.setVisibility(View.INVISIBLE);
+            buttOther.setVisibility(View.INVISIBLE);
+        }
     }
 
     public void storeAmb(int optionNo) {
         buttPause.start();
-        if (!trolley) {
+        if (trolley) {
+            switch (optionNo) {
+                case 1: troll = getString(R.string.tro1);   break;
+                case 2: troll = getString(R.string.tro2);   break;
+                case 3: troll = getString(R.string.tro3);   break;
+                case 4: troll = getString(R.string.tro4);   break;
+            }
+        } else if (patient) {
+            switch (optionNo) {
+                case 1: pat = getString(R.string.yesButt);  break;
+                case 2: pat = getString(R.string.noButt);   break;
+            }
+            finish();
+        } else {
             switch (optionNo) {
                 case 1: amb = getString(R.string.amb1); break;
                 case 2: amb = getString(R.string.amb2); break;
                 case 3: amb = getString(R.string.amb3); break;
                 case 4: amb = getString(R.string.amb4); break;
             }
-        } else {
-            switch (optionNo) {
-                case 1: troll = getString(R.string.tro1); break;
-                case 2: troll = getString(R.string.tro2); break;
-                case 3: troll = getString(R.string.tro3); break;
-                case 4: troll = getString(R.string.tro4); break;
-            }
-            finish();
         }
     }
 
@@ -140,7 +145,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             troll = input.getText().toString();
-                            finish();
+//                            finish();
                         }
                     });
         }

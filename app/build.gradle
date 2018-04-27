@@ -11,7 +11,7 @@ android {
         versionName "3.0.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resValue "string", "app_name", "CradleRide Logger"
-        manifestPlaceholders = [isAmb: "false"]
+        manifestPlaceholders.isAmb = "false"
     }
     buildTypes {
         release {
@@ -28,6 +28,7 @@ android {
             applicationIdSuffix ".amb"
             versionNameSuffix " - NTT"
             manifestPlaceholders = [isAmb: "true"]
+            resValue "string", "app_name", "Ambulance Logger"
         }
         shaker {
             applicationIdSuffix ".shaker"
