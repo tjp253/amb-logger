@@ -8,9 +8,11 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -18,20 +20,14 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.GpsStatus;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,15 +40,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
-public class MainActivity extends Activity implements View.OnClickListener, LocationListener, GpsStatus.Listener {
+public class MainActivity extends Activity implements View.OnClickListener {
 
     final String testPref = "TestingMode", initPref = "StillInitialise";
     boolean initTest, testMode = BuildConfig.FLAVOR.equals("shaker");
@@ -66,7 +60,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
 
     Intent uploadService;
-    Intent audioService, gpsService, imuService, loggingService;
+    Intent audioService, gpsService, imuService, loggingService, gpsTimerService;
 
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
@@ -74,29 +68,21 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     Button adButt;
     MenuItem autoStopCheckbox, buttDelay, buttTimeout, testCheck, initB4Test;
     // Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
-    final String keyDelay = "DelayTime", keyAS = "AutoStop", keyTimeout = "GPS Timeout";
+    final static String keyDelay = "DelayTime", keyAS = "AutoStop", keyTimeout = "GPS Timeout";
     final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
 
-    int timeDelay, newValue, posDelay, timeOut;
+    int timeDelay, newValue, timeOut;
     boolean delayNotTimeout;
     static int userID;
 
     final int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
 
-    CountDownTimer timeoutTimer, removalTimer;
-
     public Button recordButt, cancelButt;
     public TextView instructDisplay, versionView;
 
-    protected LocationManager myLocationManager;
-
-    //    Sets up variables for the GPS fix-check
-    boolean gpsFixed;
-    long myLastLocationMillis;
-    Location myLastLocation;
     private ProgressBar loadingAn;
 
-    boolean initialising, positioned, buttPressed, cancelGPS, displayOn;
+    boolean initialising, buttPressed/*, cancelGPS*/, displayOn;
     static boolean recording, compressing, moving,
             crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
             autoStopOn;
@@ -179,7 +165,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         imuService = new Intent(getApplicationContext(), IMUService.class);
         loggingService = new Intent(getApplicationContext(), LoggingService.class);
 
-        myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        gpsTimerService = new Intent(getApplicationContext(), GPSTimerService.class);
 
         setUpToolbar();
 
@@ -256,29 +242,22 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     @SuppressWarnings("MissingPermission")
     public void startInitialising() {
         initialising = true;     recording = false;
-        positioned = false;
         recordButt.setEnabled(false);
         recordButt.setText(R.string.butt_init);
         loadingAn.setVisibility(View.VISIBLE);      cancelButt.setVisibility(View.VISIBLE);
         gpsData = "";
-        if (!testing) {
-            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            myLocationManager.addGpsStatusListener(this);
-        }
+        startService(gpsTimerService);
+        LocalBroadcastManager.getInstance(this).registerReceiver(BReceiver, new IntentFilter(timerFilter));
 
         instructDisplay.setText(R.string.initialising);
 
         startService(audioService);
         Log.i(TAG, "startInitialising");
-        gpsTimer();
     }
 
     public void stopInitialising() {
         loadingAn.setVisibility(View.GONE);     cancelButt.setVisibility(View.GONE);
-        stopListening();
-        if (timeoutTimer != null) {
-            timeoutTimer.cancel();
-        }
+        stopService(gpsTimerService);
         stopAll();
         recordButt.setText(R.string.butt_start);
     }
@@ -308,22 +287,17 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
         recordButt.setText(R.string.butt_stop);
         recordButt.setEnabled(true);
-
-        if (timeoutTimer != null) {
-            timeoutTimer.cancel();
-        }
-
-        gpsRemoval();
     }
 
     public void stopAll() {
+        stopService(gpsTimerService);
+
         stopService(imuService);
         stopService(audioService);
         stopService(gpsService);
         stopService(loggingService);
 
         recording = false;
-        positioned = false;
 
         recordButt.setText(R.string.butt_start);
         recordButt.setEnabled(true);
@@ -333,11 +307,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         instructDisplay.setText(R.string.finished);
 
         recordButt.setEnabled(true);
-    }
-
-    public void stopListening() {
-        //noinspection MissingPermission
-        myLocationManager.removeUpdates(this);
     }
 
     @Override
@@ -369,7 +338,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
                 if (ambMode) {
                     startActivityForResult(ambSelect, ambInt);
-//                    checkReasonEtc(patOnBoard);
                 } else {
                     stopAll();
 
@@ -384,108 +352,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
 
     }
 
-    @Override
-    public void onGpsStatusChanged(int event) {
-
-        if (initialising) {
-
-//        Ensures the GPS is fixed before the user starts recording
-            switch (event) {
-                case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-                    if (myLastLocation != null)
-                        gpsFixed = (SystemClock.elapsedRealtime() - myLastLocationMillis) < 3000;
-
-                    if (gpsFixed && positioned) {
-                        Log.i(TAG, "Fixed and in Position");
-                        startAll();
-                    }
-
-                    break;
-                case GpsStatus.GPS_EVENT_FIRST_FIX:
-
-                    gpsFixed = true;
-
-                    break;
-            }
-        }
-    }
-
-    // Allow time for phone positioning before recording - less cut-off needed in analysis?
-    public void gpsRemoval() {
-        removalTimer = new CountDownTimer(1000,1000) {
-            public void onTick(long millisUntilFinished) {}
-
-            @Override
-            public void onFinish() {
-                Log.i(TAG, "Stop GPS");
-                cancelGPS = true;
-            }
-        }.start();
-    }
-
-    public void gpsTimer() {
-        if (timeDelay == 0) {
-            Log.i(TAG, "Positioned");
-            positioned = true;
-            posDelay = 60;
-        } else {
-            posDelay = timeDelay;
-        }
-
-        timeoutTimer = new CountDownTimer(timeOut*1000, posDelay*1000) {    // TODO: Set to timeOut & posDelay
-
-            public void onTick(long millisUntilFinished) {
-                if (millisUntilFinished <= (timeOut-timeDelay) * 1000 && !positioned) {
-                    Log.i(TAG, "Positioned");
-                    positioned = true;          // Allow time for phone positioning before recording
-                    if (testing) {
-                        startAll();
-                    }
-                }
-            }
-
-            @Override
-            public void onFinish() {
-                if (initialising && !recording) {
-                    Log.i(TAG, "GPS Timed Out");
-                    stopInitialising();     // Cancels recording if the GPS can't get a fix within a reasonable time.
-                    instructDisplay.setText(R.string.failed);
-                    if (!displayOn) {
-                        gpsFailNotify();
-                    }
-                }
-            }
-        }.start();
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-
-        if (!cancelGPS && !crashed) {
-            if (location == null) return;
-
-            if (!recording) {
-                myLastLocationMillis = SystemClock.elapsedRealtime();
-
-                myLastLocation = location;
-
-                String sLat = String.valueOf(location.getLatitude());
-                String sLong = String.valueOf(location.getLongitude());
-                String sSpeed = String.valueOf(location.getSpeed());
-                String sGTime = String.valueOf(location.getTime());
-                String sAcc = String.valueOf(location.getAccuracy());
-                String sAlt = String.valueOf(location.getAltitude());
-                String sBear = String.valueOf(location.getBearing());
-                String sRT = String.valueOf(location.getElapsedRealtimeNanos());
-
-                List<String> dataList = Arrays.asList(sLat, sLong, sSpeed, sGTime, sAcc, sAlt, sBear, sRT);
-                gpsData = TextUtils.join(",", dataList);
-            }
-        } else {
-            myLocationManager.removeUpdates(this);
-            cancelGPS = false;
-        }
-    }
 
     @TargetApi(Build.VERSION_CODES.M)
     public void permissionCheck() {
@@ -557,12 +423,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
             adButt.setEnabled(false);
             prefEditor.putBoolean(keyInst, false);
             prefEditor.commit();
-
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !preferences.getBoolean(keyDisc, true)) {
-//
-//                permissionCheck();
-//
-//            }
         }
 
     }
@@ -825,7 +685,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
     protected void onStart() {
         super.onStart();
         if (!initialising && !recording) {
-            stopListening();
+//            stopListening();
             stopAll();
         }
     }
@@ -850,13 +710,22 @@ public class MainActivity extends Activity implements View.OnClickListener, Loca
         stopAll();
     }
 
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {}
-
-    @Override
-    public void onProviderEnabled(String provider) {}
-
-    @Override
-    public void onProviderDisabled(String provider) {}
+    static final String timerFilter = "TimerResponse", timerInt = "ResponseInt";
+    private BroadcastReceiver BReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getIntExtra(timerInt, 1)) {
+                case 1: startAll(); break;
+                case 0:
+                    stopInitialising();     // Cancels recording if the GPS can't get a fix within a reasonable time.
+                    instructDisplay.setText(R.string.failed);
+                    if (!displayOn) {
+                        gpsFailNotify();
+                    }
+                    break;
+            }
+            LocalBroadcastManager.getInstance(MainActivity.this).unregisterReceiver(BReceiver);
+        }
+    };
 
 }

@@ -58,10 +58,9 @@
         <service android:name=".IMUService" />
         <service
             android:name=".UploadJobService"
-            android:enabled="true"
-            android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
+        <!--suppress AndroidDomInspection -->
         <activity
             android:name=".AmbSelect"
             android:enabled="${isAmb}" />
@@ -70,14 +69,15 @@
             android:name=".BootReceiver"
             android:enabled="${isAmb}"
             android:exported="true">
-            <intent-filter
-                android:priority="100">
+            <intent-filter android:priority="100">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+
                 <category android:name="android.intent.category.HOME" />
             </intent-filter>
         </receiver>
 
+        <service android:name=".GPSTimerService" />
     </application>
 
 </manifest>
