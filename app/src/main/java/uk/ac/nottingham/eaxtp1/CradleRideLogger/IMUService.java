@@ -43,7 +43,7 @@ public class IMUService extends Service implements SensorEventListener {
     Sensor accelerometer, gravity, magnetic;
 
     private long sampleID;
-    private short prevSamp;
+    private short prevSample;
 
     String sID, sX, sY, sZ, sampleTime;
     String sGX = "", sGY = "", sGZ = "", sE = "", sN = "", sD = "";
@@ -172,19 +172,19 @@ public class IMUService extends Service implements SensorEventListener {
             sID = String.valueOf(sampleID);
 
             if (gravityPresent) {
-                if (gpsSample > prevSamp) {
+                if (gpsSample > prevSample) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGX, sGY, sGZ,
                             sN, sE, sD, sGPS, sAmp, gpsData);
-                    prevSamp = gpsSample;
+                    prevSample = gpsSample;
                 } else {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGX, sGY, sGZ,
                             sN, sE, sD, sGPS, sAmp);
                 }
 
             } else {
-                if (gpsSample > prevSamp) {
+                if (gpsSample > prevSample) {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGPS, sAmp, gpsData);
-                    prevSamp = gpsSample;
+                    prevSample = gpsSample;
                 } else {
                     outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGPS, sAmp);
                 }

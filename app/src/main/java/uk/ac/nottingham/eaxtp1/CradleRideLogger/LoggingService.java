@@ -243,7 +243,7 @@ public class LoggingService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
-//        noinspection StatementWithEmptyBody
+//        noinspection StatementWithEmptyBody, WhileLoopSpinsOnField
         while (writingToFile) {
 //            Wait it out.
         }

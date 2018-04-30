@@ -16,10 +16,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -69,6 +65,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     MenuItem autoStopCheckbox, buttDelay, buttTimeout, testCheck, initB4Test;
     // Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
     final static String keyDelay = "DelayTime", keyAS = "AutoStop", keyTimeout = "GPS Timeout";
+    final static String keyFCheck = "CheckFS", keyG = "Gravity Present", keyFS = "MaxFS";
     final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
 
     int timeDelay, newValue, timeOut;
@@ -177,29 +174,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
             startActivity(ambSelect);
         }
 
-        gravityCheck();
-    }
-
-    public void gravityCheck() {
-        SensorManager manager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        if (manager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
-            Sensor gravity = manager.getDefaultSensor(Sensor.TYPE_GRAVITY);
-            SensorEventListener listener = new SensorEventListener() {
-                @Override
-                public void onSensorChanged(SensorEvent event) {
-//                Log.i("Main", "Gravity sensing");
-                }
-
-                @Override
-                public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-                }
-            };
-            if (manager.registerListener(listener, gravity, SensorManager.SENSOR_DELAY_NORMAL)) {
-                gravityPresent = true;
-                manager.unregisterListener(listener);
-            }
+        if (preferences.getBoolean(keyFCheck, true)) {
+            Intent fsService = new Intent(getApplicationContext(), FSChecker.class);
+            startService(fsService);
         }
+        gravityPresent = preferences.getBoolean(keyG, false);
     }
 
     @Override
