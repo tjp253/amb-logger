@@ -26,10 +26,16 @@ import java.util.zip.GZIPOutputStream;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.amb;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambMode;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.emerge;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.pat;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.trans;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.troll;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
 public class LoggingService extends Service {
@@ -73,11 +79,11 @@ public class LoggingService extends Service {
     Date todayDate = new Date();
     public String date = dateFormat.format(todayDate);
 
-    OutputStream myOutputStream;
+    OutputStream myOutputStream, myAmbStream;
     int zipPart = 1;
-    String filepath = "Recording";
-    String filename = date + "-ID" + String.valueOf(userID) + "-" + zipPart + ".csv.gz";
-    String mainPath, gzipPath;
+    String filepath = "Recording", digitAdjuster = "-0", suffix = "-END";
+    String filename = date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz";
+    String mainPath, gzipPath, ambPath;
 
     StringBuilder stringBuilder = new StringBuilder("");
     String toFile;
@@ -125,6 +131,10 @@ public class LoggingService extends Service {
         }
 
         gzFile = new File(gzipPath);
+
+        if (ambMode) {
+            prepAmb();
+        }
 
         logTitle();
 
@@ -202,6 +212,9 @@ public class LoggingService extends Service {
 
         if (nearLimit) {
             zipPart++;
+            if (zipPart == 10) {
+                digitAdjuster = "-";
+            }
             nearLimit = false;
             fileSplitter(zipPart);
             multiFile = true;
@@ -222,7 +235,7 @@ public class LoggingService extends Service {
 
     public void fileSplitter(int filePart) {
 
-        gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + "-" + filePart + ".csv.gz";
+        gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + digitAdjuster + filePart + ".csv.gz";
 
         try {
             myOutputStream.close();
@@ -249,6 +262,10 @@ public class LoggingService extends Service {
         }
 
         if (!crashed) {
+            if (ambMode) {
+                logAmb(false);  // Log the entries at the end of ambulance journey.
+            }
+
             if (logTimer != null) {
                 logTimer.cancel();
                 logTimer.purge();
@@ -272,10 +289,10 @@ public class LoggingService extends Service {
                 }
             }
 
-            if (!multiFile) {
-                endName = gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + ".csv.gz";
+            if (multiFile || ambMode) {
+                endName = mainPath + date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + suffix + ".csv.gz";
             } else {
-                endName = gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + "-" + zipPart + "-END" + ".csv.gz";
+                endName = mainPath + date + "-ID" + String.valueOf(userID) + ".csv.gz";
             }
             endFile = new File(endName);
             gzFile.renameTo(endFile);
@@ -314,5 +331,44 @@ public class LoggingService extends Service {
 
         logging = false;
         Log.i(TAG, "Destroyed!");
+    }
+
+    public void prepAmb() {
+        suffix = "-AMB";
+        ambPath = mainPath + date + "-ID" + String.valueOf(userID) + "-00.csv.gz";
+        try {
+            myAmbStream = new FileOutputStream(ambPath);
+            myAmbStream = new GZIPOutputStream(myAmbStream)
+            {{def.setLevel(Deflater.BEST_COMPRESSION);}};
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        logAmb(true);
+    }
+
+    public void logAmb(boolean atStart) {
+        String ambList;
+
+        if (atStart) {
+            ambList = TextUtils.join(",", Arrays.asList("Ambulance", amb, "Trolley", troll, "Patient", pat,""));
+        } else {
+            ambList = TextUtils.join(",", Arrays.asList("Reason for Transfer", trans, "Emergency driving used", emerge)) + "\n";
+        }
+
+        try {
+            myAmbStream.write(ambList.getBytes("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (!atStart) {
+            if (myAmbStream != null) {
+                try {
+                    myAmbStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
