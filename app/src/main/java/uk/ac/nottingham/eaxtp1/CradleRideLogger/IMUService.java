@@ -25,7 +25,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.testing;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 
 public class IMUService extends Service implements SensorEventListener {
     public IMUService() {
@@ -119,7 +119,7 @@ public class IMUService extends Service implements SensorEventListener {
 
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             currTime = System.currentTimeMillis();
-            if (!testing) {
+            if (!gpsOff) {
                 sampleTime = String.valueOf(currTime - startTime);
             } else {
                 sampleTime = String.valueOf(currTime);  // Outputs time since 1970, when testing.

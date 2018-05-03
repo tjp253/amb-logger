@@ -23,10 +23,11 @@ import java.util.List;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyBuffStart;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyDelay;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyTimeout;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.testing;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.timerFilter;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.timerInt;
 
@@ -36,7 +37,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
     String TAG = "CRL_GPS Timer Service";
 
-    CountDownTimer timeoutTimer, positionTimer, removalTimer;
+    CountDownTimer timeoutTimer, positionTimer, removalTimer, startBuffer;
     SharedPreferences preferences;
 
     protected LocationManager myLocationManager;
@@ -61,7 +62,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
         positioned = false;
 
-        if (!testing) {
+        if (!gpsOff) {
 
             if (preferences.contains(keyTimeout)) {
                 timeOut = preferences.getInt(keyTimeout, 60);
@@ -125,7 +126,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
             public void onFinish() {
                 Log.i(TAG, "Positioned");
                 positioned = true;          // Allow time for phone positioning before recording
-                if (testing) {
+                if (gpsOff) {
                     sendBroadcast(1);
                 }
             }
@@ -145,8 +146,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
                     if (gpsFixed && positioned) {
 //                        Log.i(TAG, "Fixed and in Position");
                         timeoutTimer.cancel();
-                        sendBroadcast(1);
-                        gpsRemoval();
+                        buffTheStart();
                     }
 
                     break;
@@ -156,6 +156,26 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
                     break;
             }
+        }
+    }
+
+    public void buffTheStart() {
+        int bs = preferences.getInt(keyBuffStart, 0) * 60000;
+        if ( bs == 0) {
+            sendBroadcast(1);
+            gpsRemoval();
+        } else {
+            sendBroadcast(2);   // Let User know GPS is fixed, but waiting for buffer before recording.
+            startBuffer = new CountDownTimer(bs, bs) {
+                @Override
+                public void onTick(long millisUntilFinished) {}
+
+                @Override
+                public void onFinish() {
+                    sendBroadcast(1);
+                    gpsRemoval();
+                }
+            }.start();
         }
     }
 
@@ -201,6 +221,15 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
         super.onDestroy();
         if (timeoutTimer != null) {
             timeoutTimer.cancel();
+        }
+        if (positionTimer != null) {
+            positionTimer.cancel();
+        }
+        if (removalTimer != null) {
+            removalTimer.cancel();
+        }
+        if (startBuffer != null) {
+            startBuffer.cancel();
         }
         myLocationManager.removeUpdates(this);
     }

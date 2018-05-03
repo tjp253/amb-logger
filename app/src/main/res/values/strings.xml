@@ -67,6 +67,11 @@
     <string name="menu_testing">Testing (no GPS)</string>
     <string name="menu_test_init">Initialise before test.</string>
 
+    <string name="menu_buff_tit">Recording Buffer</string>
+    <string name="menu_buff_start">Remove from Start:\u0020</string>
+    <string name="menu_buff_end">Remove from End:  \u0020</string>
+    <string name="menu_minutes">\u0020minutes.</string>
+
     <string name="test_on">Testing on. GPS disabled.</string>
     <string name="test_off">Testing off. GPS enabled.</string>
     <string name="test_init_on">Initialising on.</string>
@@ -98,19 +103,11 @@
     <string name="yesButt">yes</string>
     <string name="noButt">no</string>
 
-    <string name="transTit">What was the operational reason for the transfer?</string>
+    <string name="transTit">Operational Reason for Transfer</string>
     <string name="transReasonOne">Uplift</string>
-    <string name="transReasonTwo">Repatriation or Capacity</string>
+    <!--<string name="transReasonTwo">Repatriation or Capacity</string>-->
+    <string name="transReasonTwo">Repat or Capacity</string>
 
-    <string name="emergeTit">Were blue lights and/or sirens used at any time?</string>
-
-    <array name="transReasons">
-        <item>@string/transReasonOne</item>
-        <item>@string/transReasonTwo</item>
-    </array>
-    <array name="emergeReasons">
-        <item>@string/yesButt</item>
-        <item>@string/noButt</item>
-    </array>
+    <string name="emergeTit">Was Emergency Driving used at any time?</string>
 
 </resources>

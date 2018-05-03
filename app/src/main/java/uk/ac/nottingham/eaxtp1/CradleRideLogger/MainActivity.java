@@ -46,11 +46,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     final String testPref = "TestingMode", initPref = "StillInitialise";
     boolean initTest, testMode = BuildConfig.FLAVOR.equals("shaker");
-    static boolean testing;
+    static boolean gpsOff;
 
-    boolean ambMode = BuildConfig.FLAVOR.equals("ambulance");
+    static boolean ambMode = BuildConfig.FLAVOR.equals("ambulance");
     Intent ambSelect;   final int ambInt = 1132;    final static String ambExtra = "EndLogging";
-    static String amb, troll, pat, trans, emerge;  static boolean patOnBoard;
+    static String amb, troll, pat, trans = "N/A", emerge;  static boolean patOnBoard;
 
     String TAG = "CRL_MainActivity";
     static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
@@ -62,14 +62,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
     SharedPreferences.Editor prefEditor;
     AlertDialog disclosureDialog, policyDialog, checkDialog, delayDialog;
     Button adButt;
-    MenuItem autoStopCheckbox, buttDelay, buttTimeout, testCheck, initB4Test;
+    MenuItem autoStopCheckbox, buttDelay, buttTimeout, testCheck, initB4Test, buttBuffS, buttBuffE;
     // Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
-    final static String keyDelay = "DelayTime", keyAS = "AutoStop", keyTimeout = "GPS Timeout";
-    final static String keyFCheck = "CheckFS", keyG = "Gravity Present", keyFS = "MaxFS";
+    final static String keyAS = "AutoStop", keyDelay = "DelayTime", keyTimeout = "GPS Timeout",
+            keyFCheck = "CheckFS", keyG = "Gravity Present", keyFS = "MaxFS",
+            keyBuffStart = "BuffStart", keyBuffEnd = "BuffEnd";
     final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
 
-    int timeDelay, newValue, timeOut;
-    boolean delayNotTimeout;
+    int selectValue;    int[] prefTimes;// offStart, offEnd;
     static int userID;
 
     final int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
@@ -79,7 +79,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private ProgressBar loadingAn;
 
-    boolean initialising, buttPressed/*, cancelGPS*/, displayOn;
+    boolean initialising, buttPressed, displayOn;
     static boolean recording, compressing, moving,
             crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
             autoStopOn;
@@ -252,18 +252,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
         recording = true;
         initialising = false;
         forcedStop = false;
-        loadingAn.setVisibility(View.GONE);     cancelButt.setVisibility(View.GONE);
 
-        instructDisplay.setText(R.string.recording);
-        startService(audioService);
-        if (!testing) {
+        if (!gpsOff) {
             startService(gpsService);
         } else {
             sGPS = "";
         }
         startService(loggingService);
         startService(imuService);
+    }
 
+//    Separate the display / UI changes - to enable buffer to work nicely. TODO: Implement for initialising, etc?
+    public void changeDisplay() {
+        loadingAn.setVisibility(View.GONE);
+        cancelButt.setVisibility(View.GONE);
+        instructDisplay.setText(R.string.recording);
         recordButt.setText(R.string.butt_stop);
         recordButt.setEnabled(true);
     }
@@ -306,7 +309,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                 } else {
 
-                    if (!testing || initTest) {
+                    if (!gpsOff || initTest) {
                         startInitialising();
                     } else {
                         startAll();
@@ -391,7 +394,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         prefEditor.putBoolean(keyInst, true);
                         prefEditor.commit();
 
-                        permissionCheck();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            permissionCheck();
+                        }
                     }
                 });
         disclosureDialog = builder.create();
@@ -442,13 +447,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         checkDialog = builder.create();
         checkDialog.show();
     }
+    boolean timeChanged;
+    public void timePicker(final int whichTime) {
 
-    public void timePicker() {
-        if (delayNotTimeout) {
-            newValue = timeDelay;
-        } else {
-            newValue = timeOut;
-        }
+        selectValue = prefTimes[whichTime];
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View delayView = View.inflate(this, R.layout.delay_picker, null);
@@ -457,41 +459,35 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (delayNotTimeout) {
-                            if (timeDelay != newValue) {
-                                timeDelay = newValue;
-                                changeDelay();
-                            }
-                        } else {
-                            if (timeOut != newValue) {
-                                timeOut = newValue;
-                                changeTimeout();
-                            }
+                        if (timeChanged) {
+                            prefTimes[whichTime] = selectValue;
+                            changeTime(whichTime);
                         }
                     }
                 })
                 .setNegativeButton(R.string.butt_cancel, new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
+                    public void onClick(DialogInterface dialog, int which) {}
                 });
 
         NumberPicker dP = delayView.findViewById(R.id.numberPicker);
-        if (delayNotTimeout) {
-            dP.setMinValue(0);
-            dP.setMaxValue(timeOut - 1);
-            dP.setValue(timeDelay);
-        } else {
-            dP.setMinValue(30);
-            dP.setMaxValue(300);
-            dP.setValue(timeOut);
+        dP.setMinValue(0);  dP.setMaxValue(5);
+        switch (whichTime) {
+            case 0:
+                dP.setMaxValue(prefTimes[1] - 1);
+                break;
+            case 1:
+                dP.setMinValue(30);
+                dP.setMaxValue(300);
+                break;
         }
+        dP.setValue(prefTimes[whichTime]);
         dP.setWrapSelectorWheel(false);
         dP.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
             @Override
             public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-                newValue = newVal;
+                timeChanged = newVal != oldVal;
+                selectValue = newVal;
             }
         });
 
@@ -500,17 +496,30 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     }
 
-    public void changeDelay() {
-        prefEditor.putInt(keyDelay, timeDelay).commit();
-        buttDelay.setTitle(getString(R.string.menu_delay) + timeDelay + getString(R.string.menu_seconds) );
-    }
+    public void changeTime(int choice) {
+        int toCommit = prefTimes[choice];
+        switch (choice) {
+            case 0:
+                prefEditor.putInt(keyDelay, toCommit).commit();
+                buttDelay.setTitle(getString(R.string.menu_delay) + toCommit + getString(R.string.menu_seconds) );
+                break;
+            case 1:
+                prefEditor.putInt(keyTimeout, toCommit).commit();
+                buttTimeout.setTitle(getString(R.string.menu_timeout) + toCommit + getString(R.string.menu_seconds) );
+                if (prefTimes[0] >= toCommit) {
+                    prefTimes[0] = toCommit - 1;
+                    changeTime(0);
+                }
+                break;
+            case 2:
+                prefEditor.putInt(keyBuffStart, toCommit).commit();
+                buttBuffS.setTitle(getString(R.string.menu_buff_start) + toCommit + getString(R.string.menu_minutes));
+                break;
+            case 3:
+                prefEditor.putInt(keyBuffEnd, toCommit).commit();
+                buttBuffE.setTitle(getString(R.string.menu_buff_end) + toCommit + getString(R.string.menu_minutes));
+                break;
 
-    public void changeTimeout() {
-        prefEditor.putInt(keyTimeout, timeOut).commit();
-        buttTimeout.setTitle(getString(R.string.menu_timeout) + timeOut + getString(R.string.menu_seconds) );
-        if (timeDelay >= timeOut) {
-            timeDelay = timeOut - 1;
-            changeDelay();
         }
     }
 
@@ -530,35 +539,51 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         buttDelay = toolbar.getMenu().findItem(R.id.delayTime);
         buttTimeout = toolbar.getMenu().findItem(R.id.timeOutItem);
+        buttBuffS = toolbar.getMenu().findItem(R.id.buffStart);
+        buttBuffE = toolbar.getMenu().findItem(R.id.buffEnd);
+
+        prefTimes = new int[4]; //TODO: Change to [2] for ambulance and test modes??
 
         if (preferences.contains(keyDelay)) {
-            timeDelay = preferences.getInt(keyDelay, 10);
+            prefTimes[0] = preferences.getInt(keyDelay, 10);
         } else {
-            timeDelay = 0;
+            prefTimes[0] = 0;
         }
-        changeDelay();
 
         if (preferences.contains(keyTimeout)) {
-            timeOut = preferences.getInt(keyTimeout, 60);
+            prefTimes[1] = preferences.getInt(keyTimeout, 60);
         } else {
-            timeOut = 60;
+            prefTimes[1] = 60;
         }
-        changeTimeout();
+
+        if (preferences.contains(keyBuffStart)) {
+            prefTimes[2] = preferences.getInt(keyBuffStart, 0);
+        } else {
+            prefTimes[2] = 0;
+        }
+
+        if (preferences.contains(keyBuffEnd)) {
+            prefTimes[3] = preferences.getInt(keyBuffEnd, 0);
+        } else {
+            prefTimes[3] = 0;
+        }
+
+        for (int x = 0; x<4; x++) {
+            changeTime(x);
+        }
 
         if (testMode) {
+            toolbar.getMenu().setGroupVisible(R.id.menuTestGroup, true);
             testCheck = toolbar.getMenu().findItem(R.id.testingItem);
-            testCheck.setVisible(true);
-            if (preferences.contains(testPref)) {
-                testing = preferences.getBoolean(testPref, false);
-            }
-            testingMode();
-
             initB4Test = toolbar.getMenu().findItem(R.id.testInitItem);
-            initB4Test.setVisible(true);
+            if (preferences.contains(testPref)) {
+                gpsOff = preferences.getBoolean(testPref, false);
+            }
+            changeTestMode(true);
             if (preferences.contains(initPref)) {
                 initTest = preferences.getBoolean(initPref, false);
             }
-            testInitMode();
+            changeTestMode(false);
         }
 
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
@@ -579,20 +604,26 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         }
                         return true;
                     case R.id.delayTime:
-                        delayNotTimeout = true;
-                        timePicker();
+                        timePicker(0);
                         return true;
                     case R.id.timeOutItem:
-                        delayNotTimeout = false;
-                        timePicker();
+                        timePicker(1);
                         return true;
+
+                    case R.id.buffStart:
+                        timePicker(2);
+                        return true;
+                    case R.id.buffEnd:
+                        timePicker(3);
+                        return true;
+
                     case R.id.testingItem:
-                        testing = !item.isChecked();
-                        testingMode();
+                        gpsOff = !item.isChecked();
+                        changeTestMode(true);
                         return true;
                     case R.id.testInitItem:
                         initTest = !item.isChecked();
-                        testInitMode();
+                        changeTestMode(false);
                         return true;
                 }
                 return false;
@@ -600,28 +631,27 @@ public class MainActivity extends Activity implements View.OnClickListener {
         });
     }
 
-    public void testingMode() {
-        prefEditor.putBoolean(testPref, testing).commit();
-        testCheck.setChecked(testing);
-        String message;
-        if (testing) {
-            message = getString(R.string.test_on);
+    public void changeTestMode(boolean optionOne) {
+        int stringID;
+        if (optionOne) {
+            prefEditor.putBoolean(testPref, gpsOff).commit();
+            testCheck.setChecked(gpsOff);
+            initB4Test.setEnabled(gpsOff);
+            if (gpsOff) {
+                stringID = R.string.test_on;
+            } else {
+                stringID = R.string.test_off;
+            }
         } else {
-            message = getString(R.string.test_off);
+            prefEditor.putBoolean(initPref, initTest).commit();
+            initB4Test.setChecked(initTest);
+            if (initTest) {
+                stringID = R.string.test_init_on;
+            } else {
+                stringID = R.string.test_init_off;
+            }
         }
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    public void testInitMode() {
-        prefEditor.putBoolean(initPref, initTest).commit();
-        initB4Test.setChecked(initTest);
-        String message;
-        if (initTest) {
-            message = getString(R.string.test_init_on);
-        } else {
-            message = getString(R.string.test_init_off);
-        }
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getString(stringID), Toast.LENGTH_SHORT).show();
     }
 
     public void autoStopToast() {
@@ -694,17 +724,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (intent.getIntExtra(timerInt, 1)) {
-                case 1: startAll(); break;
+                case 1: startAll(); changeDisplay(); cancelBM(); break;
                 case 0:
                     stopInitialising();     // Cancels recording if the GPS can't get a fix within a reasonable time.
                     instructDisplay.setText(R.string.failed);
                     if (!displayOn) {
                         gpsFailNotify();
                     }
+                    cancelBM();
                     break;
+                case 2:
+                    changeDisplay(); break;
             }
-            LocalBroadcastManager.getInstance(MainActivity.this).unregisterReceiver(BReceiver);
         }
     };
+
+    public void cancelBM() {
+        LocalBroadcastManager.getInstance(MainActivity.this).unregisterReceiver(BReceiver);
+    }
 
 }
