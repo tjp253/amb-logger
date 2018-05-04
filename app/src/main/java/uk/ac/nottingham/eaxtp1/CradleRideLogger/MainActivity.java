@@ -44,8 +44,8 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConne
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
-    final String testPref = "TestingMode", initPref = "StillInitialise";
-    boolean initTest, testMode = BuildConfig.FLAVOR.equals("shaker");
+    final String testPref = "TestingMode";
+    boolean testMode = BuildConfig.FLAVOR.equals("shaker");
     static boolean gpsOff;
 
     static boolean ambMode = BuildConfig.FLAVOR.equals("ambulance");
@@ -62,14 +62,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
     SharedPreferences.Editor prefEditor;
     AlertDialog disclosureDialog, policyDialog, checkDialog, delayDialog;
     Button adButt;
-    MenuItem autoStopCheckbox, buttDelay, buttTimeout, testCheck, initB4Test, buttBuffS, buttBuffE;
+    MenuItem autoStopCheckbox, buttDelay, buttTimeout, testCheck, buttBuffS, buttBuffE;
     // Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
     final static String keyAS = "AutoStop", keyDelay = "DelayTime", keyTimeout = "GPS Timeout",
             keyFCheck = "CheckFS", keyG = "Gravity Present", keyFS = "MaxFS",
             keyBuffStart = "BuffStart", keyBuffEnd = "BuffEnd";
     final String user_ID = "User ID", keyDisc = "NotSeenDisclosure2", keyInst = "FirstInstance", keyFirst = "firstLogin";
 
-    int selectValue;    int[] prefTimes;// offStart, offEnd;
+    int selectValue;    int[] prefTimes;
     static int userID;
 
     final int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
@@ -82,7 +82,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     boolean initialising, buttPressed, displayOn;
     static boolean recording, compressing, moving,
             crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
-            autoStopOn;
+            autoStopOn, buffEnd;
 
     @SuppressLint("WifiManagerLeak")
     @Override
@@ -308,12 +308,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     permissionCheck();
 
                 } else {
-
-                    if (!gpsOff || initTest) {
-                        startInitialising();
-                    } else {
-                        startAll();
-                    }
+                    startInitialising();
                 }
 
             } else { // Stop recording data
@@ -471,7 +466,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 });
 
         NumberPicker dP = delayView.findViewById(R.id.numberPicker);
-        dP.setMinValue(0);  dP.setMaxValue(5);
+        dP.setMinValue(0);
+        dP.setMaxValue(5);
         switch (whichTime) {
             case 0:
                 dP.setMaxValue(prefTimes[1] - 1);
@@ -497,29 +493,28 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     public void changeTime(int choice) {
-        int toCommit = prefTimes[choice];
         switch (choice) {
             case 0:
-                prefEditor.putInt(keyDelay, toCommit).commit();
-                buttDelay.setTitle(getString(R.string.menu_delay) + toCommit + getString(R.string.menu_seconds) );
+                prefEditor.putInt(keyDelay, prefTimes[choice]).commit();
+                buttDelay.setTitle(getString(R.string.menu_delay) + prefTimes[choice] + getString(R.string.menu_seconds) );
                 break;
             case 1:
-                prefEditor.putInt(keyTimeout, toCommit).commit();
-                buttTimeout.setTitle(getString(R.string.menu_timeout) + toCommit + getString(R.string.menu_seconds) );
-                if (prefTimes[0] >= toCommit) {
-                    prefTimes[0] = toCommit - 1;
+                prefEditor.putInt(keyTimeout, prefTimes[choice]).commit();
+                buttTimeout.setTitle(getString(R.string.menu_timeout) + prefTimes[choice] + getString(R.string.menu_seconds) );
+                if (prefTimes[0] >= prefTimes[choice]) {
+                    prefTimes[0] = prefTimes[choice] - 1;
                     changeTime(0);
                 }
                 break;
             case 2:
-                prefEditor.putInt(keyBuffStart, toCommit).commit();
-                buttBuffS.setTitle(getString(R.string.menu_buff_start) + toCommit + getString(R.string.menu_minutes));
+                prefEditor.putInt(keyBuffStart, prefTimes[choice]).commit();
+                buttBuffS.setTitle(getString(R.string.menu_buff_start) + prefTimes[choice] + getString(R.string.menu_minutes));
                 break;
             case 3:
-                prefEditor.putInt(keyBuffEnd, toCommit).commit();
-                buttBuffE.setTitle(getString(R.string.menu_buff_end) + toCommit + getString(R.string.menu_minutes));
+                prefEditor.putInt(keyBuffEnd, prefTimes[choice]).commit();
+                buttBuffE.setTitle(getString(R.string.menu_buff_end) + prefTimes[choice] + getString(R.string.menu_minutes));
+                buffEnd = prefTimes[choice] != 0;
                 break;
-
         }
     }
 
@@ -573,17 +568,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
 
         if (testMode) {
-            toolbar.getMenu().setGroupVisible(R.id.menuTestGroup, true);
             testCheck = toolbar.getMenu().findItem(R.id.testingItem);
-            initB4Test = toolbar.getMenu().findItem(R.id.testInitItem);
+            testCheck.setVisible(true);
             if (preferences.contains(testPref)) {
                 gpsOff = preferences.getBoolean(testPref, false);
             }
-            changeTestMode(true);
-            if (preferences.contains(initPref)) {
-                initTest = preferences.getBoolean(initPref, false);
-            }
-            changeTestMode(false);
+            changeTestMode();
         }
 
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
@@ -619,11 +609,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                     case R.id.testingItem:
                         gpsOff = !item.isChecked();
-                        changeTestMode(true);
-                        return true;
-                    case R.id.testInitItem:
-                        initTest = !item.isChecked();
-                        changeTestMode(false);
+                        changeTestMode();
                         return true;
                 }
                 return false;
@@ -631,25 +617,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
         });
     }
 
-    public void changeTestMode(boolean optionOne) {
+    public void changeTestMode() {
         int stringID;
-        if (optionOne) {
-            prefEditor.putBoolean(testPref, gpsOff).commit();
-            testCheck.setChecked(gpsOff);
-            initB4Test.setEnabled(gpsOff);
-            if (gpsOff) {
-                stringID = R.string.test_on;
-            } else {
-                stringID = R.string.test_off;
-            }
+        prefEditor.putBoolean(testPref, gpsOff).commit();
+        testCheck.setChecked(gpsOff);
+        if (gpsOff) {
+            stringID = R.string.test_on;
         } else {
-            prefEditor.putBoolean(initPref, initTest).commit();
-            initB4Test.setChecked(initTest);
-            if (initTest) {
-                stringID = R.string.test_init_on;
-            } else {
-                stringID = R.string.test_init_off;
-            }
+            stringID = R.string.test_off;
         }
         Toast.makeText(this, getString(stringID), Toast.LENGTH_SHORT).show();
     }

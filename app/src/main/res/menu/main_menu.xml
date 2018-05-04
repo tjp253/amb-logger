@@ -36,19 +36,11 @@
         </item>
     </group>
 
-    <group android:id="@+id/menuTestGroup">
-        <item
-            android:id="@+id/testingItem"
-            android:checkable="true"
-            android:enabled="true"
-            android:title="@string/menu_testing"
-            android:visible="false" />
-
-        <item
-            android:id="@+id/testInitItem"
-            android:checkable="true"
-            android:title="@string/menu_test_init"
-            android:visible="false" />
-    </group>
+    <item
+        android:id="@+id/testingItem"
+        android:checkable="true"
+        android:enabled="true"
+        android:title="@string/menu_testing"
+        android:visible="false" />
 
 </menu>

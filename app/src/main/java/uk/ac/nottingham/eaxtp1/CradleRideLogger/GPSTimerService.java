@@ -46,7 +46,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
     long myLastLocationMillis;
     Location myLastLocation;
 
-    int timeDelay, timeOut, posDelay;
+    int timeDelay, timeOut;
 
     @SuppressLint("MissingPermission")
     @Override
@@ -55,7 +55,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
         preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
         if (preferences.contains(keyDelay)) {
-            timeDelay = preferences.getInt(keyDelay, 10);
+            timeDelay = preferences.getInt(keyDelay, 10) * 1000;
         } else {
             timeDelay = 0;
         }
@@ -110,15 +110,8 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
     }
 
     public void posTimer() {
-        if (timeDelay == 0) {
-            Log.i(TAG, "Positioned");
-            positioned = true;
-            posDelay = 60000;
-        } else {
-            posDelay = timeDelay*1000;
-        }
 
-        positionTimer = new CountDownTimer(posDelay, posDelay) {
+        positionTimer = new CountDownTimer(timeDelay, timeDelay) {
             @Override
             public void onTick(long millisUntilFinished) {}
 
@@ -231,7 +224,9 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
         if (startBuffer != null) {
             startBuffer.cancel();
         }
-        myLocationManager.removeUpdates(this);
+        if (myLocationManager != null) {
+            myLocationManager.removeUpdates(this);
+        }
     }
 
     @Override

@@ -28,6 +28,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.amb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambMode;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.buffEnd;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.emerge;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
@@ -69,7 +70,7 @@ public class LoggingService extends Service {
     String outputTitle, endName;
 
     List<String> titleList;
-    int qSize;
+    int qSize, samplesInFile;
 
     boolean writingToFile;
 
@@ -174,6 +175,7 @@ public class LoggingService extends Service {
     }
 
     public void loggingTT() {
+        samplesInFile = 0;
         loggingTask = new TimerTask() {
             @Override
             public void run() {
@@ -190,17 +192,21 @@ public class LoggingService extends Service {
         stringBuilder.setLength(0);
 
         qSize = myQ.size();
+
+        int i = 0;
         try {
 
-            for (int i = 0; i < qSize; i++) {
+            for (i = 1; i <= qSize; i++) {
                 stringBuilder.append(myQ.remove());
             }
 
         } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
 
-            Log.i(TAG, "Queue empty. Supposed size: " + qSize + ".");
+            Log.i(TAG, "Queue empty. Supposed size: " + qSize + "." + " Actual size: " + i);
             e.getMessage();
         }
+
+        samplesInFile += i;
 
         toFile = stringBuilder.toString();
 
@@ -247,6 +253,7 @@ public class LoggingService extends Service {
         }
 
         gzFile = new File(gzipPath);
+        samplesInFile = 0;
 
         Log.i(TAG, "fileSplitter: Split File");
 
@@ -315,6 +322,14 @@ public class LoggingService extends Service {
                 if (gzipPath != null) {
                     new File(gzipPath).delete();
                 }
+
+            } else if (buffEnd){
+
+                Intent bufferService = new Intent(getApplicationContext(), BufferService.class);
+                bufferService.putExtra("Samples", samplesInFile)
+                        .putExtra("FileParts", zipPart)
+                        .putExtra("Folder", mainPath);
+                this.startService(bufferService);
 
             } else {
 
