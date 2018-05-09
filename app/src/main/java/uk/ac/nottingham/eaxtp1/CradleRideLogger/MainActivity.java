@@ -45,10 +45,8 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConne
 public class MainActivity extends Activity implements View.OnClickListener {
 
     final String testPref = "TestingMode";
-    boolean testMode = BuildConfig.FLAVOR.equals("shaker");
     static boolean gpsOff;
 
-    static boolean ambMode = BuildConfig.FLAVOR.equals("ambulance");
     Intent ambSelect;   final int ambInt = 1132;    final static String ambExtra = "EndLogging";
     static String amb, troll, pat, trans = "N/A", emerge;  static boolean patOnBoard;
 
@@ -61,7 +59,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
     AlertDialog disclosureDialog, policyDialog, checkDialog, delayDialog;
-    Button adButt;
+    Button adButt;  int nItems = 2;
     MenuItem autoStopCheckbox, buttDelay, buttTimeout, testCheck, buttBuffS, buttBuffE;
     // Strings for SharedPreferences. TODO: NOTHING! DO NOT EDIT!
     final static String keyAS = "AutoStop", keyDelay = "DelayTime", keyTimeout = "GPS Timeout",
@@ -79,9 +77,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private ProgressBar loadingAn;
 
-    boolean initialising, buttPressed, displayOn;
+    boolean initialising, buttPressed, displayOn, buffing, fileEmpty;
     static boolean recording, compressing, moving,
-            crashed, forcedStop, gravityPresent,    // forcedStop set to true when AutoStop has been used.
+            crashed, forcedStop,    // forcedStop set to true when AutoStop has been used.
             autoStopOn, buffEnd;
 
     @SuppressLint("WifiManagerLeak")
@@ -130,7 +128,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         recordButt.setOnClickListener(this);
         cancelButt = findViewById(R.id.butt_Cancel);
         cancelButt.setOnClickListener(this);
-        cancelButt.setVisibility(View.GONE);
 
         instructDisplay.setText(R.string.startGPS);
 
@@ -169,7 +166,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         loadingAn = findViewById(R.id.initProgress);
         loadingAn.setVisibility(View.GONE);
 
-        if (ambMode) {
+        if (BuildConfig.AMB_MODE) {
             ambSelect = new Intent(this, AmbSelect.class);
             startActivity(ambSelect);
         }
@@ -178,7 +175,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             Intent fsService = new Intent(getApplicationContext(), FSChecker.class);
             startService(fsService);
         }
-        gravityPresent = preferences.getBoolean(keyG, false);
     }
 
     @Override
@@ -260,9 +256,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
         startService(loggingService);
         startService(imuService);
+        LocalBroadcastManager.getInstance(this).registerReceiver(BReceiver, new IntentFilter(loggingFilter));
     }
 
-//    Separate the display / UI changes - to enable buffer to work nicely. TODO: Implement for initialising, etc?
+//    Separate the display / UI changes - to enable buffer to work nicely.
     public void changeDisplay() {
         loadingAn.setVisibility(View.GONE);
         cancelButt.setVisibility(View.GONE);
@@ -286,7 +283,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     public void stopLogging() {
-        instructDisplay.setText(R.string.finished);
+        if (fileEmpty) {
+            instructDisplay.setText(R.string.file_empty);
+        } else {
+            instructDisplay.setText(R.string.finished);
+        }
 
         recordButt.setEnabled(true);
     }
@@ -307,13 +308,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                     permissionCheck();
 
+                } else if (buffing) {
+                    stopInitialising();
+                    instructDisplay.setText(R.string.file_empty);
+                    buffing = false;
                 } else {
                     startInitialising();
                 }
 
             } else { // Stop recording data
 
-                if (ambMode) {
+                if (BuildConfig.AMB_MODE) {
                     startActivityForResult(ambSelect, ambInt);
                 } else {
                     stopAll();
@@ -508,11 +513,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 break;
             case 2:
                 prefEditor.putInt(keyBuffStart, prefTimes[choice]).commit();
-                buttBuffS.setTitle(getString(R.string.menu_buff_start) + prefTimes[choice] + getString(R.string.menu_minutes));
+                buttBuffS.setTitle(getString(R.string.menu_buff_start) + prefTimes[choice]);
                 break;
             case 3:
                 prefEditor.putInt(keyBuffEnd, prefTimes[choice]).commit();
-                buttBuffE.setTitle(getString(R.string.menu_buff_end) + prefTimes[choice] + getString(R.string.menu_minutes));
+                buttBuffE.setTitle(getString(R.string.menu_buff_end) + prefTimes[choice]);
                 buffEnd = prefTimes[choice] != 0;
                 break;
         }
@@ -532,13 +537,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         autoStopCheckbox = toolbar.getMenu().findItem(R.id.autoStop);
         autoStopCheckbox.setChecked(autoStopOn);
 
+        if (BuildConfig.CROWD_MODE) {
+            nItems = 4;
+        }
+        prefTimes = new int[nItems];
+
         buttDelay = toolbar.getMenu().findItem(R.id.delayTime);
         buttTimeout = toolbar.getMenu().findItem(R.id.timeOutItem);
-        buttBuffS = toolbar.getMenu().findItem(R.id.buffStart);
-        buttBuffE = toolbar.getMenu().findItem(R.id.buffEnd);
-
-        prefTimes = new int[4]; //TODO: Change to [2] for ambulance and test modes??
-
         if (preferences.contains(keyDelay)) {
             prefTimes[0] = preferences.getInt(keyDelay, 10);
         } else {
@@ -551,23 +556,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
             prefTimes[1] = 60;
         }
 
-        if (preferences.contains(keyBuffStart)) {
-            prefTimes[2] = preferences.getInt(keyBuffStart, 0);
-        } else {
-            prefTimes[2] = 0;
-        }
+        if (BuildConfig.CROWD_MODE) {
+            toolbar.getMenu().setGroupVisible(R.id.menuBuffGroup, true);
+            buttBuffS = toolbar.getMenu().findItem(R.id.buffStart);
+            buttBuffE = toolbar.getMenu().findItem(R.id.buffEnd);
 
-        if (preferences.contains(keyBuffEnd)) {
-            prefTimes[3] = preferences.getInt(keyBuffEnd, 0);
-        } else {
-            prefTimes[3] = 0;
-        }
+            if (preferences.contains(keyBuffStart)) {
+                prefTimes[2] = preferences.getInt(keyBuffStart, 0);
+            } else {
+                prefTimes[2] = 0;
+            }
 
-        for (int x = 0; x<4; x++) {
-            changeTime(x);
-        }
-
-        if (testMode) {
+            if (preferences.contains(keyBuffEnd)) {
+                prefTimes[3] = preferences.getInt(keyBuffEnd, 0);
+            } else {
+                prefTimes[3] = 0;
+            }
+        } else if (BuildConfig.TEST_MODE) {
             testCheck = toolbar.getMenu().findItem(R.id.testingItem);
             testCheck.setVisible(true);
             if (preferences.contains(testPref)) {
@@ -575,6 +580,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
             changeTestMode();
         }
+
+        for (int x = 0; x<nItems; x++) {
+            changeTime(x);
+        }
+
 
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
@@ -694,22 +704,44 @@ public class MainActivity extends Activity implements View.OnClickListener {
         stopAll();
     }
 
-    static final String timerFilter = "TimerResponse", timerInt = "ResponseInt";
+    static final String timerFilter = "TimerResponse", timerInt = "tResponse",
+            loggingFilter = "LoggingResponse", loggingInt = "lResponse";
     private BroadcastReceiver BReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getIntExtra(timerInt, 1)) {
-                case 1: startAll(); changeDisplay(); cancelBM(); break;
-                case 0:
-                    stopInitialising();     // Cancels recording if the GPS can't get a fix within a reasonable time.
-                    instructDisplay.setText(R.string.failed);
-                    if (!displayOn) {
-                        gpsFailNotify();
-                    }
-                    cancelBM();
-                    break;
-                case 2:
-                    changeDisplay(); break;
+            if (initialising) {
+                switch (intent.getIntExtra(timerInt, 1)) {
+                    case 1:
+                        buffing = false;
+                        startAll();
+                        changeDisplay();
+                        break;
+                    case 0:
+                        stopInitialising();     // Cancels recording if the GPS can't get a fix within a reasonable time.
+                        instructDisplay.setText(R.string.failed);
+                        if (!displayOn) {
+                            gpsFailNotify();
+                        }
+                        cancelBM();
+                        break;
+                    case 2:
+                        buffing = true;
+                        changeDisplay();
+                        break;
+                    case 3:
+                        cancelBM();
+                        break;
+                }
+            } else {
+                switch (intent.getIntExtra(loggingInt,1)) {
+                    case 0:
+                        fileEmpty = true;
+                        break;
+                    case 1:
+                        fileEmpty = false;
+                        cancelBM();
+                        break;
+                }
             }
         }
     };

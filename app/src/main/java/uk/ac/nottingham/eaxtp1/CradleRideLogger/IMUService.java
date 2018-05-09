@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -24,8 +25,8 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyG;
 
 public class IMUService extends Service implements SensorEventListener {
     public IMUService() {
@@ -41,6 +42,7 @@ public class IMUService extends Service implements SensorEventListener {
 
     SensorManager manager;
     Sensor accelerometer, gravity, magnetic;
+    boolean gravityPresent;
 
     private long sampleID;
     private short prevSample;
@@ -87,6 +89,9 @@ public class IMUService extends Service implements SensorEventListener {
     }
 
     public void initialiseIMU() {
+        SharedPreferences preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
+        gravityPresent = preferences.getBoolean(keyG, true);
+
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if (manager != null) {
             accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);

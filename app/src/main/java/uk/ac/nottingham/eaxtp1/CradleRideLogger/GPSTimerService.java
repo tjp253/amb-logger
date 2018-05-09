@@ -42,7 +42,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
     protected LocationManager myLocationManager;
     //    Sets up variables for the GPS fix-check
-    boolean gpsFixed, positioned;
+    boolean gpsFixed, positioned, buffFinished;
     long myLastLocationMillis;
     Location myLastLocation;
 
@@ -60,7 +60,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
             timeDelay = 0;
         }
 
-        positioned = false;
+        positioned = false; buffFinished = false;
 
         if (!gpsOff) {
 
@@ -165,6 +165,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
                 @Override
                 public void onFinish() {
+                    buffFinished = true;
                     sendBroadcast(1);
                     gpsRemoval();
                 }
@@ -212,6 +213,11 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        if (!buffFinished) {
+            sendBroadcast(3);
+        }
+
         if (timeoutTimer != null) {
             timeoutTimer.cancel();
         }

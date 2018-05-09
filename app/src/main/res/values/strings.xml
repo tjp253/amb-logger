@@ -61,16 +61,16 @@
     <string name="as_on">Auto-Stop enabled</string>
     <string name="as_off">Auto-Stop disabled</string>
 
-    <string name="menu_delay">Start Delay: \t</string>
+    <string name="menu_delay">Start Delay: \u0020\u0020\u0020\u0020</string>
     <string name="menu_timeout">GPS Timeout: \t</string>
-    <string name="menu_seconds">\t seconds.</string>
+    <string name="menu_seconds">\u0020seconds.</string>
     <string name="menu_testing">Testing (no GPS)</string>
     <string name="menu_test_init">Initialise before test.</string>
 
     <string name="menu_buff_tit">Recording Buffer</string>
-    <string name="menu_buff_start">Remove from Start:\u0020</string>
-    <string name="menu_buff_end">Remove from End:  \u0020</string>
-    <string name="menu_minutes">\u0020minutes.</string>
+    <string name="menu_buff_start">Minutes from Start:\u0020</string>
+    <string name="menu_buff_end">Minutes from End:\u0020\u0020\u0020</string>
+    <string name="file_empty">Recording duration was shorter than buffer time. No data was saved for this journey.</string>
 
     <string name="test_on">Testing on. GPS disabled.</string>
     <string name="test_off">Testing off. GPS enabled.</string>

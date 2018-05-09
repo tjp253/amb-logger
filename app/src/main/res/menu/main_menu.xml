@@ -21,7 +21,8 @@
         android:id="@+id/timeOutItem"
         android:title="@string/menu_timeout" />
 
-    <group android:id="@+id/menuBuffGroup">
+    <group android:id="@+id/menuBuffGroup"
+        android:visible="false">
         <item
             android:id="@+id/buffMenu"
             android:title="@string/menu_buff_tit">

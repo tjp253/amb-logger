@@ -7,11 +7,14 @@ android {
         applicationId "uk.ac.nottingham.eaxtp1.CradleRideLogger"
         minSdkVersion 17
         targetSdkVersion 26
-        versionCode 44
-        versionName "3.1"
+        versionCode 45
+        versionName "3.1.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resValue "string", "app_name", "CradleRide Logger"
-        manifestPlaceholders.isAmb = "false"
+        manifestPlaceholders = [isAmb: "false"]
+        buildConfigField 'boolean', 'CROWD_MODE', 'false'
+        buildConfigField 'boolean', 'AMB_MODE', 'false'
+        buildConfigField 'boolean', 'TEST_MODE', 'false'
     }
     buildTypes {
         release {
@@ -22,17 +25,20 @@ android {
     flavorDimensions("1")
     productFlavors {
         main {
-
+            buildConfigField 'boolean', 'CROWD_MODE', 'true'
         }
         ambulance {
+
             applicationIdSuffix ".amb"
             versionNameSuffix " - NTT"
             manifestPlaceholders = [isAmb: "true"]
+            buildConfigField 'boolean', 'AMB_MODE', 'true'
             resValue "string", "app_name", "Ambulance Logger"
         }
         shaker {
             applicationIdSuffix ".shaker"
             versionNameSuffix " - Test Mode"
+            buildConfigField 'boolean', 'TEST_MODE', 'true'
             resValue "string", "app_name", "CradleRide Shaker"
         }
     }

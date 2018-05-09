@@ -5,8 +5,11 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -27,12 +30,14 @@ import java.util.zip.GZIPOutputStream;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.amb;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambMode;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.buffEnd;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.emerge;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gravityPresent;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyBuffEnd;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyFS;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyG;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingFilter;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.pat;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.trans;
@@ -56,12 +61,15 @@ public class LoggingService extends Service {
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
     boolean sentIntents;
 
+    SharedPreferences preferences;
+    int buffBy, buffSamples, fs; boolean bufferOn;   CountDownTimer waitTimer;
+
     static boolean logging;
 
     Timer logTimer, sizeCheckTimer;
     TimerTask loggingTask, sizeCheckingTask;
 
-    int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
+    final int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
     long checkDelay = 5000;
     boolean nearLimit;
 
@@ -72,7 +80,7 @@ public class LoggingService extends Service {
     List<String> titleList;
     int qSize, samplesInFile;
 
-    boolean writingToFile;
+    boolean writingToFile, dataInFile;
 
     //    Creates a string of the current date and time
     @SuppressLint("SimpleDateFormat")
@@ -99,6 +107,7 @@ public class LoggingService extends Service {
         crashCheck();
 
         if (!crashed) {
+            preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
             initialiseLogging();
         }
 
@@ -120,6 +129,14 @@ public class LoggingService extends Service {
 
     public void initialiseLogging() {
 
+        dataInFile = false;
+
+        PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (myPowerManager != null) {
+            wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Logging WakeLock");
+            wakelock.acquire(wakelockTimeout);
+        }
+
         mainPath = String.valueOf(getExternalFilesDir(filepath)) + "/";
         gzipPath = mainPath + filename;
 
@@ -133,29 +150,49 @@ public class LoggingService extends Service {
 
         gzFile = new File(gzipPath);
 
-        if (ambMode) {
+        if (BuildConfig.AMB_MODE) {
             prepAmb();
+        } else if (BuildConfig.CROWD_MODE) {
+            buffBy = preferences.getInt(keyBuffEnd,0);
+            fs = preferences.getInt(keyFS, 100);
+            bufferOn = buffBy != 0;
         }
 
         logTitle();
 
+        if (!bufferOn) {
+            startLogging();
+        } else {
+            sendBroadcast(0);
+            buffSamples = buffBy*60*fs; buffBy = buffBy*60000;
+            startTimer();
+        }
+    }
+
+    public void startLogging() {
         logTimer = new Timer();
         loggingTT();
         logTimer.schedule(loggingTask, 1000 * loggingPeriod, 1000 * loggingPeriod);
-
-        PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (myPowerManager != null) {
-            wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Logging WakeLock");
-            wakelock.acquire(wakelockTimeout);
-        }
 
         sizeCheckTimer = new Timer();
         sizeCheckTT();
         sizeCheckTimer.schedule(sizeCheckingTask, 5000, checkDelay);
     }
 
+    public void startTimer() {
+        waitTimer = new CountDownTimer(buffBy,buffBy) {
+            @Override
+            public void onTick(long millisUntilFinished) {}
+
+            @Override
+            public void onFinish() {
+                startLogging();
+            }
+        }.start();
+    }
+
     public void logTitle() {
-        if (gravityPresent) {
+        if (preferences.getBoolean(keyG, true)) {
             titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GX", "GY", "GZ",
                     "North", "East", "Down", "GPS Sample", "Audio",
                     "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
@@ -183,6 +220,10 @@ public class LoggingService extends Service {
                     writingToFile = true;
                     writeToFile();
                     writingToFile = false;
+                    if (!dataInFile) {
+                        sendBroadcast(1);
+                        dataInFile = true;
+                    }
                 }
             }
         };
@@ -191,7 +232,7 @@ public class LoggingService extends Service {
     public void writeToFile() {
         stringBuilder.setLength(0);
 
-        qSize = myQ.size();
+        qSize = myQ.size() - buffSamples;
 
         int i = 0;
         try {
@@ -269,7 +310,7 @@ public class LoggingService extends Service {
         }
 
         if (!crashed) {
-            if (ambMode) {
+            if (BuildConfig.AMB_MODE) {
                 logAmb(false);  // Log the entries at the end of ambulance journey.
             }
 
@@ -296,7 +337,7 @@ public class LoggingService extends Service {
                 }
             }
 
-            if (multiFile || ambMode) {
+            if (multiFile || BuildConfig.AMB_MODE) {
                 endName = mainPath + date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + suffix + ".csv.gz";
             } else {
                 endName = mainPath + date + "-ID" + String.valueOf(userID) + ".csv.gz";
@@ -323,18 +364,15 @@ public class LoggingService extends Service {
                     new File(gzipPath).delete();
                 }
 
-            } else if (buffEnd){
-
-                Intent bufferService = new Intent(getApplicationContext(), BufferService.class);
-                bufferService.putExtra("Samples", samplesInFile)
-                        .putExtra("FileParts", zipPart)
-                        .putExtra("Folder", mainPath);
-                this.startService(bufferService);
-
-            } else {
+            } else if (dataInFile){
 
                 Intent movingService = new Intent(getApplicationContext(), MovingService.class);
                 this.startService(movingService);
+                sendBroadcast(1);
+
+            } else {
+                endFile.delete();
+                sendBroadcast(0);
 
             }
             sentIntents = true;
@@ -346,6 +384,12 @@ public class LoggingService extends Service {
 
         logging = false;
         Log.i(TAG, "Destroyed!");
+    }
+
+    private void sendBroadcast(int response) {
+        Intent intent = new Intent(loggingFilter);
+        intent.putExtra(loggingInt, response);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     public void prepAmb() {
