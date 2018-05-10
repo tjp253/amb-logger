@@ -454,7 +454,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View delayView = View.inflate(this, R.layout.delay_picker, null);
-        builder .setTitle("Start Delay")
+        builder .setTitle( getResources().getStringArray(R.array.timePickerArray)[whichTime] )
                 .setView(delayView)
                 .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
                     @Override
@@ -471,17 +471,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 });
 
         NumberPicker dP = delayView.findViewById(R.id.numberPicker);
-        dP.setMinValue(0);
-        dP.setMaxValue(5);
+        int minVal = 0, maxVal = 5;
         switch (whichTime) {
             case 0:
-                dP.setMaxValue(prefTimes[1] - 1);
+                maxVal = prefTimes[1] - 1;
                 break;
             case 1:
-                dP.setMinValue(30);
-                dP.setMaxValue(300);
+                minVal = 30;    maxVal = 300;
                 break;
         }
+        dP.setMinValue(minVal);
+        dP.setMaxValue(maxVal);
         dP.setValue(prefTimes[whichTime]);
         dP.setWrapSelectorWheel(false);
         dP.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {

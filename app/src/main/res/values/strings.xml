@@ -110,5 +110,12 @@
     <string name="transReasonTwo">Repat or Capacity</string>
 
     <string name="emergeTit">Was Emergency Driving used at any time?</string>
+    
+    <array name="timePickerArray">
+        <item>@string/menu_delay</item>
+        <item>@string/menu_timeout</item>
+        <item>@string/menu_buff_start</item>
+        <item>@string/menu_buff_end</item>
+    </array>
 
 </resources>
