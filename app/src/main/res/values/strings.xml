@@ -89,6 +89,7 @@
     <string name="amb3">4223</string>
     <string name="amb4">4224</string>
     <string name="optOther">Other</string>
+    <string name="optSame">Same as before</string>
     <string name="entAmb">Please enter the ambulance ID</string>
     <string name="entButt">Enter</string>
 

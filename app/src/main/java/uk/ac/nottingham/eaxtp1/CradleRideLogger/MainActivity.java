@@ -47,8 +47,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     final String testPref = "TestingMode";
     static boolean gpsOff;
 
-    Intent ambSelect;   final int ambInt = 1132;    final static String ambExtra = "EndLogging";
-    static String amb, troll, pat, trans = "N/A", emerge;  static boolean patOnBoard;
+    Intent ambSelect;   final int ambStart = 1132, ambEnd = 1133;    final static String ambExtra = "EndLogging";
 
     String TAG = "CRL_MainActivity";
     static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
@@ -168,7 +167,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         if (BuildConfig.AMB_MODE) {
             ambSelect = new Intent(this, AmbSelect.class);
-            startActivity(ambSelect);
         }
 
         if (preferences.getBoolean(keyFCheck, true)) {
@@ -312,6 +310,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     stopInitialising();
                     instructDisplay.setText(R.string.file_empty);
                     buffing = false;
+                } else if (BuildConfig.AMB_MODE) {
+                    startActivityForResult(ambSelect, ambStart);
                 } else {
                     startInitialising();
                 }
@@ -319,7 +319,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             } else { // Stop recording data
 
                 if (BuildConfig.AMB_MODE) {
-                    startActivityForResult(ambSelect, ambInt);
+                    startActivityForResult(ambSelect, ambEnd);
                 } else {
                     stopAll();
 
@@ -686,8 +686,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == ambInt && resultCode == RESULT_OK && data.getBooleanExtra(ambExtra, false)) {
-            stopAll();  stopLogging();
+        if (resultCode == RESULT_OK && data.getBooleanExtra(ambExtra, false)) {
+            switch (requestCode) {
+                case ambStart:
+                    startInitialising();
+                    break;
+                case ambEnd:
+                    stopAll();  stopLogging();
+                    break;
+            }
         }
     }
 

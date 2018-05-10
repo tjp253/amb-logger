@@ -27,21 +27,21 @@ import java.util.TimerTask;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyAmb;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyEmerge;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyPat;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyTrans;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyTroll;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.amb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.emerge;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyBuffEnd;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyFS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyG;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingFilter;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.pat;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.trans;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.troll;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
 public class LoggingService extends Service {
@@ -406,11 +406,22 @@ public class LoggingService extends Service {
     }
 
     public void logAmb(boolean atStart) {
-        String ambList;
+        String ambList, amb, troll, pat, trans, emerge;
+
+        SharedPreferences ambPref = getSharedPreferences("ambPref", MODE_PRIVATE);
 
         if (atStart) {
+            amb = ambPref.getString(keyAmb,"");
+            troll = ambPref.getString(keyTroll,"");
+            if (ambPref.getBoolean(keyPat, true)) {
+                pat = getString(R.string.yesButt);
+            } else {
+                pat = getString(R.string.noButt);
+            }
             ambList = TextUtils.join(",", Arrays.asList("Ambulance", amb, "Trolley", troll, "Patient", pat,""));
         } else {
+            trans = ambPref.getString(keyTrans,"");
+            emerge = ambPref.getString(keyEmerge,"");
             ambList = TextUtils.join(",", Arrays.asList("Reason for Transfer", trans, "Emergency driving used", emerge)) + "\n";
         }
 
