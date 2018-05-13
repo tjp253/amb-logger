@@ -40,7 +40,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
     protected LocationManager myLocationManager;
     //    Sets up variables for the GPS fix-check
-    boolean gpsFixed, positioned, buffFinished;
+    boolean gpsFixed, positioned, buffFinished; static boolean buffering;
     long myLastLocationMillis;
     Location myLastLocation;
 
@@ -55,7 +55,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
         timeDelay = preferences.getInt(getString(R.string.key_pref_delay), getResources().getInteger(R.integer.delay_default)) * 1000;
 
-        positioned = false; buffFinished = false;
+        positioned = false; buffFinished = false;   buffering = false;
 
         if (!gpsOff) {
 
@@ -149,6 +149,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
             sendBroadcast(1);
             gpsRemoval();
         } else {
+            buffering = true;
             sendBroadcast(2);   // Let User know GPS is fixed, but waiting for buffer before recording.
             startBuffer = new CountDownTimer(bs, bs) {
                 @Override
@@ -156,7 +157,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
                 @Override
                 public void onFinish() {
-                    buffFinished = true;
+                    buffFinished = true;    buffering = false;
                     sendBroadcast(1);
                     gpsRemoval();
                 }
@@ -207,6 +208,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
         if (!buffFinished) {
             sendBroadcast(3);
+            buffering = false;
         }
 
         if (timeoutTimer != null) {

@@ -52,7 +52,7 @@ public class LoggingService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    final String TAG = "CRL_LoggingService", KEY_BUFF_END = getString(R.string.key_pref_buff_end);
+    final String TAG = "CRL_LoggingService";
 
     int loggingPeriod = 5;     // Set the logging period in seconds
 
@@ -140,9 +140,7 @@ public class LoggingService extends Service {
         gzipPath = mainPath + filename;
 
         try {
-            myOutputStream = new FileOutputStream(gzipPath);
-            myOutputStream = new GZIPOutputStream(myOutputStream)
-            {{def.setLevel(Deflater.BEST_COMPRESSION);}};
+            myOutputStream = new GZIPOutputStream(new FileOutputStream(gzipPath)) {{def.setLevel(Deflater.BEST_COMPRESSION);}};
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -152,7 +150,7 @@ public class LoggingService extends Service {
         if (BuildConfig.AMB_MODE) {
             prepAmb();
         } else if (BuildConfig.CROWD_MODE) {
-            buffBy = preferences.getInt(KEY_BUFF_END,getResources().getInteger(R.integer.buff_default));
+            buffBy = preferences.getInt(getString(R.string.key_pref_buff_end),getResources().getInteger(R.integer.buff_default));
             fs = preferences.getInt(KEY_FS, 100);
             bufferOn = buffBy != 0;
         }
@@ -285,8 +283,7 @@ public class LoggingService extends Service {
 
         try {
             myOutputStream.close();
-            myOutputStream = new FileOutputStream(gzipPath);
-            myOutputStream = new GZIPOutputStream(myOutputStream)
+            myOutputStream = new GZIPOutputStream(new FileOutputStream(gzipPath))
             {{def.setLevel(Deflater.BEST_COMPRESSION);}};
         } catch (IOException e) {
             e.printStackTrace();

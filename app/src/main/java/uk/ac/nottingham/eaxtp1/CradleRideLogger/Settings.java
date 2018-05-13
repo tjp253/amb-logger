@@ -19,9 +19,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.autoStopOn;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSTimerService.buffering;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class Settings extends AppCompatActivity  {
 
@@ -58,7 +61,8 @@ public class Settings extends AppCompatActivity  {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                NavUtils.navigateUpFromSameTask(this);
+//                NavUtils.navigateUpFromSameTask(this);
+                onBackPressed();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -69,7 +73,7 @@ public class Settings extends AppCompatActivity  {
         SharedPreferences preferences;
         SharedPreferences.Editor prefEd;
         int leftMargin, rightMargin, verticalMargin, topMargin;
-        String asPref, tPref;
+        String asPref, tPref, buffS, buffE;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -81,6 +85,8 @@ public class Settings extends AppCompatActivity  {
             preferences = getActivity().getSharedPreferences(getString(R.string.pref_main),MODE_PRIVATE);
             asPref = getActivity().getString(R.string.key_pref_as);
             tPref = getActivity().getString(R.string.key_pref_test);
+            buffS = getActivity().getString(R.string.key_pref_buff_start);
+            buffE = getActivity().getString(R.string.key_pref_buff_end);
 
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
 
@@ -106,7 +112,7 @@ public class Settings extends AppCompatActivity  {
                 rightMargin = leftMargin;
             }
             verticalMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getResources().getDisplayMetrics());
-            topMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (int) getResources().getDimension(R.dimen.activity_vertical_margin) + 30, getResources().getDisplayMetrics());
+            topMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (int) getResources().getDimension(R.dimen.activity_vertical_margin) + 40, getResources().getDisplayMetrics());
             View v = super.onCreateView(inflater, container, savedInstanceState);
             if (v != null) {
                 ListView lv = v.findViewById(android.R.id.list);
@@ -126,7 +132,15 @@ public class Settings extends AppCompatActivity  {
                 gpsOff = !sharedPreferences.getBoolean(key, false);
             } else {
                 prefEd.putInt(key, sharedPreferences.getInt(key,0)).commit();
+                if ( (key.equals(buffS) && ( recording || buffering )) || (key.equals(buffE) && recording) ) {
+                    buffToast();
+                }
             }
+        }
+
+        public void buffToast() {
+            String message = "Buffer value will be changed after the current recording.";
+            Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
         }
     }
 }

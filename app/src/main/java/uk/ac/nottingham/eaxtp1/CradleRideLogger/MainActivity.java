@@ -26,6 +26,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -55,6 +56,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
+    ContextThemeWrapper dialogWrapper = new ContextThemeWrapper(this, R.style.MyAlertDialog);
     AlertDialog disclosureDialog, policyDialog;
     Button adButt;
     final static String KEY_G = "Gravity Present", KEY_FS = "MaxFS", KEY_F_CHECK = "CheckFS";
@@ -347,7 +349,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 permissionCheck();
             } else {
                 if (buttPressed) {
-                    startInitialising();
+                    if (BuildConfig.AMB_MODE) {
+                        startActivityForResult(ambSelect, ambStart);
+                    } else {
+                        startInitialising();
+                    }
                 }
             }
         } else {
@@ -369,7 +375,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         });
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
         builder .setTitle(R.string.ad_title)
                 .setView(checkboxView)
                 .setCancelable(false)
@@ -400,7 +406,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     public void showPolicy() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
         builder .setTitle(R.string.privacy_title)
                 .setMessage(R.string.privacy_policy)
                 .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {

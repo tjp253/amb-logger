@@ -1,0 +1,25 @@
+<!--suppress AndroidDomInspection -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        tools:ignore="GoogleAppIndexingWarning">
+
+        <activity android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity"
+            tools:ignore="InnerclassSeparator">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category tools:node="merge" android:name="android.intent.category.HOME"/>
+                <category tools:node="merge" android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect"
+            android:enabled="${isAmb}"
+            tools:ignore="InnerclassSeparator" />
+
+    </application>
+
+</manifest>

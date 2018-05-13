@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 27
     buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId "uk.ac.nottingham.eaxtp1.CradleRideLogger"
         minSdkVersion 21
-        targetSdkVersion 26
-        versionCode 46
-        versionName "3.1.2"
+        targetSdkVersion 27
+        versionCode 47
+        versionName "3.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resValue "string", "app_name", "CradleRide Logger"
         manifestPlaceholders = [isAmb: "false"]
@@ -28,16 +28,16 @@ android {
             buildConfigField 'boolean', 'CROWD_MODE', 'true'
         }
         ambulance {
-
             applicationIdSuffix ".amb"
-            versionNameSuffix " - NTT"
+            versionNameSuffix ' - NTT'
             manifestPlaceholders = [isAmb: "true"]
             buildConfigField 'boolean', 'AMB_MODE', 'true'
             resValue "string", "app_name", "Ambulance Logger"
+            applicationId 'uk.ac.nottingham.eaxtp1.CradleRideLogger.amb'
         }
         shaker {
             applicationIdSuffix ".shaker"
-            versionNameSuffix " - Test Mode"
+            versionNameSuffix ' - Test Mode'
             buildConfigField 'boolean', 'TEST_MODE', 'true'
             resValue "string", "app_name", "CradleRide Shaker"
         }
@@ -49,7 +49,7 @@ dependencies {
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.squareup.okhttp3:okhttp:3.7.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
     implementation 'com.vanniktech:vntnumberpickerpreference:1.0.0'

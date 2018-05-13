@@ -24,6 +24,7 @@
         app:layout_constraintVertical_chainStyle="spread_inside" />
 
     <android.support.v7.widget.Toolbar
+        android:theme="@style/MyMenuTheme"
         android:id="@+id/toolbar"
         android:layout_width="wrap_content"
         android:layout_height="26dp"
@@ -52,7 +53,6 @@
         android:id="@+id/button_Record"
         android:layout_width="0dp"
         android:layout_height="120dp"
-
         android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp"
         android:text="@string/butt_start"
@@ -71,6 +71,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
+        android:indeterminateTint="@color/colorWhite"
         app:layout_constraintBottom_toBottomOf="@+id/button_Record"
         app:layout_constraintEnd_toEndOf="@+id/button_Record"
         app:layout_constraintStart_toStartOf="@+id/button_Record"
