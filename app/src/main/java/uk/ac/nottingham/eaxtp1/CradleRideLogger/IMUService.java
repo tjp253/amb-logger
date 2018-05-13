@@ -26,7 +26,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyG;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
 
 public class IMUService extends Service implements SensorEventListener {
     public IMUService() {
@@ -89,8 +89,8 @@ public class IMUService extends Service implements SensorEventListener {
     }
 
     public void initialiseIMU() {
-        SharedPreferences preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
-        gravityPresent = preferences.getBoolean(keyG, true);
+        SharedPreferences preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
+        gravityPresent = preferences.getBoolean(KEY_G, true);
 
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if (manager != null) {

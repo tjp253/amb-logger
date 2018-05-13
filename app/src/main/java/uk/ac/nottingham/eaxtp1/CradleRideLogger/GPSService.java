@@ -11,12 +11,12 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
@@ -48,6 +48,7 @@ public class GPSService extends Service implements LocationListener {
     // Number of GPS samples (seconds) before journey is considered "finished".
     long limit = 10*60;     //    TODO: Set limit to 10*60
     float speed;
+    static boolean autoStopOn;
 
     LocationManager myLocationManager;
 
@@ -65,6 +66,8 @@ public class GPSService extends Service implements LocationListener {
             gpsSample = 0;
             sGPS = "";
         }
+
+         autoStopOn = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.key_pref_as), true);
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (myLocationManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning

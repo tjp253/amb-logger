@@ -10,15 +10,15 @@ import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.util.Log;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyFCheck;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyFS;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyG;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_F_CHECK;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_FS;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
 
 public class FSChecker extends Service implements SensorEventListener {
     public FSChecker() {
     }
 
-    String TAG = "FSChecker";
+    final String TAG = "FSChecker";
 
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
@@ -49,11 +49,11 @@ public class FSChecker extends Service implements SensorEventListener {
     public void onDestroy() {
         super.onDestroy();
 
-        preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
+        preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
         prefEditor = preferences.edit();
-        prefEditor.putBoolean(keyG, gPresent);
-        prefEditor.putInt(keyFS, fSample);
-        prefEditor.putBoolean(keyFCheck, false);
+        prefEditor.putBoolean(KEY_G, gPresent);
+        prefEditor.putInt(KEY_FS, fSample);
+        prefEditor.putBoolean(KEY_F_CHECK, false);
         prefEditor.commit();
 
     }

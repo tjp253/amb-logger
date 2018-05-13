@@ -16,8 +16,6 @@
     <string name="crashed">Something went wrong with recording. \n\nPlease restart the app.</string>
     <string name="permissions">Please grant all permissions to enable recording.</string>
 
-    <string name="orient_info">Align arrow with forward travel.\n\n ---> </string>
-
     <string name="ad_title">Disclosure Agreement</string>
     <string name="ad_button">Accept</string>
     <string name="ad_checkbox">I consent to my data being used for the purposes of research.</string>
@@ -54,22 +52,21 @@
 
         \n\nAll data is transmitted securely.\n</string>
 
-    <string name="as_menu">Auto-Stop</string>
+    <string name="set_as">Auto-Stop</string>
     <string name="as_check_title">Turning Auto-Stop Off</string>
-    <string name="as_check_message">Auto-stop shuts off the app when accidentally left logging.
+    <string name="set_as_mess">Auto-stop shuts off the app when accidentally left logging.
         \n\nTurning off could lead to excess battery usage.</string>
     <string name="as_on">Auto-Stop enabled</string>
     <string name="as_off">Auto-Stop disabled</string>
 
-    <string name="menu_delay">Start Delay: \u0020\u0020\u0020\u0020</string>
-    <string name="menu_timeout">GPS Timeout: \t</string>
-    <string name="menu_seconds">\u0020seconds.</string>
-    <string name="menu_testing">Testing (no GPS)</string>
-    <string name="menu_test_init">Initialise before test.</string>
+    <string name="set_delay">Start Delay (seconds): \u0020\u0020\u0020\u0020</string>
+    <string name="set_timeout">GPS Timeout (minutes): \t</string>
+    <string name="set_test_tit">Testing</string>
+    <string name="set_testing">Use GPS</string>
 
-    <string name="menu_buff_tit">Recording Buffer</string>
-    <string name="menu_buff_start">Minutes from Start:\u0020</string>
-    <string name="menu_buff_end">Minutes from End:\u0020\u0020\u0020</string>
+    <string name="set_buff_tit">Recording Buffer</string>
+    <string name="set_buff_start">Minutes from Start:\u0020</string>
+    <string name="set_buff_end">Minutes from End:\u0020\u0020\u0020</string>
     <string name="file_empty">Recording duration was shorter than buffer time. No data was saved for this journey.</string>
 
     <string name="test_on">Testing on. GPS disabled.</string>
@@ -78,6 +75,19 @@
     <string name="test_init_off">Initialising off.</string>
 
     <string name="recording_data">Journey being recorded. Please do not move the phone.</string>
+
+    <string name="setTit">Settings</string>
+    <string name="setScreen">PrefScreen</string>
+
+    <string name="key_pref_as">AutoStop</string>
+    <string name="key_pref_delay">DelayTime</string>
+    <string name="key_pref_timeout">GPS Timeout</string>
+    <string name="key_pref_buff_start">BuffStart</string>
+    <string name="key_pref_buff_end">BuffEnd</string>
+    <string name="key_pref_test">TestMode</string>
+
+    <string name="pref_main">myPreferences</string>
+    <string name="pref_amb">ambPref</string>
 
     <!--Below is for CenTre Neonatal Transport only-->
 
@@ -110,12 +120,5 @@
     <string name="transReasonTwo">Repat or Capacity</string>
 
     <string name="emergeTit">Was Emergency Driving used at any time?</string>
-    
-    <array name="timePickerArray">
-        <item>@string/menu_delay</item>
-        <item>@string/menu_timeout</item>
-        <item>@string/menu_buff_start</item>
-        <item>@string/menu_buff_end</item>
-    </array>
 
 </resources>

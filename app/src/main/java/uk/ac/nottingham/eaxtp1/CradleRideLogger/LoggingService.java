@@ -36,9 +36,8 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyBuffEnd;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyFS;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyG;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_FS;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingFilter;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
@@ -53,7 +52,7 @@ public class LoggingService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    String TAG = "CRL_LoggingService";
+    final String TAG = "CRL_LoggingService", KEY_BUFF_END = getString(R.string.key_pref_buff_end);
 
     int loggingPeriod = 5;     // Set the logging period in seconds
 
@@ -107,7 +106,7 @@ public class LoggingService extends Service {
         crashCheck();
 
         if (!crashed) {
-            preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
+            preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
             initialiseLogging();
         }
 
@@ -153,8 +152,8 @@ public class LoggingService extends Service {
         if (BuildConfig.AMB_MODE) {
             prepAmb();
         } else if (BuildConfig.CROWD_MODE) {
-            buffBy = preferences.getInt(keyBuffEnd,0);
-            fs = preferences.getInt(keyFS, 100);
+            buffBy = preferences.getInt(KEY_BUFF_END,getResources().getInteger(R.integer.buff_default));
+            fs = preferences.getInt(KEY_FS, 100);
             bufferOn = buffBy != 0;
         }
 
@@ -192,7 +191,7 @@ public class LoggingService extends Service {
     }
 
     public void logTitle() {
-        if (preferences.getBoolean(keyG, true)) {
+        if (preferences.getBoolean(KEY_G, true)) {
             titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GX", "GY", "GZ",
                     "North", "East", "Down", "GPS Sample", "Audio",
                     "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
@@ -408,7 +407,7 @@ public class LoggingService extends Service {
     public void logAmb(boolean atStart) {
         String ambList, amb, troll, pat, trans, emerge;
 
-        SharedPreferences ambPref = getSharedPreferences("ambPref", MODE_PRIVATE);
+        SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
 
         if (atStart) {
             amb = ambPref.getString(keyAmb,"");

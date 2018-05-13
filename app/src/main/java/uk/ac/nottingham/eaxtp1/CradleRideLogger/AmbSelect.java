@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.Calendar;
+import java.util.Objects;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambExtra;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
@@ -48,7 +49,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_amb_select);
 
-        ambPref = getSharedPreferences("ambPref", MODE_PRIVATE);
+        ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
         prefEd = ambPref.edit();
 
         titleView = findViewById(R.id.optTitle);
@@ -255,7 +256,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
-                        inAlert.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                        Objects.requireNonNull(inAlert.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
                     }
                 }
             });

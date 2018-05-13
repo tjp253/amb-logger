@@ -1,0 +1,61 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:key="@string/setScreen"
+    android:layout="@layout/activity_settings">
+
+    <SwitchPreference
+        android:layout_width="match_parent"
+        android:defaultValue="true"
+        android:key="@string/key_pref_as"
+        android:summary="@string/set_as_mess"
+        android:title="@string/set_as" />
+
+    <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
+        android:defaultValue="@integer/delay_default"
+        android:key="@string/key_pref_delay"
+        android:title="@string/set_delay"
+        app:vnt_maxValue="@integer/delay_max"
+        app:vnt_minValue="@integer/delay_min" />
+
+    <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
+        android:defaultValue="@integer/timeout_default"
+        android:inputType="number"
+        android:key="@string/key_pref_timeout"
+        android:title="@string/set_timeout"
+        app:vnt_maxValue="@integer/timeout_max"
+        app:vnt_minValue="@integer/timeout_min" />
+
+    <PreferenceCategory
+        android:key="@string/set_buff_tit"
+        android:title="@string/set_buff_tit">
+
+        <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
+            android:defaultValue="@integer/buff_default"
+            android:inputType="number"
+            android:key="@string/key_pref_buff_start"
+            android:title="@string/set_buff_start"
+            app:vnt_maxValue="@integer/buff_max"
+            app:vnt_minValue="@integer/buff_min" />
+
+        <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
+            android:defaultValue="@integer/buff_default"
+            android:inputType="number"
+            android:key="@string/key_pref_buff_end"
+            android:title="@string/set_buff_end"
+            app:vnt_maxValue="@integer/buff_max"
+            app:vnt_minValue="@integer/buff_min" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/set_test_tit"
+        android:key="@string/set_test_tit">
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="@string/key_pref_test"
+            android:title="@string/set_testing" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

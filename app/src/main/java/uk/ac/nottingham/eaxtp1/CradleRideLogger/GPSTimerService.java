@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
@@ -23,9 +24,6 @@ import java.util.List;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyBuffStart;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyDelay;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.keyTimeout;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.timerFilter;
@@ -35,7 +33,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
     public GPSTimerService() {
     }
 
-    String TAG = "CRL_GPS Timer Service";
+    final String TAG = "CRL_GPS Timer Service";
 
     CountDownTimer timeoutTimer, positionTimer, removalTimer, startBuffer;
     SharedPreferences preferences;
@@ -53,22 +51,15 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
     public void onCreate() {
         super.onCreate();
 
-        preferences = getSharedPreferences("myPreferences", MODE_PRIVATE);
-        if (preferences.contains(keyDelay)) {
-            timeDelay = preferences.getInt(keyDelay, 10) * 1000;
-        } else {
-            timeDelay = 0;
-        }
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        timeDelay = preferences.getInt(getString(R.string.key_pref_delay), getResources().getInteger(R.integer.delay_default)) * 1000;
 
         positioned = false; buffFinished = false;
 
         if (!gpsOff) {
 
-            if (preferences.contains(keyTimeout)) {
-                timeOut = preferences.getInt(keyTimeout, 60);
-            } else {
-                timeOut = 60;
-            }
+            timeOut = preferences.getInt(getString(R.string.key_pref_timeout), getResources().getInteger(R.integer.timeout_default)) * 60000;
 
             myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             //noinspection ConstantConditions
@@ -95,7 +86,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
     public void gpsTimer() {
 
-        timeoutTimer = new CountDownTimer(timeOut*1000, timeOut*1000) {
+        timeoutTimer = new CountDownTimer(timeOut, timeOut) {
 
             public void onTick(long millisUntilFinished) {}
 
@@ -153,7 +144,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
     }
 
     public void buffTheStart() {
-        int bs = preferences.getInt(keyBuffStart, 0) * 60000;
+        int bs = preferences.getInt(getString(R.string.key_pref_buff_start), getResources().getInteger(R.integer.buff_default)) * 60000;
         if ( bs == 0) {
             sendBroadcast(1);
             gpsRemoval();

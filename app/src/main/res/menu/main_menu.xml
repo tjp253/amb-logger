@@ -5,43 +5,8 @@
     <item
         android:id="@+id/privacyPolicy"
         android:title="@string/menu_policy" />
-
     <item
-        android:id="@+id/autoStop"
-        android:checkable="true"
-        android:enabled="true"
-        android:title="@string/as_menu"
-        android:visible="true" />
-
-    <item
-        android:id="@+id/delayTime"
-        android:title="@string/menu_delay" />
-
-    <item
-        android:id="@+id/timeOutItem"
-        android:title="@string/menu_timeout" />
-
-    <group android:id="@+id/menuBuffGroup"
-        android:visible="false">
-        <item
-            android:id="@+id/buffMenu"
-            android:title="@string/menu_buff_tit">
-            <menu>
-                <item
-                    android:id="@+id/buffStart"
-                    android:title="@string/menu_buff_start" />
-                <item
-                    android:id="@+id/buffEnd"
-                    android:title="@string/menu_buff_end" />
-            </menu>
-        </item>
-    </group>
-
-    <item
-        android:id="@+id/testingItem"
-        android:checkable="true"
-        android:enabled="true"
-        android:title="@string/menu_testing"
-        android:visible="false" />
+        android:id="@+id/setButt"
+        android:title="@string/setTit" />
 
 </menu>
