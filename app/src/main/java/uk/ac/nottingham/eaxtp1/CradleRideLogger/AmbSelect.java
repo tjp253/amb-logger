@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -31,6 +32,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     SharedPreferences ambPref;
     SharedPreferences.Editor prefEd;
+    ContextThemeWrapper dialogWrapper = new ContextThemeWrapper(this, R.style.MyAlertDialog);
 
     static final String keyAmb = "PrefAmb", keyTroll = "PrefTroll", keyPat = "PrefPat",
             keyTrans = "PrefTrans", keyEmerge = "PrefEmerge";
@@ -216,7 +218,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         if (recording) {
             storeAmb(5);
         } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
             View inputView = View.inflate(this, R.layout.amb_input, null);
             if (!trolley) {
                 intOne = R.id.ambInput;
