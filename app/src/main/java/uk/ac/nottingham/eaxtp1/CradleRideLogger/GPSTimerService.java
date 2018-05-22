@@ -40,7 +40,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
     protected LocationManager myLocationManager;
     //    Sets up variables for the GPS fix-check
-    boolean gpsFixed, positioned, buffFinished; static boolean buffering;
+    boolean gpsFixed, positioned, buffFinished, ambGPSOff; static boolean buffering;
     long myLastLocationMillis;
     Location myLastLocation;
 
@@ -186,6 +186,12 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
                 List<String> dataList = Arrays.asList(sLat, sLong, sSpeed, sGTime, sAcc, sAlt, sBear, sRT);
                 gpsData = TextUtils.join(",", dataList);
+            }
+
+            if (BuildConfig.AMB_MODE && !ambGPSOff) {
+                Intent stopAmbGPS = new Intent(getApplicationContext(), AmbGPSService.class);
+                stopService(stopAmbGPS);
+                ambGPSOff = true;
             }
         }
     }

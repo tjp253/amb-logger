@@ -20,6 +20,9 @@
             android:enabled="${isAmb}"
             tools:ignore="InnerclassSeparator" />
 
+        <service android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbGPSService"
+            tools:ignore="InnerclassSeparator" />
+
     </application>
 
 </manifest>

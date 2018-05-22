@@ -49,6 +49,11 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_amb_select);
 
+        if (!recording) {
+            Intent startGPS = new Intent(getApplicationContext(), AmbGPSService.class);
+            startService(startGPS);
+        }
+
         ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
         prefEd = ambPref.edit();
 
