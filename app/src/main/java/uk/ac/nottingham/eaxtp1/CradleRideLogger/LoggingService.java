@@ -18,9 +18,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -38,6 +38,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_FS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingFilter;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
@@ -76,7 +77,7 @@ public class LoggingService extends Service {
     boolean multiFile;
     String outputTitle, endName;
 
-    List<String> titleList;
+    ArrayList<String> titleList, gpsTitleList;
     int qSize, samplesInFile;
 
     boolean writingToFile, dataInFile;
@@ -189,13 +190,17 @@ public class LoggingService extends Service {
     }
 
     public void logTitle() {
+        gpsTitleList = new ArrayList<> ( Arrays.asList("Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT") );
+
         if (preferences.getBoolean(KEY_G, true)) {
-            titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GX", "GY", "GZ",
-                    "North", "East", "Down", "GPS Sample", "Audio",
-                    "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
+            titleList = new ArrayList<> ( Arrays.asList("id", "X", "Y", "Z", "Time", "GyX", "GyY", "GyZ",
+                    "North", "East", "Down", "GPS Sample", "Audio") );
         } else {
-            titleList = Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Audio",
-                    "Lat", "Long", "Speed", "GPS Time", "Acc", "Alt", "Bearing", "ERT");
+            titleList = new ArrayList<> ( Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Audio") );
+        }
+
+        if (! (BuildConfig.TEST_MODE && gpsOff) ) {
+            titleList.addAll(gpsTitleList);
         }
 
         outputTitle = TextUtils.join(",", titleList);

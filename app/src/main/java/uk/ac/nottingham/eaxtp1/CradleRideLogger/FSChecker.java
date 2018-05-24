@@ -23,7 +23,7 @@ public class FSChecker extends Service implements SensorEventListener {
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
     SensorManager manager;
-    Sensor acc, gravity;
+    Sensor acc, gyro;
 
     boolean gPresent;
     int nSamples, fSample;
@@ -36,10 +36,10 @@ public class FSChecker extends Service implements SensorEventListener {
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if (manager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
             acc = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            gravity = manager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+            gyro = manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
             manager.registerListener(this, acc, SensorManager.SENSOR_DELAY_FASTEST);
-            manager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_FASTEST);
+            manager.registerListener(this, gyro, SensorManager.SENSOR_DELAY_FASTEST);
 
             startTime = System.currentTimeMillis();
         }
@@ -60,29 +60,35 @@ public class FSChecker extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        int sensor = event.sensor.getType();
+        switch (event.sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER:
 
-        if (sensor == Sensor.TYPE_ACCELEROMETER){
 //            nSamples++;
-            int now = (int) (System.currentTimeMillis() - startTime) / 1000;
+                int now = (int) (System.currentTimeMillis() - startTime) / 1000;
 
-            if (now >= 5) {
-                nSamples++;
-            }
-            if (now >= 15) {
-                now -= 5 ;
-                fSample = ( nSamples / now ) + 1 ;
-                Log.i(TAG, "Sample Frequency: " + fSample);
-                Log.i(TAG, "Samples: " + nSamples);
-                Log.i(TAG, "Now: " + now);
-                manager.unregisterListener(this, acc);
-                onDestroy();
-            }
+                if (now >= 5) {
+                    nSamples++;
+                }
+                if (now >= 15) {
+                    now -= 5 ;
+                    fSample = ( nSamples / now ) + 1 ;
+                    Log.i(TAG, "Sample Frequency: " + fSample);
+                    Log.i(TAG, "Samples: " + nSamples);
+                    Log.i(TAG, "Seconds: " + now);
+                    manager.unregisterListener(this, acc);
+                    onDestroy();
+                }
 
-        } else if (sensor == Sensor.TYPE_GRAVITY){
-            gPresent = true;
-            manager.unregisterListener(this, gravity);
-            Log.i(TAG, "Gravity Present: " + gPresent);
+                break;
+
+            case Sensor.TYPE_GYROSCOPE:
+
+                gPresent = true;
+                manager.unregisterListener(this, gyro);
+                Log.i(TAG, "Gyro Present: " + gPresent);
+
+                break;
+
         }
 
     }
