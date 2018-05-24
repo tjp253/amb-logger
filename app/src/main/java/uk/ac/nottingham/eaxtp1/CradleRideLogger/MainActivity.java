@@ -46,7 +46,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     static boolean gpsOff;
 
-    Intent ambSelect;   final int ambStart = 1132, ambEnd = 1133;    final static String ambExtra = "EndLogging";
+    Intent ambSelect;   final int ambStart = 1132, ambEnd = 1133, ambForced = 1134;    final static String ambExtra = "EndLogging";
 
     String TAG = "CRL_MainActivity";
     static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
@@ -186,7 +186,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         if (forcedStop) {
             stopLogging();
-            forcedStop = false;
+            if (BuildConfig.AMB_MODE) {
+                startActivityForResult(ambSelect, ambForced);
+            } else {
+                forcedStop = false;
+            }
         }
 
     }
@@ -320,6 +324,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         } else if (v == cancelButt && !recording) {
             stopInitialising();
             instructDisplay.setText(R.string.startGPS);
+
+            if (BuildConfig.AMB_MODE) {
+                Intent stopAmbGPS = new Intent(getApplicationContext(), AmbGPSService.class);
+                stopService(stopAmbGPS);
+            }
         }
 
     }
@@ -469,7 +478,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     @Override
     protected void onStart() {
         super.onStart();
-        if (!initialising && !recording) {
+        if (!initialising && !recording && !forcedStop) {
 //            stopListening();
             stopAll();
         }
@@ -484,6 +493,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     break;
                 case ambEnd:
                     stopAll();  stopLogging();
+                    break;
+                case ambForced:
+                    stopService(loggingService);
+                    forcedStop = false;
                     break;
             }
         }

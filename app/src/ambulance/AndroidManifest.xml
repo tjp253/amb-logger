@@ -17,7 +17,6 @@
 
         <activity
             android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect"
-            android:enabled="${isAmb}"
             tools:ignore="InnerclassSeparator" />
 
         <service android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbGPSService"

@@ -11,8 +11,12 @@
         <item name="colorButtonNormal">@color/colorUoN</item>
     </style>
 
-    <style name="MyMenuTheme" parent="Theme.AppCompat.Light">
+    <style name="MyToolbarTheme" parent="Theme.AppCompat.Light">
 
+    </style>
+
+    <style name="MyMenuTheme" parent="ThemeOverlay.AppCompat.Dark">
+        <item name="android:colorBackground">@color/colorUoN</item>
     </style>
 
     <style name="MyPrefTheme" parent="Theme.AppCompat.Light">

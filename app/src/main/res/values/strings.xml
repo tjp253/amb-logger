@@ -102,6 +102,7 @@
     <string name="optSame">Same as before</string>
     <string name="entAmb">Please enter the ambulance ID</string>
     <string name="entButt">Enter</string>
+    <string name="forcedAmbSelect">Recording stopped due to lack of movement. Please input selections to return to the Start Screen.</string>
 
     <string name="trollTit">Please select current trolley</string>
     <string name="tro1">NORTH 1</string>
@@ -111,13 +112,13 @@
     <string name="entTroll">Please enter the trolley ID</string>
 
     <string name="patTit">Patient on board?</string>
-    <string name="yesButt">yes</string>
-    <string name="noButt">no</string>
+    <string name="yesButt">YES</string>
+    <string name="noButt">NO</string>
 
     <string name="transTit">Operational Reason for Transfer</string>
-    <string name="transReasonOne">Uplift</string>
+    <string name="transReasonOne">UPLIFT</string>
     <!--<string name="transReasonTwo">Repatriation or Capacity</string>-->
-    <string name="transReasonTwo">Repat or Capacity</string>
+    <string name="transReasonTwo">REPAT OR CAPACITY</string>
 
     <string name="emergeTit">Was Emergency Driving used at any time?</string>
 

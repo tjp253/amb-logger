@@ -3,4 +3,5 @@
     <color name="colorUoN">#27366d</color>
     <color name="colorBlack">#000000</color>
     <color name="colorWhite">#FFFFFF</color>
+    <color name="primary_material_dark_1">#f44336</color>
 </resources>

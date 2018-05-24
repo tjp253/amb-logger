@@ -21,12 +21,13 @@ import java.util.Calendar;
 import java.util.Objects;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambExtra;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class AmbSelect extends Activity implements View.OnClickListener {
 
     Button butt1, butt2, butt3, butt4, buttOther, buttSame;
-    TextView titleView;
+    TextView titleView, asView;
     int ambInt, trollInt, transInt, emergeInt;
     boolean patBool;
 
@@ -51,7 +52,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_amb_select);
 
-        if (!recording) {
+        if (!recording && !forcedStop) {
             Intent startGPS = new Intent(getApplicationContext(), AmbGPSService.class);
             startService(startGPS);
         }
@@ -60,6 +61,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         prefEd = ambPref.edit();
 
         titleView = findViewById(R.id.optTitle);
+        asView = findViewById(R.id.forcedText);
 
         butt1 = findViewById(R.id.opt1);
         butt2 = findViewById(R.id.opt2);
@@ -85,7 +87,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
             @Override
             public void onFinish() {
-                if (!recording) {
+                if (!recording && !forcedStop) {
                     changeButts();
                 } else {
                     setupQuestion(false);
@@ -93,11 +95,15 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             }
         };
 
-        if (recording) {
+        if (recording || forcedStop) {
             butt3.setVisibility(View.INVISIBLE);
             butt4.setVisibility(View.INVISIBLE);
             buttSame.setVisibility(View.GONE);
             buttOther.setText(R.string.butt_cancel);
+            if (forcedStop) {
+                buttOther.setVisibility(View.INVISIBLE);
+                asView.setVisibility(View.VISIBLE);
+            }
             patient = ambPref.getBoolean(keyPat, false);
             setupQuestion(patient);
             if (!patient) {
@@ -153,7 +159,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     public void storeAmb(int optionNo) {
         buttPause.start();
-        if (!recording) {
+        if (!(recording || forcedStop)) {
             if (trolley) {
                 switch (optionNo) {
                     case 1: trollInt = R.string.tro1;   break;

@@ -246,7 +246,7 @@ public class UploadService extends IntentService {
 
         mBuilder = new Notification.Builder(this)
                 .setSmallIcon(R.drawable.upload_symb)
-                .setContentTitle("CradleRide Logger")
+                .setContentTitle(getString(R.string.app_name))
                 .setContentText(uText);
 
         nm1 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -267,7 +267,7 @@ public class UploadService extends IntentService {
 
         mBuilder2 = new Notification.Builder(this)
                 .setSmallIcon(R.drawable.oversize_symb)
-                .setContentTitle("CradleRide Logger")
+                .setContentTitle(getString(R.string.app_name))
                 .setContentText(oText);
 
         nm2 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -288,7 +288,7 @@ public class UploadService extends IntentService {
 
         mBuilder3 = new Notification.Builder(this)
                 .setSmallIcon(R.drawable.oversize_symb)
-                .setContentTitle("CradleRide Logger")
+                .setContentTitle(getString(R.string.app_name))
                 .setContentText(oText);
 
         nm3 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);

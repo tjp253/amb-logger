@@ -24,7 +24,7 @@
         app:layout_constraintVertical_chainStyle="spread_inside" />
 
     <android.support.v7.widget.Toolbar
-        android:theme="@style/MyMenuTheme"
+        android:theme="@style/MyToolbarTheme"
         android:id="@+id/toolbar"
         android:layout_width="wrap_content"
         android:layout_height="26dp"
@@ -32,7 +32,8 @@
         android:layout_marginEnd="8dp"
         android:background="@android:color/transparent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:popupTheme="@style/MyMenuTheme"/>
 
     <TextView
         android:id="@+id/instructDisplay"

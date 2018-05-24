@@ -221,6 +221,8 @@ public class LoggingService extends Service {
                         sendBroadcast(1);
                         dataInFile = true;
                     }
+                } else {
+                    logTimer.cancel();
                 }
             }
         };

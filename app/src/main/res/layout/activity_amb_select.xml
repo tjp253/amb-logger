@@ -103,11 +103,27 @@
         android:layout_marginEnd="8dp"
         android:text="@string/optSame"
         android:textSize="27sp"
-        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/optOther"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/optOther"
         app:layout_constraintTop_toTopOf="@+id/optOther" />
+
+    <TextView
+        android:id="@+id/forcedText"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:gravity="bottom"
+        android:text="@string/forcedAmbSelect"
+        android:textSize="20sp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/opt4" />
 
 </android.support.constraint.ConstraintLayout>

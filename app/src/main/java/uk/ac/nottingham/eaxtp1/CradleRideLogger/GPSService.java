@@ -154,16 +154,18 @@ public class GPSService extends Service implements LocationListener {
     public void stopOthers() {
         Intent stopAudio = new Intent(this, AudioService.class);
         Intent stopIMU = new Intent(this, IMUService.class);
-        Intent stopLogging = new Intent(this, LoggingService.class);
         this.stopService(stopAudio);
         this.stopService(stopIMU);
-        this.stopService(stopLogging);
+        if (!BuildConfig.AMB_MODE) {
+            Intent stopLogging = new Intent(this, LoggingService.class);
+            this.stopService(stopLogging);
+        }
     }
 
     public void stopNotification() {
         builder = new Notification.Builder(this)
                 .setSmallIcon(R.drawable.stop_symb)
-                .setContentTitle("CradleRide Logger")
+                .setContentTitle(getString(R.string.app_name))
                 .setContentText("Recording stopped due to lack of movement.");
 
         NotificationManager manager =
