@@ -26,6 +26,18 @@
         app:vnt_minValue="@integer/timeout_min" />
 
     <PreferenceCategory
+        android:title="@string/choose_ntt"
+        android:key="@string/pref_amb_settings">
+
+        <ListPreference
+            android:defaultValue="@string/ntt_centre"
+            android:entries="@array/ntt_choice"
+            android:entryValues="@array/ntt_number"
+            android:key="@string/key_pref_ntt"
+            android:title="@string/ntt_centre" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:key="@string/set_buff_tit"
         android:title="@string/set_buff_tit">
 

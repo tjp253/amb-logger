@@ -16,7 +16,6 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
 import java.util.Calendar;
 import java.util.Objects;
 
@@ -28,7 +27,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     Button butt1, butt2, butt3, butt4, buttOther, buttSame;
     TextView titleView, asView;
-    int ambInt, trollInt, transInt, emergeInt;
+    int transInt, emergeInt, inputNo;
     boolean patBool;
 
     SharedPreferences ambPref;
@@ -38,9 +37,12 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     static final String keyAmb = "PrefAmb", keyTroll = "PrefTroll", keyPat = "PrefPat",
             keyTrans = "PrefTrans", keyEmerge = "PrefEmerge";
     final String keyDate = "PrefDate";
+    String prefStr;
+    String[] ambArray, trollArray;
 
-    boolean trolley, patient;
-    int intOne, intTwo;
+    boolean patient;
+    int intOne, intTwo, strID;
+    Intent startGPS;
 
     CountDownTimer buttPause;
 
@@ -51,11 +53,6 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_amb_select);
-
-        if (!recording && !forcedStop) {
-            Intent startGPS = new Intent(getApplicationContext(), AmbGPSService.class);
-            startService(startGPS);
-        }
 
         ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
         prefEd = ambPref.edit();
@@ -109,20 +106,18 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             if (!patient) {
                 prefEd.putString(keyTrans,"N/A").commit();
             }
-        }
-
-    }
-
-    public void setupQuestion(boolean bool) {
-        if (bool) {
-            titleView.setText(R.string.transTit);
-            butt1.setText(R.string.transReasonOne);
-            butt2.setText(R.string.transReasonTwo);
         } else {
-            titleView.setText(R.string.emergeTit);
-            butt1.setText(R.string.yesButt);
-            butt2.setText(R.string.noButt);
+            startGPS = new Intent(getApplicationContext(), AmbGPSService.class);
+            startService(startGPS);
+            int nttInt = ambPref.getInt(getString(R.string.key_pref_ntt),0);
+            int ambChoice = Integer.valueOf( Objects.requireNonNull(getResources().obtainTypedArray(R.array.amb_ntt).getString(nttInt)).substring((1)) );
+            int trollChoice = Integer.valueOf( Objects.requireNonNull(getResources().obtainTypedArray(R.array.troll_ntt).getString(nttInt)).substring((1)) );
+            ambArray = getResources().getStringArray(ambChoice);
+            trollArray = getResources().getStringArray(trollChoice);
+
+            changeButts();
         }
+
     }
 
     @Override
@@ -138,55 +133,71 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     }
 
     public void changeButts() {
-        if (!trolley) {
-            trolley = true;
-            titleView.setText(R.string.trollTit);
-            butt1.setText(R.string.tro1);
-            butt2.setText(R.string.tro2);
-            butt3.setText(R.string.tro3);
-            butt4.setText(R.string.tro4);
+        switch (inputNo) {
+            case 0:
+                titleView.setText(R.string.ambTit);
+                butt1.setText(ambArray[0]);
+                butt2.setText(ambArray[1]);
+                butt3.setText(ambArray[2]);
+                butt4.setText(ambArray[3]);
+                break;
+            case 1:
+                titleView.setText(R.string.trollTit);
+                butt1.setText(trollArray[0]);
+                butt2.setText(trollArray[1]);
+                butt3.setText(trollArray[2]);
+                butt4.setText(trollArray[3]);
+                butt3.setVisibility(View.VISIBLE);
+                butt4.setVisibility(View.VISIBLE);
+                buttOther.setVisibility(View.VISIBLE);
+                if (ambPref.getInt(keyDate,0) == Calendar.getInstance().get(Calendar.DAY_OF_YEAR)) {
+                    buttSame.setVisibility(View.VISIBLE);
+                }
+                break;
+            case 2:
+                titleView.setText(R.string.patTit);
+                butt1.setText(R.string.yesButt);
+                butt2.setText(R.string.noButt);
+                butt3.setVisibility(View.INVISIBLE);
+                butt4.setVisibility(View.INVISIBLE);
+                buttOther.setVisibility(View.INVISIBLE);
+                buttSame.setVisibility(View.GONE);
+                break;
+        }
+    }
+
+    public void setupQuestion(boolean bool) {
+        if (bool) {
+            titleView.setText(R.string.transTit);
+            butt1.setText(R.string.transReasonOne);
+            butt2.setText(R.string.transReasonTwo);
         } else {
-            trolley = false;    patient = true;
-            titleView.setText(R.string.patTit);
+            titleView.setText(R.string.emergeTit);
             butt1.setText(R.string.yesButt);
             butt2.setText(R.string.noButt);
-            butt3.setVisibility(View.INVISIBLE);
-            butt4.setVisibility(View.INVISIBLE);
-            buttOther.setVisibility(View.INVISIBLE);
-            buttSame.setVisibility(View.INVISIBLE);
         }
     }
 
     public void storeAmb(int optionNo) {
-        buttPause.start();
-        if (!(recording || forcedStop)) {
-            if (trolley) {
-                switch (optionNo) {
-                    case 1: trollInt = R.string.tro1;   break;
-                    case 2: trollInt = R.string.tro2;   break;
-                    case 3: trollInt = R.string.tro3;   break;
-                    case 4: trollInt = R.string.tro4;   break;
-                }
-                prefEd.putString(keyTroll, getString(trollInt)).commit();
-            } else if (patient) {
-                switch (optionNo) {
-                    case 1: patBool = true; break;
-                    case 2: patBool = false; break;
-                }
-                prefEd.putBoolean(keyPat, patBool).commit();
-                prefEd.putInt(keyDate, Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
-                sendIntentBack();
-            } else {
-                switch (optionNo) {
-                    case 1: ambInt = R.string.amb1; break;
-                    case 2: ambInt = R.string.amb2; break;
-                    case 3: ambInt = R.string.amb3; break;
-                    case 4: ambInt = R.string.amb4; break;
-                }
-                prefEd.putString(keyAmb, getString(ambInt)).commit();
+        if (!(recording || forcedStop)) {   // Selections before journey.
+            buttPause.start();
+            switch (inputNo) {
+                case 0:
+                    prefEd.putString(keyAmb, ambArray[optionNo-1]).commit();
+                    break;
+                case 1:
+                    prefEd.putString(keyTroll, trollArray[optionNo-1]).commit();
+                    break;
+                case 2:
+                    patBool = optionNo == 1;
+                    prefEd.putBoolean(keyPat, patBool).commit();
+                    prefEd.putInt(keyDate, Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
+                    sendIntentBack(true);
+                    break;
             }
-        } else {
+        } else {    // Selections after journey.
             if (patient) {
+                buttPause.start();
                 switch (optionNo) {
                     case 1: transInt = R.string.transReasonOne; break;
                     case 2: transInt = R.string.transReasonTwo; break;
@@ -201,23 +212,25 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                     case 5: finish();   break;
                 }
                 prefEd.putString(keyEmerge, getString(emergeInt)).commit();
-                sendIntentBack();
+                sendIntentBack(true);
             }
         }
+
+        inputNo++;
     }
 
-    public void sendIntentBack() {
-        Intent returnIntent = new Intent().putExtra(ambExtra, true);
+    public void sendIntentBack(boolean bool) {
+        Intent returnIntent = new Intent().putExtra(ambExtra, bool);
         setResult(Activity.RESULT_OK, returnIntent);
+        if (buttPause != null) {
+            buttPause.cancel();
+        }
         finish();
     }
 
     public void keepEntry() {
-        if (patient) {
-            finish();
-        } else {
-            buttPause.start();
-        }
+        buttPause.start();
+        inputNo++;
     }
 
     public void getOther() {
@@ -226,38 +239,30 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
             View inputView = View.inflate(this, R.layout.amb_input, null);
-            if (!trolley) {
+            if (inputNo == 0) {
                 intOne = R.id.ambInput;
                 intTwo = R.id.trollInput;
+                strID = R.string.entAmb;
+                prefStr = keyAmb;
             } else {
                 intOne = R.id.trollInput;
                 intTwo = R.id.ambInput;
+                strID = R.string.entTroll;
+                prefStr = keyTroll;
             }
             final EditText input = inputView.findViewById(intOne);
             final EditText input2 = inputView.findViewById(intTwo);
+            input2.setVisibility(View.INVISIBLE);
 
-            if (!trolley) {
-                input2.setVisibility(View.INVISIBLE);
-                builder.setMessage(R.string.entAmb)
-                        .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                prefEd.putString(keyAmb, input.getText().toString()).commit();
-                                changeButts();
-                            }
-                        });
-            } else {
-                input2.setVisibility(View.INVISIBLE);
-                builder.setMessage(R.string.entTroll)
-                        .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                prefEd.putString(keyTroll, input.getText().toString()).commit();
-                            }
-                        });
-            }
-
-            builder.setView(inputView)
+            builder.setMessage(strID)
+                    .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            prefEd.putString(prefStr, input.getText().toString()).commit();
+                            changeButts();
+                        }
+                    })
+                    .setView(inputView)
                     .setCancelable(false).create();
 
             inAlert = builder.show();
@@ -293,10 +298,42 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                 }
             });
         }
+
+        inputNo++;
     }
 
     @Override
     public void onBackPressed() {
+        if (!recording && inputNo == 0) { // Confirm user wants to return to home screen and cancel recording.
+            confirmExit();
+        } else if (inputNo != 0){ // Change buttons back to previous selection
+            inputNo--;
+            if (!recording) {
+                changeButts();
+            } else {
+                patient = true;
+                setupQuestion(true);
+            }
+        }
         // Do nothing
+    }
+
+    public void confirmExit() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
+        builder .setTitle("Cancel Recording")
+                .setPositiveButton(R.string.yesButt, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        stopService(startGPS);
+                        sendIntentBack(false);
+                    }
+                })
+                .setNegativeButton(R.string.noButt, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+//                        Do nothing.
+                    }
+                })
+                .setCancelable(false).create().show();
     }
 }

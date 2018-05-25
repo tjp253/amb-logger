@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Below is for Neonatal Transport only-->
+
+    <string name="pref_amb">ambPref</string>
+    <string name="pref_amb_settings">Amb Settings</string>
+    <string name="key_pref_ntt">NTT Pref</string>
+
+    <string name="ambTit">Please select current ambulance</string>
+    <string name="optOther">Other</string>
+    <string name="optSame">Same as before</string>
+    <string name="entAmb">Please enter the ambulance ID</string>
+    <string name="entButt">Enter</string>
+    <string name="forcedAmbSelect">Recording stopped due to lack of movement. Please input selections to return to the Start Screen.</string>
+
+    <string name="trollTit">Please select current trolley</string>
+    <string name="entTroll">Please enter the trolley ID</string>
+
+    <string name="patTit">Patient on board?</string>
+    <string name="yesButt">YES</string>
+    <string name="noButt">NO</string>
+
+    <string name="transTit">Operational Reason for Transfer</string>
+    <string name="transReasonOne">UPLIFT</string>
+    <string name="transReasonTwo">REPAT OR CAPACITY</string>
+
+    <string name="emergeTit">Was Emergency Driving used at any time?</string>
+
+    <string name="choose_ntt">Neonatal Transfer Team</string>
+    <string name="ntt_centre">CenTre</string>
+    <string name="ntt_north">North</string>
+
+    <string-array name="ntt_choice">
+        <item>@string/ntt_centre</item>
+        <!--<item>@string/ntt_north</item>-->
+    </string-array>
+
+    <string-array name="ntt_number">
+        <item>0</item>
+        <!--<item>1</item>-->
+    </string-array>
+
+    <string name="ntt_default">1</string>
+
+    <array name="amb_ntt">
+        <item>@array/amb_centre</item>
+        <item>@array/amb_north</item>
+    </array>
+
+    <array name="troll_ntt">
+        <item>@array/troll_centre</item>
+        <item>@array/troll_north</item>
+    </array>
+
+    <!--CenTre data-->
+
+    <string-array name="amb_centre">
+        <item>8912</item>
+        <item>8915</item>
+        <item>4223</item>
+        <item>4224</item>
+    </string-array>
+
+    <string-array name="troll_centre">
+        <item>NORTH 1</item>
+        <item>NORTH 2</item>
+        <item>SOUTH 1</item>
+        <item>SOUTH 2</item>
+    </string-array>
+
+    <!--Example of other NTT data-->
+
+    <string-array name="amb_north">
+        <item>AMB 1</item>
+        <item>AMB 2</item>
+        <item>AMB 3</item>
+        <item>AMB 4</item>
+    </string-array>
+
+    <string-array name="troll_north">
+        <item>TROLLEY 1</item>
+        <item>TROLLEY 2</item>
+        <item>TROLLEY 3</item>
+        <item>TROLLEY 4</item>
+    </string-array>
+
+    <!--Button Placeholders-->
+    <string name="butt1">1</string>
+    <string name="butt2">2</string>
+    <string name="butt3">3</string>
+    <string name="butt4">4</string>
+
+</resources>

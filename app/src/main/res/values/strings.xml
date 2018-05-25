@@ -87,39 +87,5 @@
     <string name="key_pref_test">TestMode</string>
 
     <string name="pref_main">myPreferences</string>
-    <string name="pref_amb">ambPref</string>
-
-    <!--Below is for CenTre Neonatal Transport only-->
-
-    <string name="centre_ntt">\u0020- CenTre</string>
-
-    <string name="ambTit">Please select current ambulance</string>
-    <string name="amb1">8912</string>
-    <string name="amb2">8915</string>
-    <string name="amb3">4223</string>
-    <string name="amb4">4224</string>
-    <string name="optOther">Other</string>
-    <string name="optSame">Same as before</string>
-    <string name="entAmb">Please enter the ambulance ID</string>
-    <string name="entButt">Enter</string>
-    <string name="forcedAmbSelect">Recording stopped due to lack of movement. Please input selections to return to the Start Screen.</string>
-
-    <string name="trollTit">Please select current trolley</string>
-    <string name="tro1">NORTH 1</string>
-    <string name="tro2">NORTH 2</string>
-    <string name="tro3">SOUTH 1</string>
-    <string name="tro4">SOUTH 2</string>
-    <string name="entTroll">Please enter the trolley ID</string>
-
-    <string name="patTit">Patient on board?</string>
-    <string name="yesButt">YES</string>
-    <string name="noButt">NO</string>
-
-    <string name="transTit">Operational Reason for Transfer</string>
-    <string name="transReasonOne">UPLIFT</string>
-    <!--<string name="transReasonTwo">Repatriation or Capacity</string>-->
-    <string name="transReasonTwo">REPAT OR CAPACITY</string>
-
-    <string name="emergeTit">Was Emergency Driving used at any time?</string>
 
 </resources>

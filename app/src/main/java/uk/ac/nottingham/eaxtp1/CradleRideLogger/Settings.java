@@ -1,15 +1,14 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.preference.ListPreference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
@@ -70,10 +69,11 @@ public class Settings extends AppCompatActivity  {
     }
 
     public static class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
-        SharedPreferences preferences;
-        SharedPreferences.Editor prefEd;
+        SharedPreferences preferences, prefAmb;
+        SharedPreferences.Editor prefEd, prefEdAmb;
+        ListPreference nttList;
         int leftMargin, rightMargin, verticalMargin, topMargin;
-        String asPref, tPref, buffS, buffE;
+        String asPref, tPref, buffS, buffE, nttPref;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -88,17 +88,28 @@ public class Settings extends AppCompatActivity  {
             buffS = getActivity().getString(R.string.key_pref_buff_start);
             buffE = getActivity().getString(R.string.key_pref_buff_end);
 
+            if (BuildConfig.AMB_MODE) {
+                prefAmb = getActivity().getSharedPreferences(getString(R.string.pref_amb),MODE_PRIVATE);
+                nttPref = getActivity().getString(R.string.key_pref_ntt);
+                nttList = (ListPreference) findPreference(nttPref);
+                nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[prefAmb.getInt(nttPref,0)]);
+            }
+
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
 
             PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference(getResources().getString(R.string.setScreen));
             PreferenceCategory buffCat = (PreferenceCategory) findPreference(getResources().getString(R.string.set_buff_tit));
             PreferenceCategory testCat = (PreferenceCategory) findPreference(getResources().getString(R.string.set_test_tit));
+            PreferenceCategory ambCat = (PreferenceCategory) findPreference(getResources().getString(R.string.pref_amb_settings));
 
             if (!BuildConfig.CROWD_MODE) {
                 preferenceScreen.removePreference(buffCat);
             }
             if (!BuildConfig.TEST_MODE) {
                 preferenceScreen.removePreference(testCat);
+            }
+            if (!BuildConfig.AMB_MODE) {
+                preferenceScreen.removePreference(ambCat);
             }
 
         }
@@ -126,15 +137,28 @@ public class Settings extends AppCompatActivity  {
             prefEd = preferences.edit();
 
             if (key.equals(asPref)) {
+
                 autoStopOn = sharedPreferences.getBoolean(key, true);
                 prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).commit();
+
             } else if (key.equals(tPref)) {
+
                 gpsOff = !sharedPreferences.getBoolean(key, false);
+
+            } else if (BuildConfig.AMB_MODE && key.equals(nttPref)) {
+                int choice = Integer.parseInt(sharedPreferences.getString(key, ""));
+                nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[choice]);
+
+                prefEdAmb = prefAmb.edit();
+                prefEdAmb.putInt(key, choice).commit();
+
             } else {
+
                 prefEd.putInt(key, sharedPreferences.getInt(key,0)).commit();
                 if ( (key.equals(buffS) && ( recording || buffering )) || (key.equals(buffE) && recording) ) {
                     buffToast();
                 }
+
             }
         }
 

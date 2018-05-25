@@ -486,18 +486,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK && data.getBooleanExtra(ambExtra, false)) {
-            switch (requestCode) {
-                case ambStart:
-                    startInitialising();
-                    break;
-                case ambEnd:
-                    stopAll();  stopLogging();
-                    break;
-                case ambForced:
-                    stopService(loggingService);
-                    forcedStop = false;
-                    break;
+        if (resultCode == RESULT_OK) {
+            if (data.getBooleanExtra(ambExtra, false)) {
+                switch (requestCode) {
+                    case ambStart:
+                        startInitialising();
+                        break;
+                    case ambEnd:
+                        stopAll();
+                        stopLogging();
+                        break;
+                    case ambForced:
+                        stopService(loggingService);
+                        forcedStop = false;
+                        break;
+                }
+            } else if (!data.getBooleanExtra(ambExtra, false) && requestCode == ambStart) {
+                stopInitialising();
             }
         }
     }
