@@ -233,7 +233,7 @@ public class IMUService extends Service implements SensorEventListener {
             manager.unregisterListener(this);
         }
 
-        if (wakeLock != null) {
+        if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }
     }
