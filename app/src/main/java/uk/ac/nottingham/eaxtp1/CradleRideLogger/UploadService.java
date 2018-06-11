@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -157,7 +158,9 @@ public class UploadService extends IntentService {
 
                 try {
 
-                    OkHttpClient okHttpClient = new OkHttpClient();
+                    OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                            .writeTimeout((long) 60, TimeUnit.SECONDS)
+                            .build();
                     File fileToUpload = new File(uploadFilePath);
 
                     RequestBody requestBody = new MultipartBody.Builder()
