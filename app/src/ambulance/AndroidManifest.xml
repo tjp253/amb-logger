@@ -6,7 +6,8 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <activity android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity"
-            tools:ignore="InnerclassSeparator">
+            tools:ignore="InnerclassSeparator"
+            android:excludeFromRecents="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category tools:node="merge" android:name="android.intent.category.HOME"/>
@@ -15,8 +16,7 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect"
+        <activity android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect"
             tools:ignore="InnerclassSeparator" />
 
         <service android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbGPSService"

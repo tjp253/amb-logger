@@ -25,6 +25,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class AmbSelect extends Activity implements View.OnClickListener {
 
+    static boolean selectingAmb;
     Button butt1, butt2, butt3, butt4, buttOther, buttSame;
     TextView titleView, asView;
     int transInt, emergeInt, inputNo;
@@ -54,6 +55,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_amb_select);
 
+        selectingAmb = true;
         ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
         prefEd = ambPref.edit();
 
@@ -335,5 +337,11 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                     }
                 })
                 .setCancelable(false).create().show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        selectingAmb = false;
     }
 }

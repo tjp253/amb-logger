@@ -38,6 +38,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.util.Random;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.selectingAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
@@ -46,7 +47,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     static boolean gpsOff;
 
-    Intent ambSelect;   final int ambStart = 1132, ambEnd = 1133, ambForced = 1134;    final static String ambExtra = "EndLogging";
+    Intent ambSelect, ambGPS;   final int ambStart = 1132, ambEnd = 1133, ambForced = 1134;    final static String ambExtra = "EndLogging";
 
     String TAG = "CRL_MainActivity";
     static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
@@ -161,6 +162,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         if (BuildConfig.AMB_MODE) {
             ambSelect = new Intent(this, AmbSelect.class);
+            ambGPS = new Intent(this,AmbGPSService.class);
         } else if (BuildConfig.TEST_MODE) {
             gpsOff = !PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.key_pref_test),false);
         }
@@ -191,6 +193,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
             } else {
                 forcedStop = false;
             }
+        }
+
+        if (BuildConfig.AMB_MODE && selectingAmb && !recording) {
+            stopService(ambGPS);
         }
 
     }
@@ -566,4 +572,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         LocalBroadcastManager.getInstance(MainActivity.this).unregisterReceiver(BReceiver);
     }
 
+    @Override
+    public void onBackPressed() {
+//        Disable Back button when used as HOME SCREEN
+        if (!BuildConfig.AMB_MODE) {
+            super.onBackPressed();
+        }
+    }
 }
