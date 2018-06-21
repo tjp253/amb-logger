@@ -34,7 +34,7 @@
             android:entries="@array/ntt_choice"
             android:entryValues="@array/ntt_number"
             android:key="@string/key_pref_ntt"
-            android:title="@string/ntt_centre" />
+            android:title="@string/choose_ntt" />
     </PreferenceCategory>
 
     <PreferenceCategory

@@ -27,7 +27,7 @@ android {
             buildConfigField 'boolean', 'CROWD_MODE', 'true'
         }
         ambulance {
-            applicationIdSuffix ".amb"
+            applicationId "uk.ac.nottingham.eaxtp1.ambulancelogger"
             versionNameSuffix ' - NTT'
             buildConfigField 'boolean', 'AMB_MODE', 'true'
             resValue "string", "app_name", "Ambulance Logger"
@@ -48,7 +48,7 @@ dependencies {
     })
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.squareup.okhttp3:okhttp:3.7.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
     implementation 'com.vanniktech:vntnumberpickerpreference:1.0.0'
     implementation 'com.vanniktech:vntnumberpickerpreference:1.0.1-SNAPSHOT'
 }
