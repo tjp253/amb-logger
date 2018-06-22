@@ -7,7 +7,7 @@
 
         <activity android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity"
             tools:ignore="InnerclassSeparator"
-            android:excludeFromRecents="true">
+            android:excludeFromRecents="false">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category tools:node="merge" android:name="android.intent.category.HOME"/>
@@ -17,7 +17,8 @@
         </activity>
 
         <activity android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect"
-            tools:ignore="InnerclassSeparator" />
+            tools:ignore="InnerclassSeparator"
+            android:screenOrientation="portrait"/>
 
         <service android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbGPSService"
             tools:ignore="InnerclassSeparator" />

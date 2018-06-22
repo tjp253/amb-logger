@@ -138,6 +138,12 @@ public class GPSService extends Service implements LocationListener {
                 stopOthers();
                 recording = false;
                 forcedStop = true;
+                if (BuildConfig.AMB_MODE) {
+                    Intent ambSelect = new Intent(getApplicationContext(), AmbSelect.class);
+                    ambSelect.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    ambSelect.putExtra(getString(R.string.forcedIntent), true);
+                    startActivity(ambSelect);
+                }
                 stopNotification();
                 onDestroy();
             }

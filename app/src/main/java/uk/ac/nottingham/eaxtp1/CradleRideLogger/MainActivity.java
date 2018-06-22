@@ -38,6 +38,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.util.Random;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.forcedStopAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.selectingAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
@@ -47,7 +48,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     static boolean gpsOff;
 
-    Intent ambSelect, ambGPS;   final int ambStart = 1132, ambEnd = 1133, ambForced = 1134;    final static String ambExtra = "EndLogging";
+    Intent ambSelect, ambGPS;   final int ambStart = 1132, ambEnd = 1133;    final static String ambExtra = "EndLogging";
 
     String TAG = "CRL_MainActivity";
     static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
@@ -73,7 +74,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private ProgressBar loadingAn;
 
     boolean initialising, buttPressed, displayOn, buffing, fileEmpty;
-    static boolean recording, compressing, moving,
+    static boolean recording, moving,
             crashed, forcedStop;    // forcedStop set to true when AutoStop has been used.
 
     @SuppressLint("WifiManagerLeak")
@@ -122,12 +123,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         recordButt.setOnClickListener(this);
         cancelButt = findViewById(R.id.butt_Cancel);
         cancelButt.setOnClickListener(this);
+        loadingAn = findViewById(R.id.initProgress);
+        loadingAn.setVisibility(View.GONE);
 
         instructDisplay.setText(R.string.startGPS);
 
         recording = false;
         initialising = false;
-        compressing = false;
         crashed = false;
 
         uploadService = new Intent(this, UploadService.class);
@@ -157,9 +159,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         setUpToolbar();
 
-        loadingAn = findViewById(R.id.initProgress);
-        loadingAn.setVisibility(View.GONE);
-
         if (BuildConfig.AMB_MODE) {
             ambSelect = new Intent(this, AmbSelect.class);
             ambGPS = new Intent(this,AmbGPSService.class);
@@ -187,11 +186,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
 
         if (forcedStop) {
-            stopLogging();
-            if (BuildConfig.AMB_MODE) {
-                startActivityForResult(ambSelect, ambForced);
-            } else {
+            if (!BuildConfig.AMB_MODE) {
+                stopLogging();
                 forcedStop = false;
+            } else if (forcedStopAmb) {
+                stopLogging();
+                forcedStop = false;
+                forcedStopAmb = false;
+                stopService(loggingService);
+            } else {
+                LocalBroadcastManager.getInstance(this).registerReceiver(BReceiver, new IntentFilter(loggingFilter));
             }
         }
 
@@ -287,6 +291,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             instructDisplay.setText(R.string.finished);
         }
 
+        recordButt.setText(R.string.butt_start);
         recordButt.setEnabled(true);
     }
 
@@ -502,10 +507,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         stopAll();
                         stopLogging();
                         break;
-                    case ambForced:
-                        stopService(loggingService);
-                        forcedStop = false;
-                        break;
                 }
             } else if (!data.getBooleanExtra(ambExtra, false) && requestCode == ambStart) {
                 stopInitialising();
@@ -561,6 +562,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         break;
                     case 1:
                         fileEmpty = false;
+                        cancelBM();
+                        break;
+                    case 9:
+                        stopLogging();
+                        forcedStop = false;
+                        stopService(loggingService);
                         cancelBM();
                         break;
                 }

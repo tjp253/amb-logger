@@ -375,6 +375,9 @@ public class LoggingService extends Service {
 
             } else {
                 endFile.delete();
+                if (BuildConfig.AMB_MODE) {
+                    new File(ambPath).delete();
+                }
                 sendBroadcast(0);
 
             }

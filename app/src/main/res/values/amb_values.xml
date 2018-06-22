@@ -11,7 +11,8 @@
     <string name="optSame">Same as before</string>
     <string name="entAmb">Please enter the ambulance ID</string>
     <string name="entButt">Enter</string>
-    <string name="forcedAmbSelect">Recording stopped due to lack of movement. Please input selections to return to the Start Screen.</string>
+    <string name="forcedAmbSelect">Recording stopped due to lack of movement.\n\nPlease input selections to return to the Start Screen.</string>
+    <string name="forcedIntent">Forced Stop</string>
 
     <string name="trollTit">Please select current trolley</string>
     <string name="entTroll">Please enter the trolley ID</string>

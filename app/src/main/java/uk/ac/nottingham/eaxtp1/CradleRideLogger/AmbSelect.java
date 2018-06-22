@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.ContextThemeWrapper;
@@ -20,12 +21,13 @@ import java.util.Calendar;
 import java.util.Objects;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambExtra;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingFilter;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class AmbSelect extends Activity implements View.OnClickListener {
 
-    static boolean selectingAmb;
+    static boolean selectingAmb, forcedStopAmb;
     Button butt1, butt2, butt3, butt4, buttOther, buttSame;
     TextView titleView, asView;
     int transInt, emergeInt, inputNo;
@@ -54,6 +56,8 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_amb_select);
+
+        forcedStopAmb = this.getIntent().getBooleanExtra(getString(R.string.forcedIntent),false);
 
         selectingAmb = true;
         ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
@@ -86,7 +90,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
             @Override
             public void onFinish() {
-                if (!recording && !forcedStop) {
+                if (!recording && !forcedStopAmb) {
                     changeButts();
                 } else {
                     setupQuestion(false);
@@ -94,12 +98,12 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             }
         };
 
-        if (recording || forcedStop) {
+        if (recording || forcedStopAmb) {
             butt3.setVisibility(View.INVISIBLE);
             butt4.setVisibility(View.INVISIBLE);
             buttSame.setVisibility(View.GONE);
             buttOther.setText(R.string.butt_cancel);
-            if (forcedStop) {
+            if (forcedStopAmb) {
                 buttOther.setVisibility(View.INVISIBLE);
                 asView.setVisibility(View.VISIBLE);
             }
@@ -181,7 +185,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     }
 
     public void storeAmb(int optionNo) {
-        if (!(recording || forcedStop)) {   // Selections before journey.
+        if (!(recording || forcedStopAmb)) {   // Selections before journey.
             buttPause.start();
             switch (inputNo) {
                 case 0:
@@ -227,6 +231,14 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         if (buttPause != null) {
             buttPause.cancel();
         }
+
+//        If forced to stop (due to inactivity) this refreshes the MainActivity
+        if (forcedStopAmb) {
+            Intent intent = new Intent(loggingFilter);
+            intent.putExtra(loggingInt, 9);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        }
+
         finish();
     }
 
