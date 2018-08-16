@@ -51,7 +51,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     AlertDialog inAlert;
 
-    @SuppressLint("CommitPrefEdits")
+    @SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

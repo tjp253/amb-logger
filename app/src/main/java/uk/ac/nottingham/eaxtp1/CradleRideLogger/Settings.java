@@ -52,7 +52,7 @@ public class Settings extends AppCompatActivity  {
             edNew.putInt(getString(R.string.key_pref_delay), prefOld.getInt(getString(R.string.key_pref_delay), 0));
             edNew.putInt(getString(R.string.key_pref_buff_start), prefOld.getInt(getString(R.string.key_pref_buff_start), 0));
             edNew.putInt(getString(R.string.key_pref_buff_end), prefOld.getInt(getString(R.string.key_pref_buff_end), 0));
-            edNew.commit();
+            edNew.apply();
         }
     }
 
@@ -139,7 +139,7 @@ public class Settings extends AppCompatActivity  {
             if (key.equals(asPref)) {
 
                 autoStopOn = sharedPreferences.getBoolean(key, true);
-                prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).commit();
+                prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).apply();
 
             } else if (key.equals(tPref)) {
 
@@ -150,7 +150,7 @@ public class Settings extends AppCompatActivity  {
                 nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[choice]);
 
                 prefEdAmb = prefAmb.edit();
-                prefEdAmb.putInt(key, choice).commit();
+                prefEdAmb.putInt(key, choice).apply();
 
             } else {
 
