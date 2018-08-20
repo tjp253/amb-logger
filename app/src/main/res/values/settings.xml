@@ -4,10 +4,6 @@
     <integer name="delay_min">0</integer>
     <integer name="delay_max">60</integer>
 
-    <integer name="timeout_default">1</integer>
-    <integer name="timeout_min">1</integer>
-    <integer name="timeout_max">5</integer>
-
     <integer name="buff_default">0</integer>
     <integer name="buff_min">0</integer>
     <integer name="buff_max">5</integer>

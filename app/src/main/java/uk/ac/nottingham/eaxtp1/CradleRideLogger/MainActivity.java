@@ -20,6 +20,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -37,6 +38,8 @@ import android.widget.TextView;
 
 import java.io.File;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.forcedStopAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.selectingAmb;
@@ -97,7 +100,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             prefEditor.putBoolean(KEY_FIRST, false);
             prefEditor.putInt(user_ID, rndUserID);
-            prefEditor.commit();
+            prefEditor.apply();
         } else if (preferences.getBoolean(KEY_DISC, true)) {
 //        Shows Disclosure Agreement.
 //        TODO: remove the '!' below when code is finalised.
@@ -257,7 +260,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
             sGPS = "";
         }
         startService(loggingService);
-        startService(imuService);
+        if (!BuildConfig.AMB_MODE) {
+            startService(imuService);
+        }
         LocalBroadcastManager.getInstance(this).registerReceiver(BReceiver, new IntentFilter(loggingFilter));
     }
 
@@ -317,6 +322,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     buffing = false;
                 } else if (BuildConfig.AMB_MODE) {
                     startActivityForResult(ambSelect, ambStart);
+                    startService(imuService);   // Start IMU logging straight away - for entrance matting, etc.
                 } else {
                     startInitialising();
                 }
@@ -529,6 +535,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     static final String timerFilter = "TimerResponse", timerInt = "tResponse",
             loggingFilter = "LoggingResponse", loggingInt = "lResponse";
+    PowerManager.WakeLock screenLock;
+    Timer screenFlashTimer;
+    TimerTask flashingTask;
     private BroadcastReceiver BReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -569,6 +578,35 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         forcedStop = false;
                         stopService(loggingService);
                         cancelBM();
+                        break;
+                    case 99:
+                        Log.i(TAG, "Turn screen on?");
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                            setTurnScreenOn(true);
+                            Log.i(TAG, "On 1");
+                        } else {
+                            screenLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock
+                                    (PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "TAG");
+                            if (screenFlashTimer == null) {
+                                screenFlashTimer = new Timer();
+                                flashingTask = new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        if (!screenLock.isHeld()) {
+                                            screenLock.acquire(500);
+                                        } else {
+                                            screenLock.release();
+                                        }
+                                        if (!recording) {
+                                            screenFlashTimer.cancel();
+                                        }
+                                    }
+                                };
+                                screenFlashTimer.schedule(flashingTask, 0, 2000);
+                            }
+
+                            Log.i(TAG, "On 2");
+                        }
                         break;
                 }
             }

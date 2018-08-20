@@ -41,12 +41,13 @@ public class GPSService extends Service implements LocationListener {
     double lat, lon;
     String sLat, sLong, sSpeed;
     String sAcc, sAlt, sBear, sRT, sGTime;
-    static String gpsData, sGPS;
+    static String gpsData, sGPS = "";
     List<String> dataList;
     static short gpsSample;
     private long statSamples, movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
-    long limit = 10*60;     //    TODO: Set limit to 10*60
+    long limitStart = 10*60;     // TODO: Set limit to 10*60
+    long limitMax = 20 * 60;
     float speed;
     static boolean autoStopOn;
 
@@ -134,7 +135,7 @@ public class GPSService extends Service implements LocationListener {
     public void stationaryChecker() {
         if (speed <= 2) {
             statSamples++;
-            if (statSamples >= limit && wifiConnected){
+            if ((statSamples >= limitStart && wifiConnected) || statSamples >= limitMax){
                 stopOthers();
                 recording = false;
                 forcedStop = true;

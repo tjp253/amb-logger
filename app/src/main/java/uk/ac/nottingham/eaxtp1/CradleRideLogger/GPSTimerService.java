@@ -189,8 +189,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
             }
 
             if (BuildConfig.AMB_MODE && !ambGPSOff) {
-                Intent stopAmbGPS = new Intent(getApplicationContext(), AmbGPSService.class);
-                stopService(stopAmbGPS);
+                stopService(new Intent(getApplicationContext(), AmbGPSService.class));
                 ambGPSOff = true;
             }
         }

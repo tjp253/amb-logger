@@ -82,7 +82,7 @@ public class AudioService extends Service {
         timerTask = new TimerTask() {
             @Override
             public void run() {
-                if (recording) {
+                if (recording || BuildConfig.AMB_MODE) {
                     amp = noiseDetector.getMaxAmplitude();
                 }
             }

@@ -55,7 +55,7 @@ public class LoggingService extends Service {
 
     final String TAG = "CRL_LoggingService";
 
-    int loggingPeriod = 5;     // Set the logging period in seconds
+    int logPeriod = 5;     // Set the logging period in seconds
 
     PowerManager.WakeLock wakelock;
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
@@ -70,7 +70,6 @@ public class LoggingService extends Service {
     TimerTask loggingTask, sizeCheckingTask;
 
     final int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
-    long checkDelay = 5000;
     boolean nearLimit;
 
     File gzFile, endFile;
@@ -148,11 +147,15 @@ public class LoggingService extends Service {
 
         gzFile = new File(gzipPath);
 
+        fs = preferences.getInt(KEY_FS, 100);
+//        if (fs > 250) {
+//            logPeriod = (int) Math.ceil(logPeriod * fs / 200);    // Logs quicker at higher frequencies, to account for increased data size.
+//        }
+
         if (BuildConfig.AMB_MODE) {
             prepAmb();
         } else if (BuildConfig.CROWD_MODE) {
             buffBy = preferences.getInt(getString(R.string.key_pref_buff_end),getResources().getInteger(R.integer.buff_default));
-            fs = preferences.getInt(KEY_FS, 100);
             bufferOn = buffBy != 0;
         }
 
@@ -170,11 +173,11 @@ public class LoggingService extends Service {
     public void startLogging() {
         logTimer = new Timer();
         loggingTT();
-        logTimer.schedule(loggingTask, 1000 * loggingPeriod, 1000 * loggingPeriod);
+        logTimer.schedule(loggingTask, 1000 * logPeriod, 1000 * logPeriod);
 
         sizeCheckTimer = new Timer();
         sizeCheckTT();
-        sizeCheckTimer.schedule(sizeCheckingTask, 5000, checkDelay);
+        sizeCheckTimer.schedule(sizeCheckingTask, 5000, 1000 * logPeriod);
     }
 
     public void startTimer() {
@@ -234,6 +237,16 @@ public class LoggingService extends Service {
     }
 
     public void writeToFile() {
+        if (nearLimit) {
+            zipPart++;
+            if (zipPart == 10) {
+                digitAdjuster = "-";
+            }
+            nearLimit = false;
+            fileSplitter(zipPart);
+            multiFile = true;
+        }
+
         stringBuilder.setLength(0);
 
         qSize = myQ.size() - buffSamples;
@@ -241,13 +254,19 @@ public class LoggingService extends Service {
         int i = 0;
         try {
 
-            for (i = 1; i <= qSize; i++) {
+            for (i = 0; i < qSize; i++) {
                 stringBuilder.append(myQ.remove());
             }
 
         } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
 
-            Log.i(TAG, "Queue empty. Supposed size: " + qSize + "." + " Actual size: " + i);
+            String errMess = "Queue empty. Supposed size: " + qSize + "." + " Actual size: " + i;
+            if (BuildConfig.TEST_MODE && i < 10) {
+                writeDebug(String.valueOf(System.currentTimeMillis()) + "-" + errMess + "\n");
+                sendBroadcast(99);
+            }
+
+            Log.i(TAG, errMess);
             e.getMessage();
         }
 
@@ -259,16 +278,6 @@ public class LoggingService extends Service {
             myOutputStream.write(toFile.getBytes("UTF-8"));
         } catch (IOException e) {
             e.printStackTrace();
-        }
-
-        if (nearLimit) {
-            zipPart++;
-            if (zipPart == 10) {
-                digitAdjuster = "-";
-            }
-            nearLimit = false;
-            fileSplitter(zipPart);
-            multiFile = true;
         }
     }
 
@@ -384,6 +393,14 @@ public class LoggingService extends Service {
             sentIntents = true;
         }
 
+        if (debugStream != null) {
+            try {
+                debugStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         if (wakelock != null && wakelock.isHeld()) {
             wakelock.release();
         }
@@ -445,6 +462,29 @@ public class LoggingService extends Service {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+//    DEBUGGING FILE ZONE
+    File debugFile;
+    OutputStream debugStream;
+    String debugName = date + "-debug.txt.gz", debugPath;
+
+    public void writeDebug(String error) {
+        if (debugStream == null) {
+            debugPath = String.valueOf(getExternalFilesDir("")) + "/" + debugName;
+            try {
+                debugStream = new GZIPOutputStream(new FileOutputStream(debugPath)) {{def.setLevel(Deflater.BEST_COMPRESSION);}};
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            debugFile = new File(debugPath);
+        }
+
+        try {
+            debugStream.write(error.getBytes("UTF-8"));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
