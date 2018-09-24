@@ -11,8 +11,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 
 public class AmbGPSService extends Service implements LocationListener {
-    public AmbGPSService() {
-    }
+    public AmbGPSService() {}
+
+//    Initialises the GPS when in AMB Mode
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -43,22 +44,14 @@ public class AmbGPSService extends Service implements LocationListener {
     }
 
     @Override
-    public void onLocationChanged(Location location) {
-
-    }
+    public void onLocationChanged(Location location) {}
 
     @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-    }
+    public void onStatusChanged(String s, int i, Bundle bundle) {}
 
     @Override
-    public void onProviderEnabled(String s) {
-
-    }
+    public void onProviderEnabled(String s) {}
 
     @Override
-    public void onProviderDisabled(String s) {
-
-    }
+    public void onProviderDisabled(String s) {}
 }

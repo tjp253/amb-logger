@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,9 +14,9 @@ import android.os.PowerManager;
 import android.text.TextUtils;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
@@ -29,8 +28,10 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
 
 public class IMUService extends Service implements SensorEventListener {
-    public IMUService() {
-    }
+    public IMUService() {}
+
+//    This service accesses the IMU to output accelerometer and gyroscope values. For every
+// accelerometer sample, the data to be logged is combined and added to the Queue.
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -47,35 +48,28 @@ public class IMUService extends Service implements SensorEventListener {
     private long sampleID;
     private short prevSample;
 
-    String sID, sX, sY, sZ, sampleTime;
-    String sGyX = "", sGyY = "", sGyZ = "", sE = "", sN = "", sD = "";
+    String sID, sX, sY, sZ, sampleTime, toQueue,
+            sGyX = "", sGyY = "", sGyZ = "", sE = "", sN = "", sD = "", sAmp = "";
     List<String> outputList;
-    String toQueue;
     long startTime, currTime;
-
-    String sAmp = "";
     int prevAmp;
 
-    private float[] deviceValues = new float[4];
+//    Declare matrices for IMU data and for converting from device to world coordinates
+    private float[] deviceValues = new float[4], gravityValues = new float[3],
+            magneticValues = new float[3], rMatrix = new float[16], iMatrix = new float[16],
+            worldMatrix = new float[16], inverse = new float[16];
     float fN, fE, fD;
-    private float[] gravityValues = new float[3];
-    private float[] magneticValues = new float[3];
-    //    Matrices for converting from device to world coordinates
-    private float[] rMatrix = new float[16];
-    private float[] iMatrix = new float[16];
-    private float[] worldMatrix = new float[16];
-    private float[] inverse = new float[16];
 
-    static Queue<String> myQ;
+    static BlockingQueue<String> myQ;   // Declare data queue
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        myQ = new LinkedList<>();
+        myQ = new LinkedBlockingQueue<>();   // Initialise the queue
 
         if(crashed) {
-            onDestroy();
+            stopSelf();
         } else {
             initialiseIMU();
         }
@@ -85,12 +79,13 @@ public class IMUService extends Service implements SensorEventListener {
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(R.string.recording_data)).build();
 
-        startForeground(foreID, notification);
+        startForeground(foreID, notification);  // Stop the service from being destroyed
     }
 
+//    Initialise the IMU sensors and the wakelock
     public void initialiseIMU() {
-        SharedPreferences preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
-        gyroPresent = preferences.getBoolean(KEY_G, true);
+        gyroPresent = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE)
+                .getBoolean(KEY_G, true);
 
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if (manager != null) {
@@ -109,6 +104,7 @@ public class IMUService extends Service implements SensorEventListener {
             }
         }
 
+//        Stop the service from being destroyed
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (myPowerManager != null) {
             wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "IMU WakeLock");
@@ -120,13 +116,14 @@ public class IMUService extends Service implements SensorEventListener {
         startTime = System.currentTimeMillis();
     }
 
+//    Called when a new sensor value is available
     @Override
     public void onSensorChanged(SensorEvent event) {
 
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
 
-                currTime = System.currentTimeMillis();
+                currTime = System.currentTimeMillis();  // Time to be logged
                 if (!gpsOff) {
                     sampleTime = String.valueOf(currTime - startTime);
                 } else {
@@ -134,7 +131,12 @@ public class IMUService extends Service implements SensorEventListener {
                 }
                 sampleID++;
 
-                if (gyroPresent) {
+//                Store the accelerometer values in device coordinates
+                sX = Float.toString(event.values[0]);
+                sY = Float.toString(event.values[1]);
+                sZ = Float.toString(event.values[2]);
+
+                if (gyroPresent) {  // Calculate accelerometer values in World coordinates
 
                     deviceValues[0] = event.values[0];
                     deviceValues[1] = event.values[1];
@@ -149,26 +151,19 @@ public class IMUService extends Service implements SensorEventListener {
                     fN = worldMatrix[1];
                     fD = worldMatrix[2];
 
-                    sX = Float.toString(deviceValues[0]);
-                    sY = Float.toString(deviceValues[1]);
-                    sZ = Float.toString(deviceValues[2]);
-
+//                    Store the accelerometer values in world coordinates
                     sE = Float.toString(fE);
                     sN = Float.toString(fN);
                     sD = Float.toString(fD);
 
+//                    If world coordinates are zero, save space in the CSV log
                     if (fE==fN && fE==fD && fE==0) {
                         sE = "";    sN = "";    sD = "";
                     }
 
-                } else {
-
-                    sX = Float.toString(event.values[0]);
-                    sY = Float.toString(event.values[1]);
-                    sZ = Float.toString(event.values[2]);
-
                 }
 
+//                If a new Audio value is available, store it. Otherwise, save space in CSV log
                 if (amp != 0 && amp != prevAmp) {
                     sAmp = String.valueOf(amp);
                     prevAmp = amp;
@@ -178,6 +173,7 @@ public class IMUService extends Service implements SensorEventListener {
 
                 sID = String.valueOf(sampleID);
 
+//                Combine data to be logged
                 if (gyroPresent) {
                     if (gpsSample > prevSample) {
                         outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGyX, sGyY, sGyZ,
@@ -215,11 +211,10 @@ public class IMUService extends Service implements SensorEventListener {
 
             case Sensor.TYPE_GYROSCOPE:
 
-                float[] gyroValues = event.values;
-
-                sGyX = Float.toString(gyroValues[0]);
-                sGyY = Float.toString(gyroValues[1]);
-                sGyZ = Float.toString(gyroValues[2]);
+//                Store the gyroscope values
+                sGyX = Float.toString(event.values[0]);
+                sGyY = Float.toString(event.values[1]);
+                sGyZ = Float.toString(event.values[2]);
 
                 break;
         }
@@ -239,7 +234,5 @@ public class IMUService extends Service implements SensorEventListener {
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 }

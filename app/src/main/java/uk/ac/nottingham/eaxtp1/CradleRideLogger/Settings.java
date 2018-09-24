@@ -57,7 +57,7 @@ public class Settings extends AppCompatActivity  {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) { // Back arrow to return from Settings
         switch (item.getItemId()) {
             case android.R.id.home:
 //                NavUtils.navigateUpFromSameTask(this);
@@ -146,6 +146,8 @@ public class Settings extends AppCompatActivity  {
                 gpsOff = !sharedPreferences.getBoolean(key, false);
 
             } else if (BuildConfig.AMB_MODE && key.equals(nttPref)) {
+//                Android Studio thinks 'choice' is not used... but it is. Twice. Inspection disabled.
+                //noinspection UnusedAssignment
                 int choice = Integer.parseInt(sharedPreferences.getString(key, ""));
                 nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[choice]);
 

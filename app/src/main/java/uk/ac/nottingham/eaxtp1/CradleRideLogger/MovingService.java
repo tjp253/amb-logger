@@ -24,6 +24,10 @@ public class MovingService extends IntentService {
     public MovingService() { super("MovingService");
     }
 
+    // Class to move files after recording to a "Finished" folder. It may be better practice to
+    // log to a single folder and then keep a database of files uploaded, but this way seems
+    // foolproof. I started off as a complete rookie; cut me some slack.
+
     String mainPath, folderPath, finishedPath;
 
     int jobID = 24;
@@ -122,7 +126,6 @@ public class MovingService extends IntentService {
                     .setMinimumLatency(60*1000)     // Wait for at least a minute before executing job.
                     .setPersisted(true)             // Keeps job in system after system reboot BUT NOT IF APP IS FORCE CLOSED
                     .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);     // Only execute on Wi-Fi
-//                .setRequiresDeviceIdle(false);    // Don't upload while device being used (yes? no?)
 
 //        Schedule job:
             JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);

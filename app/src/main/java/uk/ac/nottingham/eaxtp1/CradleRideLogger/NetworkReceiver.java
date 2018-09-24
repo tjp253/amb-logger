@@ -9,8 +9,10 @@ import android.net.wifi.WifiManager;
 import android.util.Log;
 
 public class NetworkReceiver extends BroadcastReceiver {
-    public NetworkReceiver() {
-    }
+    public NetworkReceiver() {}
+
+    // Checks whether the phone is connected to AND USING wifi. If it is, uploads can go ahead.
+    // Otherwise, stop all uploads to save mobile data.
 
     String TAG = "CRL_NetworkReceiver";
 
@@ -36,8 +38,7 @@ public class NetworkReceiver extends BroadcastReceiver {
 
                 Log.i(TAG, "Wifi not connected.");
 
-                Intent uploadService = new Intent(context, UploadService.class);
-                context.stopService(uploadService);
+                context.stopService(new Intent(context, UploadService.class));
             }
         }
     }

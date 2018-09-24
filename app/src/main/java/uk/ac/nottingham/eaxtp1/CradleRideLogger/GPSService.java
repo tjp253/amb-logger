@@ -25,8 +25,9 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConne
 
 @SuppressWarnings("MissingPermission")
 public class GPSService extends Service implements LocationListener {
-    public GPSService() {
-    }
+    public GPSService() {}
+
+//    Service to access and store GPS data for recording, to give locations of comfort.
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -38,16 +39,13 @@ public class GPSService extends Service implements LocationListener {
 
     Notification.Builder builder;
 
-    double lat, lon;
-    String sLat, sLong, sSpeed;
-    String sAcc, sAlt, sBear, sRT, sGTime;
+    String sLat, sLong, sSpeed, sAcc, sAlt, sBear, sRT, sGTime;
     static String gpsData, sGPS = "";
     List<String> dataList;
     static short gpsSample;
     private long statSamples, movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
-    long limitStart = 10*60;     // TODO: Set limit to 10*60
-    long limitMax = 20 * 60;
+    long limitStart = 10*60, limitMax = 20*60;     // TODO: Set limitStart to 10*60 (10 minutes)
     float speed;
     static boolean autoStopOn;
 
@@ -68,13 +66,15 @@ public class GPSService extends Service implements LocationListener {
             sGPS = "";
         }
 
-         autoStopOn = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.key_pref_as), true);
+//        AutoStop stops the recording if stationary for an extended period of time.
+        autoStopOn = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.key_pref_as), true);
 
         myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (myLocationManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
+        if (myLocationManager != null) {   // Mandatory check to remove AndroidStudio NullPointer warning
             myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
         }
 
+//        Stop the service from being destroyed
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (myPowerManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
             wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GPS WakeLock");
@@ -86,8 +86,7 @@ public class GPSService extends Service implements LocationListener {
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(R.string.recording_data)).build();
 
-        startForeground(foreID, notification);
-
+        startForeground(foreID, notification);  // Stop the service from being destroyed
     }
 
     @Override
@@ -105,24 +104,22 @@ public class GPSService extends Service implements LocationListener {
         }
     }
 
+//    Store GPS data for logging
     @Override
     public void onLocationChanged(Location location) {
-        lat = location.getLatitude();
-        lon = location.getLongitude();
-        speed = location.getSpeed();
-
-        sLat = String.valueOf(lat);
-        sLong = String.valueOf(lon);
-        sSpeed = String.valueOf(speed);
-
         gpsSample++;
         sGPS = String.valueOf(gpsSample);
 
+        speed = location.getSpeed();    // Needed for movement check
+
+        sLat   = String.valueOf(location.getLatitude());
+        sLong  = String.valueOf(location.getLongitude());
+        sSpeed = String.valueOf(speed);
         sGTime = String.valueOf(location.getTime());
-        sAcc = String.valueOf(location.getAccuracy());
-        sAlt = String.valueOf(location.getAltitude());
-        sBear = String.valueOf(location.getBearing());
-        sRT = String.valueOf(location.getElapsedRealtimeNanos());
+        sAcc   = String.valueOf(location.getAccuracy());
+        sAlt   = String.valueOf(location.getAltitude());
+        sBear  = String.valueOf(location.getBearing());
+        sRT    = String.valueOf(location.getElapsedRealtimeNanos());
 
         dataList = Arrays.asList(sLat,sLong,sSpeed,sGTime,sAcc,sAlt,sBear,sRT);
         gpsData = TextUtils.join(",", dataList);
@@ -132,11 +129,14 @@ public class GPSService extends Service implements LocationListener {
         }
     }
 
+//    Check for vehicle movement
     public void stationaryChecker() {
-        if (speed <= 2) {
+        if (speed <= 2) {   // Less than 5 miles per hour
             statSamples++;
             if ((statSamples >= limitStart && wifiConnected) || statSamples >= limitMax){
-                stopOthers();
+//                Stop all services due to inactivity
+                this.stopService(new Intent(this, AudioService.class));
+                this.stopService(new Intent(this, IMUService.class));
                 recording = false;
                 forcedStop = true;
                 if (BuildConfig.AMB_MODE) {
@@ -144,28 +144,19 @@ public class GPSService extends Service implements LocationListener {
                     ambSelect.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     ambSelect.putExtra(getString(R.string.forcedIntent), true);
                     startActivity(ambSelect);
+                } else {
+                    this.stopService(new Intent(this, LoggingService.class));
                 }
                 stopNotification();
-                onDestroy();
+                stopSelf();
             }
         } else {
-            if (movingSamples > 10 || speed > 10) {
+            if (movingSamples > 10 || speed > 10) { // True (?) movement detected
                 statSamples = 0;
                 movingSamples = 0;
-            } else {
+            } else {    // Count towards possible movement
                 movingSamples++;
             }
-        }
-    }
-
-    public void stopOthers() {
-        Intent stopAudio = new Intent(this, AudioService.class);
-        Intent stopIMU = new Intent(this, IMUService.class);
-        this.stopService(stopAudio);
-        this.stopService(stopIMU);
-        if (!BuildConfig.AMB_MODE) {
-            Intent stopLogging = new Intent(this, LoggingService.class);
-            this.stopService(stopLogging);
         }
     }
 
@@ -183,17 +174,11 @@ public class GPSService extends Service implements LocationListener {
     }
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     @Override
-    public void onProviderEnabled(String provider) {
-
-    }
+    public void onProviderEnabled(String provider) {}
 
     @Override
-    public void onProviderDisabled(String provider) {
-
-    }
+    public void onProviderDisabled(String provider) {}
 }

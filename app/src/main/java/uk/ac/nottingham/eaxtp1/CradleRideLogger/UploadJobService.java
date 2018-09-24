@@ -11,8 +11,11 @@ import java.io.File;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class UploadJobService extends JobService {
-    public UploadJobService() {
-    }
+    public UploadJobService() {}
+
+    // If thew phone is not connected to wifi when it wants to upload (and is API Lollipop or
+    // later), a "job" is created. This service handles that job when the criteria are met to
+    // begin the upload.
 
     Intent uploadService;
     String TAG = "CRL_JobService";

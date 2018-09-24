@@ -41,6 +41,8 @@ public class UploadService extends IntentService {
         super("UploadService");
     }
 
+    // Securely uploads the recorded files to the Optics server.
+
     Notification.Builder mBuilder, mBuilder2, mBuilder3;
     static NotificationManager nm1, nm2, nm3;
     int id1 = 2, id2 = 3, id3 = 4;
@@ -87,7 +89,7 @@ public class UploadService extends IntentService {
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText("Uploading files.").build();
 
-        startForeground(foreID, notification);
+        startForeground(foreID, notification);  // Stop the service from being destroyed
 
     }
 
@@ -112,7 +114,7 @@ public class UploadService extends IntentService {
 
         if (moving) {
             try {
-                Thread.sleep(5000);     // Wait for 5 seconds to finish moving files. Rather than kill straight away.
+                Thread.sleep(5000);   // Wait for 5 seconds to finish moving files. Rather than kill straight away.
             } catch (Exception e) {
                 Log.i(TAG, "Doesn't like sleeping..");
                 return;
@@ -125,8 +127,10 @@ public class UploadService extends IntentService {
             }
         }
 
-        File finishedFolder = new File(finishedPath);
-        if (finishedFolder.listFiles().length == 0) {
+        File sourceFolder = new File(finishedPath);
+        File[] fileList = sourceFolder.listFiles();
+        filesLeft = fileList.length;
+        if (filesLeft == 0) {
             Log.i(TAG, "Files are already uploaded. Abandon ship!");
             return;
         }
@@ -141,14 +145,9 @@ public class UploadService extends IntentService {
             e.printStackTrace();
         }
 
-        File sourceFolder = new File(finishedPath);
-        int sourceLength = sourceFolder.getParent().length();
-        sourceLength = sourceLength + 9;
+        int sourceLength = sourceFolder.getParent().length() + 9;
 
-        File[] fileList = sourceFolder.listFiles();
-        filesLeft = fileList.length;
-
-        for (File file : fileList) {
+        for (File file : fileList) { // For each file in the 'finished' folder
 
             if (wifiConnected) {
 
@@ -175,13 +174,14 @@ public class UploadService extends IntentService {
                     try {
                         response = okHttpClient.newCall(request).execute();
                     } catch (UnknownHostException uhe) {
-//                        failedFileCount++;
                         Log.i(TAG, "Host Connection Lost.");
                         throw new IOException("UnknownHostException - Upload connection failed.");
                     } catch (SocketException se) {
                         throw new IOException("Socket Exception");
                     }
 
+                    // Receives the PHP response code (programmed myself) to feedback any
+                    // problems / tell the app this file was uploaded successfully.
                     switch (response.code()) {
                         case 900:
                             moveOversized(fileName);
@@ -300,7 +300,7 @@ public class UploadService extends IntentService {
         }
     }
 
-    private void moveFile(String fileToMove) {
+    private void moveFile(String fileToMove) { // Moves the uploaded files to the 'uploaded' folder
 
         InputStream in;
         OutputStream out;
@@ -377,7 +377,7 @@ public class UploadService extends IntentService {
     }
 
     @SuppressLint("NewApi")
-    public void buildJob() {
+    public void buildJob() { // Creates a job to upload when next connected to wifi.
         if (!jobSent) {
             JobInfo.Builder builder = new JobInfo.Builder(jobID++, myComponent)
                     .setMinimumLatency(60*1000)     // Wait for at least a minute before executing job.
