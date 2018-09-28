@@ -16,6 +16,9 @@
     <string name="crashed">Something went wrong with recording. \n\nPlease restart the app.</string>
     <string name="permissions">Please grant all permissions to enable recording.</string>
 
+    <string name="uploading">Uploading files.</string>
+    <string name="as_message">Recording stopped due to lack of movement.</string>
+
     <string name="ad_title">Disclosure Agreement</string>
     <string name="ad_button">Accept</string>
     <string name="ad_checkbox">I consent to my data being used for the purposes of research.</string>
@@ -87,5 +90,20 @@
     <string name="key_pref_test">TestMode</string>
 
     <string name="pref_main">myPreferences</string>
+
+    <!--Notification Channel descriptions-->
+    <string name="foreground_description">Notifications required by Android to say the app is
+        running in the foreground. Running in the foreground ensures the app will not be killed to
+        free up space when using other apps.</string>
+    <string name="uploading_description">Notification to ensure the uploading of files to
+        the server is not interrupted by other apps.</string>
+    <string name="uploaded_description">Notifications to inform how many files have been
+        uploaded or failed due to being oversized or some unknown reason. Only those which
+        are oversized need to be noted, as other failed uploads will upload at the next
+        opportunity.</string>
+    <string name="failed_description">Informs user that the GPS failed to fix. Selecting
+        this notification will take you back to the app in order to try recording again.</string>
+    <string name="stopped_description">Informs user that the recording has been
+        automatically stopped bue to a lack of movement.</string>
 
 </resources>

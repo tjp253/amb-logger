@@ -6,8 +6,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -48,14 +46,14 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConne
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
+    NotificationUtilities notUtils;
+
     static boolean gpsOff;  // Only used in Test Mode - can choose to test accelerometers (and audio) only
 
 //    For Ambulance Mode. Intents start the ambulance-specific services. Ints and String are for onActivityResult.
     Intent ambSelect, ambGPS;   final int ambStart = 1132, ambEnd = 1133;    final static String ambExtra = "EndSelecting";
 
     String TAG = "CRL_MainActivity";    // Debugging TAG for class.
-//    Static int is for running services in foreground. Maybe sort out NotificationChannel in future?
-    static int foreID = 1992;   //static NotificationChannel foreChannel = new NotificationChannel("NotChannel", "myNotChannel", 1);
 
 //    Declare intents to start services. Self-explanatory.
     Intent uploadService, audioService, gpsService, imuService, loggingService, gpsTimerService;
@@ -88,6 +86,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main); // Associates this activity with the stated layout
+
+        notUtils = new NotificationUtilities(this);
 
 //        Initialise textboxes and buttons
         instructDisplay = findViewById(R.id.instructDisplay);
@@ -190,9 +190,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onResume();
 
 //        Cancels 'GPS Failed [to lock]' notification when User resumes app
-        if (notMan != null) {
-            notMan.cancel(notID);
-        }
+        notUtils.getManager().cancel(getResources().getInteger(R.integer.failedID));
         displayOn = true;   // Tells the app this Activity is being used
 
         if (crashed) {
@@ -488,35 +486,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         });
     }
 
-//    Declare variables to show notification when GPS fails to lock AND user is not on the Main
-// Activity screen
-    NotificationManager notMan;     int notID = 2525;
-    Notification.Builder notBuild;
-    Intent restartApp;
-    PendingIntent goToApp;
-    public void gpsFailNotify() {
-//        Initialise intent to restart the app
-        restartApp = new Intent(this, MainActivity.class)
-                .setAction(Intent.ACTION_VIEW)
-                .addCategory(Intent.CATEGORY_LAUNCHER)
-                .putExtra("clicked", true);
-
-//        Assign the intent to a 'PendingIntent' - used by notifications
-        goToApp = PendingIntent.getActivity(this, 0, restartApp, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        notBuild = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.info_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(R.string.failed))
-                .setContentIntent(goToApp)  // If clicked, run the PendingIntent
-                .setAutoCancel(true);       // Notification disappears when user selects it
-
-        notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (notMan != null) {
-            notMan.notify(notID, notBuild.build()); // Show the notification
-        }
-    }
-
 //    Stops all services if left on incorrectly (by Android Studio, usually)
     @Override
     protected void onStart() {
@@ -581,7 +550,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         stopInitialising();
                         instructDisplay.setText(R.string.failed);
                         if (!displayOn) {   // Send notification if user is not in MainActivity
-                            gpsFailNotify();
+                            Notification.Builder notBuild = notUtils.getFailedNotification();
+                            notUtils.getManager().notify(getResources().getInteger(R.integer.failedID),notBuild.build());
                         }
                         cancelBR();
                         break;
@@ -626,7 +596,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                                 // below disables the Android Studio warning.
                                 //noinspection deprecation
                                 screenLock = myPowerManager.newWakeLock
-                                        (PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "TAG");
+                                        (PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                                                "MainActivity:FlashingWakelock");
                             }
                             if (screenFlashTimer == null) {
                                 screenFlashTimer = new Timer();

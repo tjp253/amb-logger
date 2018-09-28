@@ -1,7 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -19,7 +18,6 @@ import java.util.List;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
@@ -34,10 +32,10 @@ public class GPSService extends Service implements LocationListener {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+    NotificationUtilities notUtils;
+
     PowerManager.WakeLock wakelock;
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
-
-    Notification.Builder builder;
 
     String sLat, sLong, sSpeed, sAcc, sAlt, sBear, sRT, sGTime;
     static String gpsData, sGPS = "";
@@ -77,16 +75,14 @@ public class GPSService extends Service implements LocationListener {
 //        Stop the service from being destroyed
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (myPowerManager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
-            wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GPS WakeLock");
+            wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GPSService:WakeLock");
             wakelock.acquire(wakelockTimeout);
         }
 
-        Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.ambulance_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(R.string.recording_data)).build();
+        notUtils = new NotificationUtilities(this);
 
-        startForeground(foreID, notification);  // Stop the service from being destroyed
+        Notification.Builder notBuild = notUtils.getForegroundNotification();
+        startForeground(getResources().getInteger(R.integer.foregroundID), notBuild.build());
     }
 
     @Override
@@ -147,7 +143,10 @@ public class GPSService extends Service implements LocationListener {
                 } else {
                     this.stopService(new Intent(this, LoggingService.class));
                 }
-                stopNotification();
+
+                Notification.Builder notBuild = notUtils.getStoppedNotification();
+                notUtils.getManager().notify(getResources().getInteger(R.integer.stoppedID),notBuild.build());
+
                 stopSelf();
             }
         } else {
@@ -157,19 +156,6 @@ public class GPSService extends Service implements LocationListener {
             } else {    // Count towards possible movement
                 movingSamples++;
             }
-        }
-    }
-
-    public void stopNotification() {
-        builder = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.stop_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText("Recording stopped due to lack of movement.");
-
-        NotificationManager manager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (manager != null) {      // Mandatory check to remove AndroidStudio NullPointer warning
-            manager.notify(1, builder.build());
         }
     }
 

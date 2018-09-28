@@ -23,7 +23,6 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
 
@@ -37,6 +36,8 @@ public class IMUService extends Service implements SensorEventListener {
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+    NotificationUtilities notUtils;
 
     PowerManager.WakeLock wakeLock;
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
@@ -74,12 +75,10 @@ public class IMUService extends Service implements SensorEventListener {
             initialiseIMU();
         }
 
-        Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.ambulance_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(R.string.recording_data)).build();
+        notUtils = new NotificationUtilities(this);
 
-        startForeground(foreID, notification);  // Stop the service from being destroyed
+        Notification.Builder notBuild = notUtils.getForegroundNotification();
+        startForeground(getResources().getInteger(R.integer.foregroundID), notBuild.build());
     }
 
 //    Initialise the IMU sensors and the wakelock
@@ -107,7 +106,7 @@ public class IMUService extends Service implements SensorEventListener {
 //        Stop the service from being destroyed
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (myPowerManager != null) {
-            wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "IMU WakeLock");
+            wakeLock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "IMUService:WakeLock");
             if (!wakeLock.isHeld()) {
                 wakeLock.acquire(wakelockTimeout);
             }

@@ -34,7 +34,6 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyTroll;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_FS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
@@ -53,6 +52,8 @@ public class LoggingService extends Service {
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+    NotificationUtilities notUtils;
 
     final String TAG = "CRL_LoggingService";
 
@@ -80,7 +81,7 @@ public class LoggingService extends Service {
             filename = date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz",
             mainPath, gzipPath, ambPath, toFile, outputTitle, endName;
 
-    StringBuilder stringBuilder = new StringBuilder("");
+    StringBuilder stringBuilder = new StringBuilder();  // You don't need to say the string is empty
 
     OutputStream myOutputStream, myAmbStream;
     File gzFile;
@@ -118,12 +119,10 @@ public class LoggingService extends Service {
             }
         }
 
-        Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.ambulance_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(R.string.recording_data)).build();
+        notUtils = new NotificationUtilities(this);
 
-        startForeground(foreID, notification);  // Stop the service from being destroyed
+        Notification.Builder notBuild = notUtils.getForegroundNotification();
+        startForeground(getResources().getInteger(R.integer.foregroundID), notBuild.build());
     }
 
     public void crashCheck() { // Check if the app has crashed and restarted the activity falsely.
@@ -151,7 +150,7 @@ public class LoggingService extends Service {
 //        Stop the service from being destroyed
         PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (myPowerManager != null) {
-            wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Logging WakeLock");
+            wakelock = myPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"LoggingService:WakeLock");
             wakelock.acquire(wakelockTimeout);
         }
 

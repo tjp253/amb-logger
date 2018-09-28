@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Editable;
@@ -105,10 +106,11 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             startService(new Intent(getApplicationContext(), AmbGPSService.class));
 //            Extract the NTT's specific IDs
             int nttInt = ambPref.getInt(getString(R.string.key_pref_ntt),0);
-            int ambChoice   = Integer.valueOf( Objects.requireNonNull(getResources()
-                    .obtainTypedArray(R.array.amb_ntt).getString(nttInt)).substring((1)) );
-            int trollChoice = Integer.valueOf( Objects.requireNonNull(getResources()
-                    .obtainTypedArray(R.array.troll_ntt).getString(nttInt)).substring((1)) );
+            TypedArray array = getResources().obtainTypedArray(R.array.amb_ntt);
+            int ambChoice   = Integer.valueOf( Objects.requireNonNull(array.getString(nttInt)).substring((1)) );
+            array = getResources().obtainTypedArray(R.array.troll_ntt);
+            int trollChoice = Integer.valueOf( Objects.requireNonNull(array.getString(nttInt)).substring((1)) );
+            array.recycle();    // Android was giving me  warning. Can't have that, so added this!
             ambArray   = getResources().getStringArray(ambChoice);
             trollArray = getResources().getStringArray(trollChoice);
 

@@ -3,7 +3,6 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.annotation.SuppressLint;
 import android.app.IntentService;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
@@ -30,7 +29,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.foreID;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
@@ -43,9 +41,7 @@ public class UploadService extends IntentService {
 
     // Securely uploads the recorded files to the Optics server.
 
-    Notification.Builder mBuilder, mBuilder2, mBuilder3;
-    static NotificationManager nm1, nm2, nm3;
-    int id1 = 2, id2 = 3, id3 = 4;
+    NotificationUtilities notUtils;
 
     URL url;
     String urlString = "https://optics.eee.nottingham.ac.uk/~tp/upload.php";
@@ -74,23 +70,14 @@ public class UploadService extends IntentService {
         oversizedPath = mainPath + "/Oversized";
         failedPath = mainPath + "/FailedUploads";
 
-        if (nm1 != null) {
-            nm1.cancel(id1);
-        }
-        if (nm2 != null) {
-            nm2.cancel(id2);
-        }
-        if (nm3 != null) {
-            nm3.cancel(id3);
-        }
+        notUtils = new NotificationUtilities(this);
+        // Cancel uploaded / oversized / failed notifications when starting a new lot of uploads
+        notUtils.getManager().cancel(getResources().getInteger(R.integer.uploadedID));
+        notUtils.getManager().cancel(getResources().getInteger(R.integer.oversizedID));
+        notUtils.getManager().cancel(getResources().getInteger(R.integer.failedUploadID));
 
-        Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.ambulance_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText("Uploading files.").build();
-
-        startForeground(foreID, notification);  // Stop the service from being destroyed
-
+        Notification.Builder notBuild = notUtils.getUploadingNotification();
+        startForeground(getResources().getInteger(R.integer.foregroundID),notBuild.build());
     }
 
     @Override
@@ -247,15 +234,8 @@ public class UploadService extends IntentService {
 
         uploadFileCount = 0;
 
-        mBuilder = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.upload_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(uText);
-
-        nm1 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (nm1 != null) {
-            nm1.notify(id1, mBuilder.build());
-        }
+        Notification.Builder notBuild = notUtils.getUploadedNotification(true, uText);
+        notUtils.getManager().notify(getResources().getInteger(R.integer.uploadedID),notBuild.build());
     }
 
     public void oversizedNotification() {
@@ -268,36 +248,22 @@ public class UploadService extends IntentService {
 
         oversizedFileCount = 0;
 
-        mBuilder2 = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.oversize_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(oText);
-
-        nm2 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (nm2 != null) {
-            nm2.notify(id2, mBuilder2.build());
-        }
+        Notification.Builder notBuild = notUtils.getUploadedNotification(false, oText);
+        notUtils.getManager().notify(getResources().getInteger(R.integer.oversizedID),notBuild.build());
     }
 
     private void failedNotification() {
-        String oText;
+        String fText;
         if (failedFileCount == 1) {
-            oText = failedFileCount + " file failed to upload.\nPlease check the Finished folder.";
+            fText = failedFileCount + " file failed to upload.\nPlease check the Finished folder.";
         } else {
-            oText = failedFileCount + " files too large to upload.\nPlease check the Finished folder.";
+            fText = failedFileCount + " files too large to upload.\nPlease check the Finished folder.";
         }
 
         failedFileCount = 0;
 
-        mBuilder3 = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.oversize_symb)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(oText);
-
-        nm3 = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (nm3 != null) {
-            nm3.notify(id3, mBuilder3.build());
-        }
+        Notification.Builder notBuild = notUtils.getUploadedNotification(false, fText);
+        notUtils.getManager().notify(getResources().getInteger(R.integer.failedUploadID),notBuild.build());
     }
 
     private void moveFile(String fileToMove) { // Moves the uploaded files to the 'uploaded' folder
