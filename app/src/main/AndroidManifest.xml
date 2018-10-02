@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- Permissions for the Broadcast Receiver -->
+    <!-- Permission for detecting wifi connection inside the GPSService -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Permission for recording sound -->
@@ -40,23 +40,13 @@
             </intent-filter>
         </activity>
 
-        <receiver
-            android:name=".NetworkReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.net.wifi.STATE_CHANGE" />
-            </intent-filter>
-        </receiver>
-
         <service android:name=".UploadService" />
         <service android:name=".MovingService" />
         <service android:name=".AudioService" />
         <service android:name=".GPSService" />
         <service android:name=".LoggingService" />
         <service android:name=".IMUService" />
-        <service
-            android:name=".UploadJobService"
+        <service android:name=".UploadJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".GPSTimerService" />
         <service android:name=".FSChecker" />

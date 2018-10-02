@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -19,7 +21,6 @@ import java.util.List;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
 @SuppressWarnings("MissingPermission")
 public class GPSService extends Service implements LocationListener {
@@ -129,7 +130,7 @@ public class GPSService extends Service implements LocationListener {
     public void stationaryChecker() {
         if (speed <= 2) {   // Less than 5 miles per hour
             statSamples++;
-            if ((statSamples >= limitStart && wifiConnected) || statSamples >= limitMax){
+            if ((statSamples >= limitStart && connectedToWifi()) || statSamples >= limitMax){
 //                Stop all services due to inactivity
                 this.stopService(new Intent(this, AudioService.class));
                 this.stopService(new Intent(this, IMUService.class));
@@ -157,6 +158,22 @@ public class GPSService extends Service implements LocationListener {
                 movingSamples++;
             }
         }
+    }
+
+    // As of API 26, Manifest-registered BroadcastReceivers are essentially disabled. Therefore,
+    // Wifi needs to be 'manually' searched for. Currently using deprecated code which definitely
+    // works.
+    // TODO: Test the impact of 10 minutes of programatically checking for a wifi connection.
+    // TODO: Update method to non-deprecated code.
+    @SuppressWarnings("deprecation")
+    public boolean connectedToWifi() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            NetworkInfo info = cm.getActiveNetworkInfo();
+
+            return (info != null && info.getType() == ConnectivityManager.TYPE_WIFI);
+        }
+        return false;
     }
 
     @Override

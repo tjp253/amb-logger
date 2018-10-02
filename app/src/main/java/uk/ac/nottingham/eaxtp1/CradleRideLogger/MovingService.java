@@ -1,13 +1,11 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-import android.annotation.SuppressLint;
 import android.app.IntentService;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.util.Log;
 
 import java.io.File;
@@ -18,7 +16,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
 public class MovingService extends IntentService {
     public MovingService() { super("MovingService");
@@ -29,11 +26,7 @@ public class MovingService extends IntentService {
     // foolproof. I started off as a complete rookie; cut me some slack.
 
     String mainPath, folderPath, finishedPath;
-
-    int jobID = 24;
     String TAG = "CRL_MovingService";
-    private ComponentName myComponent;
-    boolean jobSent, sentUploadIntent;
 
     @Override
     public void onCreate() {
@@ -49,9 +42,7 @@ public class MovingService extends IntentService {
             finishedDirectory.mkdir();
         }
 
-        myComponent = new ComponentName(this, UploadJobService.class);
-
-        moveFiles(folderPath, finishedPath);
+//        moveFiles(folderPath, finishedPath);
 
     }
 
@@ -107,36 +98,26 @@ public class MovingService extends IntentService {
 
         moving = false;
 
-        if (!sentUploadIntent) {
-            if (wifiConnected) {
-                Intent uploadService = new Intent(getApplicationContext(), UploadService.class);
-                this.startService(uploadService);
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                buildJob();
-            }
-            sentUploadIntent = true;
-        }
+        sendJob();
 
     }
 
-    @SuppressLint("NewApi")
-    public void buildJob() {
-        if (!jobSent) {
-            JobInfo.Builder builder = new JobInfo.Builder(jobID++, myComponent)
-                    .setMinimumLatency(60*1000)     // Wait for at least a minute before executing job.
-                    .setPersisted(true)             // Keeps job in system after system reboot BUT NOT IF APP IS FORCE CLOSED
-                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);     // Only execute on Wi-Fi
+    // Send an upload job to try and get the files just recorded to upload, rather than wait for
+    // the period upload job.
+    public void sendJob() {
+        int jobInt = getResources().getInteger(R.integer.postRecordJobID);
+        ComponentName jobName = new ComponentName(this, UploadJobService.class);
+        JobInfo newUploadJob = new JobInfo.Builder(jobInt,jobName)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Only execute on Wi-Fi
+                .build();
 
 //        Schedule job:
-            JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-            if (js != null) {
-                js.schedule(builder.build());
-            }
-
-            Log.i(TAG, "Job " + jobID + " prepared.");
-
-            jobSent = true;
+        JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (js != null) {
+            js.schedule(newUploadJob);
         }
+
+        Log.i(TAG, "New upload job prepared.");
     }
 
 }

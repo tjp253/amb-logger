@@ -1,14 +1,8 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-import android.annotation.SuppressLint;
 import android.app.IntentService;
 import android.app.Notification;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.util.Log;
 
 import java.io.File;
@@ -30,7 +24,9 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploadFilter;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploadOverWifi;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploadSuccess;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class UploadService extends IntentService {
@@ -50,19 +46,18 @@ public class UploadService extends IntentService {
 
     String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
 
+    File sourceFolder; // Have the sourceFolder available to the whole class to enable
+    // 'NotificationSender' to count the amount of files left to be uploaded.
+
     int uploadFileCount = 0, oversizedFileCount = 0, failedFileCount = 0;
 
     int filesLeft;
-    ComponentName myComponent;
-    int jobID = 253;
-    boolean jobSent;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         Log.i(TAG, "Upload Service started.");
-        myComponent = new ComponentName(this, UploadJobService.class);
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         finishedPath = mainPath + "/Finished";
@@ -104,25 +99,21 @@ public class UploadService extends IntentService {
                 Thread.sleep(5000);   // Wait for 5 seconds to finish moving files. Rather than kill straight away.
             } catch (Exception e) {
                 Log.i(TAG, "Doesn't like sleeping..");
+                sendBroadcast(false);
                 return;
             }
             if (moving) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    buildJob();             // If moving is taking AGES, generate job to upload later.
-                }
+                sendBroadcast(false);
                 return;
             }
         }
 
-        File sourceFolder = new File(finishedPath);
+        sourceFolder = new File(finishedPath);
         File[] fileList = sourceFolder.listFiles();
         filesLeft = fileList.length;
         if (filesLeft == 0) {
             Log.i(TAG, "Files are already uploaded. Abandon ship!");
-            return;
-        }
-
-        if (!wifiConnected) {
+            sendBroadcast(true);
             return;
         }
 
@@ -136,7 +127,7 @@ public class UploadService extends IntentService {
 
         for (File file : fileList) { // For each file in the 'finished' folder
 
-            if (wifiConnected) {
+            if (uploadOverWifi) {
 
                 uploadFilePath = file.getAbsolutePath();
                 fileName = uploadFilePath.substring(sourceLength);
@@ -199,6 +190,8 @@ public class UploadService extends IntentService {
             }
 
                 filesLeft--;
+            } else {
+                sendBroadcast(sourceFolder.listFiles().length == 0);
             }
 
 //      Displays notification once the last file has been uploaded
@@ -211,6 +204,9 @@ public class UploadService extends IntentService {
     }
 
     public void notificationSender() {
+
+        sendBroadcast(sourceFolder.listFiles().length == 0);
+
         if (uploadFileCount > 0) {
             uploadNotification();
         }
@@ -342,25 +338,10 @@ public class UploadService extends IntentService {
         }
     }
 
-    @SuppressLint("NewApi")
-    public void buildJob() { // Creates a job to upload when next connected to wifi.
-        if (!jobSent) {
-            JobInfo.Builder builder = new JobInfo.Builder(jobID++, myComponent)
-                    .setMinimumLatency(60*1000)     // Wait for at least a minute before executing job.
-                    .setPersisted(true)             // Keeps job in system after system reboot BUT NOT IF APP IS FORCE CLOSED
-                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED);     // Only execute on Wi-Fi
-//                .setRequiresDeviceIdle(false);    // Don't upload while device being used (yes? no?)
-
-//        Schedule job:
-            JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-            if (js != null) {
-                js.schedule(builder.build());
-            }
-
-            Log.i(TAG, "Job " + jobID + " prepared.");
-
-            jobSent = true;
-        }
+    private void sendBroadcast(boolean successfullyUploaded) {
+        Intent intent = new Intent(uploadFilter);
+        intent.putExtra(uploadSuccess, successfullyUploaded);
+        sendBroadcast(intent);
     }
 
 }

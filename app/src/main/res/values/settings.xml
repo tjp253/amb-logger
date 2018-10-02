@@ -8,13 +8,17 @@
     <integer name="buff_min">0</integer>
     <integer name="buff_max">5</integer>
 
-    <!--Notification IDs-->
-    <!--For running services in foreground-->
+    <!-- Notification IDs -->
+    <!-- For running services in foreground -->
     <integer name="foregroundID">1992</integer>
     <integer name="stoppedID">99</integer>
     <integer name="failedID">666</integer>
     <integer name="uploadedID">1</integer>
     <integer name="oversizedID">2</integer>
     <integer name="failedUploadID">3</integer>
+
+    <!-- ID values for JobScheduler -->
+    <integer name="periodicJobID">253</integer>
+    <integer name="postRecordJobID">25</integer>
 
 </resources>

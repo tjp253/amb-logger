@@ -6,7 +6,10 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,8 +17,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -33,16 +34,15 @@ import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.io.File;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.forcedStopAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.selectingAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.NetworkReceiver.wifiConnected;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -150,24 +150,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
         gpsTimerService = new Intent(getApplicationContext(), GPSTimerService.class);
         uploadService = new Intent(this, UploadService.class);
 
-//        If connected to WiFi and have files to upload, start the upload service.
-        if (!wifiConnected) {
-            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            if (cm != null) {
-                NetworkInfo info = cm.getActiveNetworkInfo();
-                if (info != null && info.getType() == ConnectivityManager.TYPE_WIFI) {
-                    wifiConnected = true;
-                    Log.i(TAG, "Wifi Connected.");
+        // Generate a periodic job to upload files, if available, over wifi.
+        int jobInt = getResources().getInteger(R.integer.periodicJobID);
+        ComponentName jobName = new ComponentName(this, UploadJobService.class);
+        JobInfo uploadJob = new JobInfo.Builder(jobInt, jobName)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Only execute on Wi-Fi
+                .setPeriodic(TimeUnit.MINUTES.toMillis(30))     //TODO: Decide on a suitable period
+                .setPersisted(true)             // Keeps job in system after system reboot BUT NOT IF APP IS FORCE CLOSED
+                .build();
 
-                    File finishedFolder = new File(String.valueOf(getExternalFilesDir("Finished")));
-                    File[] finishedList = finishedFolder.listFiles();
-
-                    if (finishedList != null && finishedList.length != 0) {
-                        this.startService(uploadService);
-                    }
-                }
-            }
+//        Schedule job:
+        JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (js != null) {
+            js.schedule(uploadJob);
         }
+        Log.i(TAG, "Periodic job prepared.");
 
         setUpToolbar(); // Sets up the toolbar - method lower down.
 
