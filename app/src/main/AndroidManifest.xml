@@ -50,6 +50,8 @@
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service android:name=".GPSTimerService" />
         <service android:name=".FSChecker" />
+        <service android:name=".WifiCheckService"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity android:name=".Settings"
             android:theme="@style/MyPrefTheme"

@@ -34,10 +34,10 @@ import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.forcedStopAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.selectingAmb;
@@ -150,21 +150,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         gpsTimerService = new Intent(getApplicationContext(), GPSTimerService.class);
         uploadService = new Intent(this, UploadService.class);
 
-        // Generate a periodic job to upload files, if available, over wifi.
-        int jobInt = getResources().getInteger(R.integer.periodicJobID);
-        ComponentName jobName = new ComponentName(this, UploadJobService.class);
-        JobInfo uploadJob = new JobInfo.Builder(jobInt, jobName)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Only execute on Wi-Fi
-                .setPeriodic(TimeUnit.MINUTES.toMillis(30))     //TODO: Decide on a suitable period
-                .setPersisted(true)             // Keeps job in system after system reboot BUT NOT IF APP IS FORCE CLOSED
-                .build();
-
-//        Schedule job:
-        JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (js != null) {
-            js.schedule(uploadJob);
+        // Check if there are files available to upload, and schedule the job if need be.
+        File finishedFolder = new File(String.valueOf(getExternalFilesDir("Finished")));
+        File[] finishedList = finishedFolder.listFiles();
+        if (finishedList != null && finishedList.length != 0) {
+            sendJob();
         }
-        Log.i(TAG, "Periodic job prepared.");
 
         setUpToolbar(); // Sets up the toolbar - method lower down.
 
@@ -197,14 +188,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (forcedStop) {   // If the recording is stopped due to inactivity
             if (!BuildConfig.AMB_MODE) {    // If NOT in AMB Mode.
                 displayOnFinish();      // Notify user that logging has stopped.
-                forcedStop = false;
             } else if (forcedStopAmb) {     // If the user has inputted AMB info after app stops.
                 displayOnFinish();      // Notify user that logging has stopped.
                 forcedStop = false;
                 forcedStopAmb = false;
                 stopService(loggingService);
             } else {    // Listen to logging service responses
-                registerReceiver(BReceiver, new IntentFilter(loggingFilter));
+                registerReceiver(loggingReceiver, new IntentFilter(loggingFilter));
             }
         }
 
@@ -240,7 +230,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         gpsData = "";   // Initialise the GPS data
         startService(gpsTimerService);  // Start service to search for GPS and buffer the start
 //        Listen to GPSTimerService to find out what to do next
-        registerReceiver(BReceiver, new IntentFilter(timerFilter));
+        registerReceiver(timerReceiver, new IntentFilter(timerFilter));
 
         startService(audioService); // Start the Audio Service so MaxAmplitude is available
         Log.i(TAG, "startInitialising");
@@ -271,13 +261,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
         sGPS = "";  // Initialise the GPS sample number string - save space in files before locked.
         if (!gpsOff) {  // Start GPS service unless GPS turned off
             startService(gpsService);
+            registerReceiver(gpsReceiver, new IntentFilter(gpsFilter));
         }
         startService(loggingService);   // Start the logging service
         if (!BuildConfig.AMB_MODE) {
             startService(imuService);   // Unless AMB, start IMU - AMB starts it earlier
         }
 //        Register for feedback from Logging Service
-        registerReceiver(BReceiver, new IntentFilter(loggingFilter));
+        registerReceiver(loggingReceiver, new IntentFilter(loggingFilter));
+        // Unregister feedback from GPSTimerService
+        unregisterReceiver(timerReceiver);
     }
 
 //    Separate the display / UI changes - to enable buffer to work nicely.
@@ -351,6 +344,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     stopAll();  // Stop all services (doesn't matter if they're not all running)
 
                     displayOnFinish();      // Notify user that logging has stopped.
+
+                    if (BuildConfig.TEST_MODE) {
+                        unregisterReceiver(loggingReceiver);
+                    }
                 }
             }
 
@@ -525,105 +522,136 @@ public class MainActivity extends Activity implements View.OnClickListener {
         stopAll();  // Stop all services (doesn't matter if they're not all running)
     }
 
-//    Declare variables for use with the Broadcast Receiver. The Broadcast Receiver enables
-// communication with other classes - in this case the Logging Service and GPS Timer Service.
+//    Declare variables for use with the Broadcast Receivers. The Broadcast Receivers enable
+// communication with other classes.
     static final String timerFilter = "TimerResponse", timerInt = "tResponse",
-            loggingFilter = "LoggingResponse", loggingInt = "lResponse";
+            loggingFilter = "LoggingResponse", loggingInt = "lResponse",
+            gpsFilter = "GPSResponse", gpsBool = "StationaryResponse";
     PowerManager.WakeLock screenLock;
     Timer screenFlashTimer;
     TimerTask flashingTask;
-    private BroadcastReceiver BReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver timerReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (initialising) {
-                switch (intent.getIntExtra(timerInt, 1)) {  // GPS Timer communication
-                    case 1: // Start recording data
-                        buffing = false;
-                        startAll();
-                        changeDisplay();
-                        break;
+            switch (intent.getIntExtra(timerInt, 1)) {  // GPS Timer communication
+                case 1: // Start recording data
+                    buffing = false;
+                    startAll();
+                    changeDisplay();
+                    break;
 
-                    case 0: // Cancels recording if the GPS can't get a fix within a reasonable time.
-                        stopInitialising();
-                        instructDisplay.setText(R.string.failed);
-                        if (!displayOn) {   // Send notification if user is not in MainActivity
-                            Notification.Builder notBuild = notUtils.getFailedNotification();
-                            notUtils.getManager().notify(getResources().getInteger(R.integer.failedID),notBuild.build());
-                        }
-                        cancelBR();
-                        break;
+                case 0: // Cancels recording if the GPS can't get a fix within a reasonable time.
+                    stopInitialising();
+                    instructDisplay.setText(R.string.failed);
+                    if (!displayOn) {   // Send notification if user is not in MainActivity
+                        Notification.Builder notBuild = notUtils.getFailedNotification();
+                        notUtils.getManager().notify(getResources().getInteger(R.integer.failedID),notBuild.build());
+                    }
+                    unregisterReceiver(timerReceiver);
+                    break;
 
-                    case 2: // Let User know GPS is fixed, but waiting for buffer before recording.
-                        buffing = true;
-                        changeDisplay();
-                        break;
+                case 2: // Let User know GPS is fixed, but waiting for buffer before recording.
+                    buffing = true;
+                    changeDisplay();
+                    break;
 
-                    case 3: // Cancel the Broadcast Receiver if GPSTimerService destroyed before lock
-                        cancelBR();
-                        break;
-                }
-            } else {
-                switch (intent.getIntExtra(loggingInt,1)) { // Logging Service communication
-                    case 0: // Recording stopped before any data recorded (time < end buffer time)
-                        fileEmpty = true;
-                        break;
-
-                    case 1: // Recording has some data
-                        fileEmpty = false;
-                        if (BuildConfig.CROWD_MODE) {
-                            cancelBR(); // Cancel Broadcast Receiver for regular users
-                        }
-                        break;
-
-                    case 9: // Notify AMB user that logging has stopped (as AmbSelect screen will
-                        // be up).
-                        displayOnFinish();
-                        forcedStop = false;
-                        stopService(loggingService);
-                        cancelBR();
-                        break;
-
-                    case 99: // Flash the screen if there's an error reading from the logging queue
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {   // For APIs 27+
-                            setTurnScreenOn(true);  // Can't check as don't have latest API
-                        } else {
-                            PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-                            if (myPowerManager != null) {
-                                // 'SCREEN_DIM_WAKE_LOCK' is deprecated, but works. The comment
-                                // below disables the Android Studio warning.
-                                //noinspection deprecation
-                                screenLock = myPowerManager.newWakeLock
-                                        (PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
-                                                "MainActivity:FlashingWakelock");
-                            }
-                            if (screenFlashTimer == null) {
-                                screenFlashTimer = new Timer();
-                                flashingTask = new TimerTask() {
-                                    @Override
-                                    public void run() {
-                                        if (screenLock != null) {
-                                            if (!screenLock.isHeld()) {
-                                                screenLock.acquire(500);
-                                            } else {
-                                                screenLock.release();
-                                            }
-                                        }
-                                        if (!recording) {
-                                            screenFlashTimer.cancel();
-                                        }
-                                    }
-                                };
-                                screenFlashTimer.schedule(flashingTask, 0, 2000);
-                            }
-                        }
-                        break;
-                }
+                case 3: // Cancel the Broadcast Receiver if GPSTimerService destroyed before lock
+                    unregisterReceiver(timerReceiver);
+                    break;
             }
         }
     };
 
-    public void cancelBR() {    // Cancel the Broadcast Receiver
-        unregisterReceiver(BReceiver);
+    private BroadcastReceiver loggingReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getIntExtra(loggingInt,1)) { // Logging Service communication
+                case 0: // Recording stopped before any data recorded (time < end buffer time)
+                    fileEmpty = true;
+                    break;
+
+                case 1: // Recording has some data
+                    fileEmpty = false;
+                    if (BuildConfig.CROWD_MODE) {
+                        unregisterReceiver(loggingReceiver); // Cancel Broadcast Receiver for regular users
+                    }
+                    return;
+
+                case 9: // Notify AMB user that logging has stopped (as AmbSelect screen will be up).
+                    displayOnFinish();
+                    forcedStop = false;
+                    stopService(loggingService);
+                    break;
+
+                case 99: // Flash the screen if there's an error reading from the logging queue
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {   // For APIs 27+
+                        setTurnScreenOn(true);  // Can't check as don't have latest API
+                    } else {
+                        PowerManager myPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                        if (myPowerManager != null) {
+                            // 'SCREEN_DIM_WAKE_LOCK' is deprecated, but works. The comment
+                            // below disables the Android Studio warning.
+                            //noinspection deprecation
+                            screenLock = myPowerManager.newWakeLock
+                                    (PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                                            "MainActivity:FlashingWakelock");
+                        }
+                        if (screenFlashTimer == null) {
+                            screenFlashTimer = new Timer();
+                            flashingTask = new TimerTask() {
+                                @Override
+                                public void run() {
+                                    if (screenLock != null) {
+                                        if (!screenLock.isHeld()) {
+                                            screenLock.acquire(500);
+                                        } else {
+                                            screenLock.release();
+                                        }
+                                    }
+                                    if (!recording) {
+                                        screenFlashTimer.cancel();
+                                    }
+                                }
+                            };
+                            screenFlashTimer.schedule(flashingTask, 0, 2000);
+                        }
+                    }
+                    return;
+            }
+            unregisterReceiver(loggingReceiver);
+        }
+    };
+
+    // Find out whether the recording was stopped due to lack of movement or not. If it was,
+    // refresh the screen in case the screen was still on.
+    private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getBooleanExtra(gpsBool,false)) {
+                displayOnFinish();  // Notify user that logging has stopped.
+                if (!BuildConfig.AMB_MODE) {
+                    forcedStop = false;
+                }
+                unregisterReceiver(loggingReceiver);
+            }
+            unregisterReceiver(gpsReceiver);
+        }
+    };
+
+    // Schedule job to upload files when connected to wifi
+    public void sendJob() {
+        int jobInt = getResources().getInteger(R.integer.uploadJobID);
+        ComponentName jobName = new ComponentName(this, UploadJobService.class);
+        JobInfo newUploadJob = new JobInfo.Builder(jobInt,jobName)
+                .setPersisted(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Only execute on Wi-Fi
+                .build();
+
+//        Schedule job:
+        JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (js != null) {
+            js.schedule(newUploadJob);
+        }
     }
 
 // Disable Back button when used as the HOME SCREEN (AMB Mode)

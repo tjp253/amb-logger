@@ -29,7 +29,7 @@ public class UploadJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
 
-        Log.i(TAG, "Starting Upload Job " + params.getJobId());
+        Log.i(TAG, "Starting Upload Job");
 
         String finishedPath = String.valueOf(getExternalFilesDir("Finished"));
         File finishedFolder = new File(finishedPath);
@@ -57,7 +57,7 @@ public class UploadJobService extends JobService {
     @Override
     public boolean onStopJob(JobParameters params) {
 
-        Log.i(TAG, "Stopping Upload Job " + params.getJobId());
+        Log.i(TAG, "Stopping Upload Job");
 
         uploadOverWifi = false;
 
@@ -65,8 +65,7 @@ public class UploadJobService extends JobService {
 
         // If onStopJob is called, it means uploading has been interrupted. Therefore, it needs
         // to be restarted again when possible.
-        // Only restart the periodic upload job, not the one that's started after each recording.
-        return params.getJobId() != getResources().getInteger(R.integer.postRecordJobID);
+        return true;
     }
 
     static String uploadSuccess = "UploadResponse", uploadFilter = "UploadService";

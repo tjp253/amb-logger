@@ -18,7 +18,7 @@
     <integer name="failedUploadID">3</integer>
 
     <!-- ID values for JobScheduler -->
-    <integer name="periodicJobID">253</integer>
-    <integer name="postRecordJobID">25</integer>
+    <integer name="uploadJobID">25</integer>
+    <integer name="wifiJobID">88</integer>
 
 </resources>

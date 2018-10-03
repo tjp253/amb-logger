@@ -6,7 +6,6 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +25,6 @@ public class MovingService extends IntentService {
     // foolproof. I started off as a complete rookie; cut me some slack.
 
     String mainPath, folderPath, finishedPath;
-    String TAG = "CRL_MovingService";
 
     @Override
     public void onCreate() {
@@ -41,8 +39,6 @@ public class MovingService extends IntentService {
         if (!finishedDirectory.exists()) {
             finishedDirectory.mkdir();
         }
-
-//        moveFiles(folderPath, finishedPath);
 
     }
 
@@ -102,13 +98,13 @@ public class MovingService extends IntentService {
 
     }
 
-    // Send an upload job to try and get the files just recorded to upload, rather than wait for
-    // the period upload job.
+    // Schedule an upload job to try and get the files which were just recorded to upload
     public void sendJob() {
-        int jobInt = getResources().getInteger(R.integer.postRecordJobID);
+        int jobInt = getResources().getInteger(R.integer.uploadJobID);
         ComponentName jobName = new ComponentName(this, UploadJobService.class);
         JobInfo newUploadJob = new JobInfo.Builder(jobInt,jobName)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Only execute on Wi-Fi
+                .setPersisted(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED) // Only upload over Wi-Fi
                 .build();
 
 //        Schedule job:
@@ -116,8 +112,6 @@ public class MovingService extends IntentService {
         if (js != null) {
             js.schedule(newUploadJob);
         }
-
-        Log.i(TAG, "New upload job prepared.");
     }
 
 }
