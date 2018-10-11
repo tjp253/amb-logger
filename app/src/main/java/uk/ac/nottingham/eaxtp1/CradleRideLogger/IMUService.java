@@ -11,6 +11,7 @@ import android.hardware.SensorManager;
 import android.opengl.Matrix;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import java.util.Arrays;
@@ -45,6 +46,7 @@ public class IMUService extends Service implements SensorEventListener {
     SensorManager manager;
     Sensor accelerometer, gravity, magnetic, gyroscope;
     boolean gyroPresent;
+    static boolean heldWithMagnets;
 
     private long sampleID;
     private short prevSample;
@@ -100,6 +102,11 @@ public class IMUService extends Service implements SensorEventListener {
                 manager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
 
                 deviceValues[3] = 0;
+
+                if (BuildConfig.AMB_MODE) {
+                    heldWithMagnets = PreferenceManager.getDefaultSharedPreferences(this).getBoolean
+                            (getString(R.string.key_pref_magnets), true);
+                }
             }
         }
 
@@ -158,6 +165,11 @@ public class IMUService extends Service implements SensorEventListener {
 //                    If world coordinates are zero, save space in the CSV log
                     if (fE==fN && fE==fD && fE==0) {
                         sE = "";    sN = "";    sD = "";
+                    } else if (BuildConfig.AMB_MODE && heldWithMagnets) {
+                        // If holding the phone in place using magnets on the ambulance trolley,
+                        // the magnetometer (compass) doesn't function properly. Therefore, save
+                        // space by blanking the 'North' and 'East' variables.
+                        sE = "";    sN = "";
                     }
 
                 }

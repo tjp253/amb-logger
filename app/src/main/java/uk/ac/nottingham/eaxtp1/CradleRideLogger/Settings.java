@@ -21,6 +21,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.autoStopOn;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.heldWithMagnets;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSTimerService.buffering;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
@@ -73,7 +74,7 @@ public class Settings extends AppCompatActivity  {
         SharedPreferences.Editor prefEd, prefEdAmb;
         ListPreference nttList;
         int leftMargin, rightMargin, verticalMargin, topMargin;
-        String asPref, tPref, buffS, buffE, nttPref;
+        String asPref, tPref, buffS, buffE, nttPref, magPref;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -91,6 +92,7 @@ public class Settings extends AppCompatActivity  {
             if (BuildConfig.AMB_MODE) {
                 prefAmb = getActivity().getSharedPreferences(getString(R.string.pref_amb),MODE_PRIVATE);
                 nttPref = getActivity().getString(R.string.key_pref_ntt);
+                magPref = getActivity().getString(R.string.key_pref_magnets);
                 nttList = (ListPreference) findPreference(nttPref);
                 nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[prefAmb.getInt(nttPref,0)]);
             }
@@ -145,14 +147,24 @@ public class Settings extends AppCompatActivity  {
 
                 gpsOff = !sharedPreferences.getBoolean(key, false);
 
-            } else if (BuildConfig.AMB_MODE && key.equals(nttPref)) {
-//                Android Studio thinks 'choice' is not used... but it is. Twice. Inspection disabled.
-                //noinspection UnusedAssignment
-                int choice = Integer.parseInt(sharedPreferences.getString(key, ""));
-                nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[choice]);
+            } else if (BuildConfig.AMB_MODE) {
 
-                prefEdAmb = prefAmb.edit();
-                prefEdAmb.putInt(key, choice).apply();
+                if (key.equals(nttPref)) {
+
+//                Android Studio thinks 'choice' is not used... but it is. Twice. Inspection disabled.
+                    //noinspection UnusedAssignment
+                    int choice = Integer.parseInt(sharedPreferences.getString(key, ""));
+                    nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[choice]);
+
+                    prefEdAmb = prefAmb.edit();
+                    prefEdAmb.putInt(key, choice).apply();
+
+                } else if (key.equals(magPref)) {
+
+                    heldWithMagnets = sharedPreferences.getBoolean(key, true);
+                    prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).apply();
+
+                }
 
             } else {
 

@@ -35,6 +35,13 @@
             android:entryValues="@array/ntt_number"
             android:key="@string/key_pref_ntt"
             android:title="@string/choose_ntt" />
+
+        <SwitchPreference
+            android:layout_width="match_parent"
+            android:defaultValue="true"
+            android:key="@string/key_pref_magnets"
+            android:title="@string/set_magnets"
+            android:summary="@string/set_mag_sum"/>
     </PreferenceCategory>
 
     <PreferenceCategory

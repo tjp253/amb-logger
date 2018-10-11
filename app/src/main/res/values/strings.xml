@@ -64,6 +64,12 @@
 
     <string name="set_delay">Start Delay (seconds): \u0020\u0020\u0020\u0020</string>
     <string name="set_timeout">GPS Timeout (minutes): \t</string>
+
+    <string name="set_magnets">Held in Place With Magnets</string>
+    <string name="set_mag_sum">If using magnets to hold the phone to the trolley for
+        recordings, set to on.
+        \n\nThis saves space inside the recording by removing compass data.</string>
+
     <string name="set_test_tit">Testing</string>
     <string name="set_testing">Use GPS</string>
 
@@ -88,6 +94,8 @@
     <string name="key_pref_buff_start">BuffStart</string>
     <string name="key_pref_buff_end">BuffEnd</string>
     <string name="key_pref_test">TestMode</string>
+
+    <string name="key_pref_magnets">HeldWithMagnets</string>
 
     <string name="pref_main">myPreferences</string>
 
