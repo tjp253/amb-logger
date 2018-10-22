@@ -25,7 +25,7 @@ import okhttp3.Response;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploadFilter;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploadOverWifi;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploading;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploadSuccess;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -40,7 +40,6 @@ public class UploadService extends IntentService {
     NotificationUtilities notUtils;
 
     URL url;
-    String urlString = "https://optics.eee.nottingham.ac.uk/~tp/upload.php";
 
     String TAG = "CRL_UploadService";
 
@@ -118,7 +117,7 @@ public class UploadService extends IntentService {
         }
 
         try {
-            url = new URL(urlString);
+            url = new URL(getResources().getString(R.string.uploadURL));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -127,7 +126,7 @@ public class UploadService extends IntentService {
 
         for (File file : fileList) { // For each file in the 'finished' folder
 
-            if (uploadOverWifi) {
+            if (uploading) {
 
                 uploadFilePath = file.getAbsolutePath();
                 fileName = uploadFilePath.substring(sourceLength);
@@ -144,7 +143,6 @@ public class UploadService extends IntentService {
                             .setType(MultipartBody.FORM)
                             .addFormDataPart("fileToUpload", fileName,
                                     RequestBody.create(MediaType.parse(parse), fileToUpload))
-
                             .build();
 
                     Request request = new Request.Builder().url(url).post(requestBody).build();
@@ -160,23 +158,23 @@ public class UploadService extends IntentService {
 
                     // Receives the PHP response code (programmed myself) to feedback any
                     // problems / tell the app this file was uploaded successfully.
-                    switch (response.code()) {
-                        case 900:
-                            moveOversized(fileName);
-                            oversizedFileCount++;
-                            fileName = null;
-                            Log.i(TAG, "File too large to upload.");
-                            break;
-                        case 901:
-                            Log.i(TAG, "File already uploaded.");
-                            break;
-                        case 910:
-                            uploadFileCount++;
-                            break;
-                        default:
-                            fileName = null;
-                            failedFileCount++;
-                            break;
+                    // Using IF-ELSE instead of SWITCH to enable use of resource INTs
+                    if (response.code() == getResources().getInteger(R.integer.successfullyUp)) {
+                        uploadFileCount++;
+
+                    } else if (response.code() == getResources().getInteger(R.integer
+                                .oversizedUp)) {
+                        moveOversized(fileName);
+                        oversizedFileCount++;
+                        fileName = null;
+                        Log.i(TAG, "File too large to upload.");
+
+                    } else if (response.code() == getResources().getInteger(R.integer.alreadyUp)) {
+                        Log.i(TAG, "File already uploaded.");
+
+                    } else {
+                        fileName = null;
+                        failedFileCount++;
                     }
 
                 } catch (IOException e) {

@@ -20,5 +20,20 @@
     <!-- ID values for JobScheduler -->
     <integer name="uploadJobID">25</integer>
     <integer name="wifiJobID">88</integer>
+    <integer name="deletingJobID">53</integer>
+
+    <!--PHP Response codes-->
+    <integer name="oversizedUp">900</integer>
+    <integer name="alreadyUp">901</integer>
+    <integer name="successfullyUp">910</integer>
+
+    <integer name="deleteFiles">925</integer>
+    <integer name="doNotDeleteFiles">952</integer>
+
+    <!--Start and end points for substrings-->
+    <integer name="idStart">19</integer>
+    <integer name="idStop">27</integer>
+    <integer name="dateStart">0</integer>
+    <integer name="dateStop">16</integer>
 
 </resources>

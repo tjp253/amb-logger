@@ -35,9 +35,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
+import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.forcedStopAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.selectingAmb;
@@ -156,6 +158,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (finishedList != null && finishedList.length != 0) {
             sendJob();
         }
+        // Initialise the file deleting job
+        sendDeletingJob();
 
         setUpToolbar(); // Sets up the toolbar - method lower down.
 
@@ -651,6 +655,37 @@ public class MainActivity extends Activity implements View.OnClickListener {
         JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (js != null) {
             js.schedule(newUploadJob);
+        }
+    }
+
+    // Schedule deleting job for once a week, when connected to wifi
+    public void sendDeletingJob() {
+        int jobInt = getResources().getInteger(R.integer.deletingJobID);
+        boolean jobExists = false;
+        JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (js != null) {
+            // Check if the job already exists in the system
+            List<JobInfo> pendingJobs = js.getAllPendingJobs();
+            for (JobInfo job : pendingJobs) {
+                if (job.getId() == jobInt) {
+                    jobExists = true;
+                    break;
+                }
+            }
+
+            // If the job doesn't exist, create it!
+            if (!jobExists) {
+                ComponentName jobName = new ComponentName(this, DeletingJobService.class);
+                JobInfo newDeletingJob = new JobInfo.Builder(jobInt, jobName)
+                        .setPeriodic(TimeUnit.DAYS.toMillis(7)) // Schedule it for once a week
+                        .setPersisted(true)
+                        .setRequiresDeviceIdle(true) // When the device is not being used
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Only execute on Wi-Fi
+                        .build();
+
+                // Schedule job:
+                js.schedule(newDeletingJob);
+            }
         }
     }
 

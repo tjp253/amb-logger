@@ -24,7 +24,7 @@ public class UploadJobService extends JobService {
 
     // Boolean to tell UploadService it can go ahead with uploading files. An extra, possibly
     // unnecessary, fail-safe to prevent using mobile data.
-    static boolean uploadOverWifi;
+    static boolean uploading;
 
     @Override
     public boolean onStartJob(JobParameters params) {
@@ -42,7 +42,7 @@ public class UploadJobService extends JobService {
             // 'jobFinished' and possibly reschedule the upload job.
             parameters = params;
 
-            uploadOverWifi = true;
+            uploading = true;
 
             Intent uploadService = new Intent(getApplicationContext(), UploadService.class);
             startService(uploadService);
@@ -59,7 +59,7 @@ public class UploadJobService extends JobService {
 
         Log.i(TAG, "Stopping Upload Job");
 
-        uploadOverWifi = false;
+        uploading = false;
 
         unregisterReceiver(receiver);
 

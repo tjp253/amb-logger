@@ -76,5 +76,11 @@
             android:title="@string/set_testing" />
     </PreferenceCategory>
 
+    <SwitchPreference
+        android:defaultValue="@bool/delete_files_by_default"
+        android:key="@string/key_pref_files"
+        android:summary="@string/set_files_sum"
+        android:title="@string/set_files" />
+
 
 </PreferenceScreen>

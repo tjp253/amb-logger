@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -20,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.DeletingJobService.userWantsFilesKept;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.heldWithMagnets;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSTimerService.buffering;
@@ -74,7 +76,7 @@ public class Settings extends AppCompatActivity  {
         SharedPreferences.Editor prefEd, prefEdAmb;
         ListPreference nttList;
         int leftMargin, rightMargin, verticalMargin, topMargin;
-        String asPref, tPref, buffS, buffE, nttPref, magPref;
+        String asPref, tPref, buffS, buffE, nttPref, magPref, filePref;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -88,6 +90,7 @@ public class Settings extends AppCompatActivity  {
             tPref = getActivity().getString(R.string.key_pref_test);
             buffS = getActivity().getString(R.string.key_pref_buff_start);
             buffE = getActivity().getString(R.string.key_pref_buff_end);
+            filePref = getActivity().getResources().getString(R.string.key_pref_files);
 
             if (BuildConfig.AMB_MODE) {
                 prefAmb = getActivity().getSharedPreferences(getString(R.string.pref_amb),MODE_PRIVATE);
@@ -146,6 +149,10 @@ public class Settings extends AppCompatActivity  {
             } else if (key.equals(tPref)) {
 
                 gpsOff = !sharedPreferences.getBoolean(key, false);
+
+            } else if (key.equals(filePref)) {
+
+                userWantsFilesKept = !sharedPreferences.getBoolean(key,true);
 
             } else if (BuildConfig.AMB_MODE) {
 
