@@ -32,6 +32,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyPat;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyTrans;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyTroll;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.date;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_FS;
@@ -71,14 +72,8 @@ public class LoggingService extends Service {
 
     final int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
 
-    //    Creates a string of the current date and time
-    @SuppressLint("SimpleDateFormat")
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd-HH_mm");
-    Date todayDate = new Date();
-    public String date = dateFormat.format(todayDate);
-
     String filepath = "Recording", digitAdjuster = "-0", suffix = "-END",
-            filename = date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz",
+            filename,// = date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz",
             mainPath, gzipPath, ambPath, toFile, outputTitle, endName;
 
     StringBuilder stringBuilder = new StringBuilder();  // You don't need to say the string is empty
@@ -95,6 +90,15 @@ public class LoggingService extends Service {
         dataInFile = false;
 
         crashCheck();
+
+        if (date == null) {
+            //    Creates a string of the current date and time
+            @SuppressLint("SimpleDateFormat")
+            SimpleDateFormat dateFormat = new SimpleDateFormat(getResources().getString(R.string.file_date_format));
+            Date todayDate = new Date();
+            date = dateFormat.format(todayDate);
+        }
+        filename = date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz";
 
         if (!crashed) {
             preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
@@ -372,6 +376,7 @@ public class LoggingService extends Service {
         }
 
         logging = false;
+        date = null;
         Log.i(TAG, "Destroyed!");
     }
 

@@ -1,5 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
@@ -14,7 +15,9 @@ import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -64,6 +67,9 @@ public class IMUService extends Service implements SensorEventListener {
     float fN, fE, fD;
 
     static BlockingQueue<String> myQ;   // Declare data queue
+
+
+    static String date;
 
     @Override
     public void onCreate() {
@@ -118,6 +124,12 @@ public class IMUService extends Service implements SensorEventListener {
                 wakeLock.acquire(wakelockTimeout);
             }
         }
+
+        //    Creates a string of the current date and time
+        @SuppressLint("SimpleDateFormat")
+        SimpleDateFormat dateFormat = new SimpleDateFormat(getResources().getString(R.string.file_date_format));
+        Date todayDate = new Date();
+        date = dateFormat.format(todayDate);
 
         startTime = System.currentTimeMillis();
     }
