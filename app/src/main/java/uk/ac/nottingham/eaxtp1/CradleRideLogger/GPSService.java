@@ -11,6 +11,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
@@ -46,11 +47,14 @@ public class GPSService extends Service implements LocationListener {
     static String gpsData, sGPS = "";
     List<String> dataList;
     static short gpsSample;
-    private long statSamples, movingSamples;
+    private long movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
     long limitStart = 10*60, limitMax = 20*60;     // TODO: Set limitStart to 10*60 (10 minutes)
     float speed;
     static boolean autoStopOn, wifiCheckOn;
+
+    CountDownTimer stationaryTimer;
+    boolean timerOn, atLimitStart;
 
     LocationManager myLocationManager;
 
@@ -137,42 +141,85 @@ public class GPSService extends Service implements LocationListener {
 //    Check for vehicle movement
     public void stationaryChecker() {
         if (speed <= 2) {   // Less than 5 miles per hour
-            statSamples++;
-            if (statSamples == 1) {
-                // Schedule a wifi checking job. Job starts when wifi connects and stops when
-                // wifi disconnects. 'wifiConnected' boolean will change with it.
-                scheduleJob();
-                wifiCheckOn = true;
+
+            if (!timerOn) {
+                // Start a timer to check the limits have passed.
+                statTimer();
+                timerOn = true;
+                atLimitStart = false;
             }
-            if ((statSamples >= limitStart && wifiConnected) || statSamples >= limitMax){
-//                Stop all services due to inactivity
-                this.stopService(new Intent(this, AudioService.class));
-                this.stopService(new Intent(this, IMUService.class));
-                recording = false;
-                forcedStop = true;
-                if (BuildConfig.AMB_MODE) {
-                    Intent ambSelect = new Intent(getApplicationContext(), AmbSelect.class);
-                    ambSelect.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    ambSelect.putExtra(getString(R.string.forcedIntent), true);
-                    startActivity(ambSelect);
-                } else {
-                    this.stopService(new Intent(this, LoggingService.class));
+
+            if (atLimitStart && wifiConnected) {
+                cancelRecording();
+            }
+
+        } else if (timerOn) {
+
+            if (speed > 10 || movingSamples > 10) { // True (?) movement detected
+                if (stationaryTimer != null) {
+                    stationaryTimer.cancel();
                 }
-
-                Notification.Builder notBuild = notUtils.getStoppedNotification();
-                notUtils.getManager().notify(getResources().getInteger(R.integer.stoppedID),notBuild.build());
-
-                stopSelf();
-            }
-        } else {
-            if (movingSamples > 10 || speed > 10) { // True (?) movement detected
-                statSamples = 0;
                 movingSamples = 0;
                 wifiCheckOn = false;
+                timerOn = false;
             } else {    // Count towards possible movement
                 movingSamples++;
             }
+
         }
+    }
+
+    // Countdown Timer to report if stationary limits have been met. This is rather than counting
+    // the number of GPS samples.
+    public void statTimer() {
+
+        stationaryTimer = new CountDownTimer(limitMax*1000,limitStart*1000) {
+            @Override
+            public void onTick(long millisUntilFinish) {
+                // Otherwise, it fires straight away
+                if ( ! ( millisUntilFinish > (limitMax - limitStart)*1000 ) ) {
+                    if (wifiConnected) {
+                        cancelRecording();
+                    } else {
+                        atLimitStart = true;
+                    }
+                }
+            }
+
+            @Override
+            public void onFinish() {
+                cancelRecording();
+            }
+        }.start();
+
+        scheduleJob();
+        wifiCheckOn = true;
+
+    }
+
+    public void cancelRecording() {
+        // Stop all services due to inactivity
+        this.stopService(new Intent(this, AudioService.class));
+        this.stopService(new Intent(this, IMUService.class));
+        recording = false;
+        forcedStop = true;
+        if (BuildConfig.AMB_MODE) {
+            Intent ambSelect = new Intent(getApplicationContext(), AmbSelect.class);
+            ambSelect.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ambSelect.putExtra(getString(R.string.forcedIntent), true);
+            startActivity(ambSelect);
+        } else {
+            this.stopService(new Intent(this, LoggingService.class));
+        }
+
+        Notification.Builder notBuild = notUtils.getStoppedNotification();
+        notUtils.getManager().notify(getResources().getInteger(R.integer.stoppedID),notBuild.build());
+
+        if (stationaryTimer != null) {
+            stationaryTimer.cancel();
+        }
+
+        stopSelf();
     }
 
     // As of API 26, Manifest-registered BroadcastReceivers are essentially disabled. Therefore,

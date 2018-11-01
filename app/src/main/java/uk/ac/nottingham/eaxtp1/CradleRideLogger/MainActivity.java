@@ -636,7 +636,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if (!BuildConfig.AMB_MODE) {
                     forcedStop = false;
                 }
-                unregisterReceiver(loggingReceiver);
+                try {
+                    unregisterReceiver(loggingReceiver);
+                } catch (Exception e) {
+                    // Receiver is already unregistered... move along.
+                }
             }
             unregisterReceiver(gpsReceiver);
         }
