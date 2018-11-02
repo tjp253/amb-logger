@@ -251,6 +251,10 @@ public class IMUService extends Service implements SensorEventListener {
             manager.unregisterListener(this);
         }
 
+        // Reset the static variables for the next recording.
+        sGPS = "";
+        amp = 0;
+
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }
