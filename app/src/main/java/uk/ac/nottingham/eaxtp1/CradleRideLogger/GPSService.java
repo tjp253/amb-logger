@@ -2,9 +2,6 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.Notification;
 import android.app.Service;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
@@ -103,6 +100,7 @@ public class GPSService extends Service implements LocationListener {
         }
 
         wifiCheckOn = false;
+        timerOn = false;
 
         gpsSample = 0;
 
@@ -188,11 +186,19 @@ public class GPSService extends Service implements LocationListener {
 
             @Override
             public void onFinish() {
-                cancelRecording();
+                // For some reason, timer doesn't get cancelled.
+                if (recording && timerOn) {
+                    cancelRecording();
+                }
             }
         }.start();
 
-        scheduleJob();
+        // As of API 26, Manifest-registered BroadcastReceivers are essentially disabled.
+        // Therefore, Wifi needs to be 'manually' searched for. When stationary, a Job is created
+        // which starts if connected to wifi and stops if then disconnected.
+        JobUtilities jobUtils = new JobUtilities(this);
+        jobUtils.getScheduler().schedule( jobUtils.wifiJob() );
+
         wifiCheckOn = true;
 
     }
@@ -220,25 +226,6 @@ public class GPSService extends Service implements LocationListener {
         }
 
         stopSelf();
-    }
-
-    // As of API 26, Manifest-registered BroadcastReceivers are essentially disabled. Therefore,
-    // Wifi needs to be 'manually' searched for. When stationary, a Job is created which starts
-    // if connected to wifi and stops if then disconnected.
-    JobScheduler scheduler;
-    JobInfo myJob;
-    public void scheduleJob() {
-        if (scheduler == null) {
-            scheduler = (JobScheduler) getSystemService(GPSService.JOB_SCHEDULER_SERVICE);
-        }
-
-        int jobInt = getResources().getInteger(R.integer.wifiJobID);
-        ComponentName jobName = new ComponentName(this, WifiCheckService.class);
-        myJob = new JobInfo.Builder(jobInt, jobName)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Start on Wi-Fi
-                .build();
-
-        scheduler.schedule(myJob);
     }
 
     // Tell MainActivity whether the recording has been stopped due to lack of movement or not.

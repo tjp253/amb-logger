@@ -16,7 +16,6 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.Arrays;
 import java.util.List;
@@ -41,8 +40,6 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 // location.
 //    GPS Removal Timer allows the full GPS service time to start up and initialise before
 // killing this one.
-
-    final String TAG = "CRL_GPS Timer Service";
 
     CountDownTimer timeoutTimer, positionTimer, removalTimer, startBuffer;
 
@@ -106,7 +103,6 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
             @Override
             public void onFinish() {
                 if (!recording) {
-                    Log.i(TAG, "GPS Timed Out");
                     sendBroadcast(0);
                 }
             }
@@ -122,7 +118,6 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
             @Override
             public void onFinish() {
-                Log.i(TAG, "Positioned");
                 positioned = true;
                 if (gpsOff) {
                     sendBroadcast(1);   // Start recording
@@ -177,7 +172,6 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
                         gpsFixed = (SystemClock.elapsedRealtime() - myLastLocationMillis) < 3000;
 
                     if (gpsFixed && positioned) {
-//                        Log.i(TAG, "Fixed and in Position");
                         timeoutTimer.cancel();  // Cancel GPS timeout as GPS is locked
 
                         if ( bs == 0) { // No buffer

@@ -20,7 +20,7 @@ public class NotificationUtilities extends ContextWrapper {
     final boolean newAPI = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
 
     private NotificationManager manager;
-    public static final String FOREGROUND_CHANNEL_ID = BuildConfig.APPLICATION_ID + ".RECORDING",
+    public final String FOREGROUND_CHANNEL_ID = BuildConfig.APPLICATION_ID + ".RECORDING",
             UPLOADING_CHANNEL_ID = BuildConfig.APPLICATION_ID + ".UPLOADING",
             UPLOADED_CHANNEL_ID = BuildConfig.APPLICATION_ID + ".UPLOADED",
             FAILED_CHANNEL_ID = BuildConfig.APPLICATION_ID + ".CANCELLED",

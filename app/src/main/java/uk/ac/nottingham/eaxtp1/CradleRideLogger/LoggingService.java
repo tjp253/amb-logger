@@ -10,7 +10,6 @@ import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -56,8 +55,6 @@ public class LoggingService extends Service {
 
     NotificationUtilities notUtils;
 
-    final String TAG = "CRL_LoggingService";
-
     SharedPreferences preferences;
     CountDownTimer waitTimer;
     PowerManager.WakeLock wakelock;
@@ -72,9 +69,8 @@ public class LoggingService extends Service {
 
     final int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
 
-    String filepath = "Recording", digitAdjuster = "-0", suffix = "-END",
-            filename,// = date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz",
-            mainPath, gzipPath, ambPath, toFile, outputTitle, endName;
+    String filepath = "Recording", digitAdjuster = "-0", filename, mainPath, gzipPath, ambPath,
+            toFile, outputTitle, endName;
 
     StringBuilder stringBuilder = new StringBuilder();  // You don't need to say the string is empty
 
@@ -85,7 +81,6 @@ public class LoggingService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        Log.i(TAG, "Created.");
         logging = true;
         dataInFile = false;
 
@@ -98,7 +93,7 @@ public class LoggingService extends Service {
             Date todayDate = new Date();
             date = dateFormat.format(todayDate);
         }
-        filename = date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz";
+        filename = date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz";
 
         if (!crashed) {
             preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
@@ -244,7 +239,7 @@ public class LoggingService extends Service {
 
         int qSize = myQ.size() - buffSamples;   // Don't record anything within the end buffer time
 
-        int i = 0;
+        int i;
         try {
 //            Extract a chunk of data from the queue to write to the file
             for (i = 0; i < qSize; i++) {
@@ -253,13 +248,12 @@ public class LoggingService extends Service {
 
         } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
 
-            String errMess = "Queue empty. Supposed size: " + qSize + "." + " Actual size: " + i;
             if (BuildConfig.TEST_MODE && i < 10) {
-                writeDebug(String.valueOf(System.currentTimeMillis()) + "-" + errMess + "\n");
+                writeDebug(String.valueOf(System.currentTimeMillis())
+                        + "- Queue empty. Supposed size: " + qSize + ". Actual size: " + i + "\n");
                 sendBroadcast(99);
             }
 
-            Log.i(TAG, errMess);
             e.getMessage();
         }
 
@@ -275,7 +269,7 @@ public class LoggingService extends Service {
 //    Create a new file to continue the recording
     public void fileSplitter(int filePart) {
 
-        gzipPath = mainPath + date + "-ID" + String.valueOf(userID) + digitAdjuster + filePart + ".csv.gz";
+        gzipPath = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + filePart + ".csv.gz";
 
         try {
             myOutputStream.close();
@@ -286,8 +280,6 @@ public class LoggingService extends Service {
         }
 
         gzFile = new File(gzipPath);
-
-        Log.i(TAG, "fileSplitter: Split File");
 
     }
 
@@ -312,7 +304,6 @@ public class LoggingService extends Service {
             }
 
             if (myQ.size() > 0) {
-                Log.i(TAG, "Writing final outputs.");
                 writeToFile();
             }
             myQ = null;
@@ -331,9 +322,9 @@ public class LoggingService extends Service {
             // Edit the final filename to enable PHP to automatically join all parts of the
             // recording
             if (multiFile || BuildConfig.AMB_MODE) {
-                endName = mainPath + date + "-ID" + String.valueOf(userID) + digitAdjuster + zipPart + suffix + ".csv.gz";
+                endName = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + zipPart + getResources().getString(R.string.suffix) + ".csv.gz";
             } else {
-                endName = mainPath + date + "-ID" + String.valueOf(userID) + ".csv.gz";
+                endName = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + ".csv.gz";
             }
             File endFile = new File(endName);
             gzFile.renameTo(endFile);
@@ -377,7 +368,6 @@ public class LoggingService extends Service {
 
         logging = false;
         date = null;
-        Log.i(TAG, "Destroyed!");
     }
 
     private void sendBroadcast(int response) {
@@ -387,8 +377,7 @@ public class LoggingService extends Service {
     }
 
     public void prepAmb() {
-        suffix = "-AMB";
-        ambPath = mainPath + date + "-ID" + String.valueOf(userID) + "-00.csv.gz";
+        ambPath = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + "-00.csv.gz";
         try {
             myAmbStream = new FileOutputStream(ambPath);
             myAmbStream = new GZIPOutputStream(myAmbStream)

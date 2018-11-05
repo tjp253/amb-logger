@@ -3,7 +3,6 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.app.IntentService;
 import android.app.Notification;
 import android.content.Intent;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,8 +40,6 @@ public class UploadService extends IntentService {
 
     URL url;
 
-    String TAG = "CRL_UploadService";
-
     String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
 
     File sourceFolder; // Have the sourceFolder available to the whole class to enable
@@ -55,8 +52,6 @@ public class UploadService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        Log.i(TAG, "Upload Service started.");
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         finishedPath = mainPath + "/Finished";
@@ -82,8 +77,6 @@ public class UploadService extends IntentService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        Log.i(TAG, "Upload Service being destroyed.");
     }
 
     @Override
@@ -97,7 +90,6 @@ public class UploadService extends IntentService {
             try {
                 Thread.sleep(5000);   // Wait for 5 seconds to finish moving files. Rather than kill straight away.
             } catch (Exception e) {
-                Log.i(TAG, "Doesn't like sleeping..");
                 sendBroadcast(false);
                 return;
             }
@@ -111,7 +103,6 @@ public class UploadService extends IntentService {
         File[] fileList = sourceFolder.listFiles();
         filesLeft = fileList.length;
         if (filesLeft == 0) {
-            Log.i(TAG, "Files are already uploaded. Abandon ship!");
             sendBroadcast(true);
             return;
         }
@@ -150,7 +141,6 @@ public class UploadService extends IntentService {
                     try {
                         response = okHttpClient.newCall(request).execute();
                     } catch (UnknownHostException uhe) {
-                        Log.i(TAG, "Host Connection Lost.");
                         throw new IOException("UnknownHostException - Upload connection failed.");
                     } catch (SocketException se) {
                         throw new IOException("Socket Exception");
@@ -167,10 +157,9 @@ public class UploadService extends IntentService {
                         moveOversized(fileName);
                         oversizedFileCount++;
                         fileName = null;
-                        Log.i(TAG, "File too large to upload.");
 
                     } else if (response.code() == getResources().getInteger(R.integer.alreadyUp)) {
-                        Log.i(TAG, "File already uploaded.");
+                        // File already uploaded.
 
                     } else {
                         fileName = null;
@@ -195,6 +184,8 @@ public class UploadService extends IntentService {
 //      Displays notification once the last file has been uploaded
             if (filesLeft == 0) {
                 notificationSender();
+
+                scheduleDeleting();
             }
 
         }
@@ -258,6 +249,15 @@ public class UploadService extends IntentService {
 
         Notification.Builder notBuild = notUtils.getUploadedNotification(false, fText);
         notUtils.getManager().notify(getResources().getInteger(R.integer.failedUploadID),notBuild.build());
+    }
+
+    private void scheduleDeleting() {
+        JobUtilities jobUtils = new JobUtilities(this);
+
+        if (jobUtils.jobNeedsCreating(jobUtils.DELETING_JOB_INT)) {
+            jobUtils.getScheduler().schedule(jobUtils.deletingJob());
+        }
+
     }
 
     private void moveFile(String fileToMove) { // Moves the uploaded files to the 'uploaded' folder

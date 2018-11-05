@@ -6,10 +6,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -24,7 +21,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,11 +31,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
-import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.forcedStopAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.selectingAmb;
@@ -54,8 +48,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 //    For Ambulance Mode. Intents start the ambulance-specific services. Ints and String are for onActivityResult.
     Intent ambSelect, ambGPS;   final int ambStart = 1132, ambEnd = 1133;    final static String ambExtra = "EndSelecting";
-
-    String TAG = "CRL_MainActivity";    // Debugging TAG for class.
 
 //    Declare intents to start services. Self-explanatory.
     Intent uploadService, audioService, gpsService, imuService, loggingService, gpsTimerService;
@@ -156,10 +148,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         File finishedFolder = new File(String.valueOf(getExternalFilesDir("Finished")));
         File[] finishedList = finishedFolder.listFiles();
         if (finishedList != null && finishedList.length != 0) {
-            sendJob();
+            sendJobs();
         }
-        // Initialise the file deleting job
-        sendDeletingJob();
 
         setUpToolbar(); // Sets up the toolbar - method lower down.
 
@@ -237,7 +227,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         registerReceiver(timerReceiver, new IntentFilter(timerFilter));
 
         startService(audioService); // Start the Audio Service so MaxAmplitude is available
-        Log.i(TAG, "startInitialising");
     }
 
 //    Stops the app initialising - if user decides to cancel
@@ -646,50 +635,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     };
 
-    // Schedule job to upload files when connected to wifi
-    public void sendJob() {
-        int jobInt = getResources().getInteger(R.integer.uploadJobID);
-        ComponentName jobName = new ComponentName(this, UploadJobService.class);
-        JobInfo newUploadJob = new JobInfo.Builder(jobInt,jobName)
-                .setPersisted(true)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Only execute on Wi-Fi
-                .build();
-
-//        Schedule job:
-        JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (js != null) {
-            js.schedule(newUploadJob);
-        }
-    }
-
-    // Schedule deleting job for once a week, when connected to wifi
-    public void sendDeletingJob() {
-        int jobInt = getResources().getInteger(R.integer.deletingJobID);
-        boolean jobExists = false;
-        JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (js != null) {
-            // Check if the job already exists in the system
-            List<JobInfo> pendingJobs = js.getAllPendingJobs();
-            for (JobInfo job : pendingJobs) {
-                if (job.getId() == jobInt) {
-                    jobExists = true;
-                    break;
-                }
-            }
-
-            // If the job doesn't exist, create it!
-            if (!jobExists) {
-                ComponentName jobName = new ComponentName(this, DeletingJobService.class);
-                JobInfo newDeletingJob = new JobInfo.Builder(jobInt, jobName)
-                        .setPeriodic(TimeUnit.DAYS.toMillis(7)) // Schedule it for once a week
-                        .setPersisted(true)
-                        .setRequiresDeviceIdle(true) // When the device is not being used
-                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)     // Only execute on Wi-Fi
-                        .build();
-
-                // Schedule job:
-                js.schedule(newDeletingJob);
-            }
+    public void sendJobs() {
+        JobUtilities jobUtils = new JobUtilities(this);
+        jobUtils.getScheduler().schedule(jobUtils.uploadJob());
+        if (jobUtils.jobNeedsCreating(jobUtils.DELETING_JOB_INT)) {
+            jobUtils.getScheduler().schedule(jobUtils.deletingJob());
         }
     }
 

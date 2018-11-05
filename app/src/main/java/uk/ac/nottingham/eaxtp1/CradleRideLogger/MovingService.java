@@ -1,10 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.IntentService;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 
 import java.io.File;
@@ -94,24 +90,10 @@ public class MovingService extends IntentService {
 
         moving = false;
 
-        sendJob();
+        // Schedule an upload job to try and get the files which were just recorded to upload
+        JobUtilities jobUtils = new JobUtilities(this);
+        jobUtils.getScheduler().schedule(jobUtils.uploadJob());
 
-    }
-
-    // Schedule an upload job to try and get the files which were just recorded to upload
-    public void sendJob() {
-        int jobInt = getResources().getInteger(R.integer.uploadJobID);
-        ComponentName jobName = new ComponentName(this, UploadJobService.class);
-        JobInfo newUploadJob = new JobInfo.Builder(jobInt,jobName)
-                .setPersisted(true)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED) // Only upload over Wi-Fi
-                .build();
-
-//        Schedule job:
-        JobScheduler js = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (js != null) {
-            js.schedule(newUploadJob);
-        }
     }
 
 }

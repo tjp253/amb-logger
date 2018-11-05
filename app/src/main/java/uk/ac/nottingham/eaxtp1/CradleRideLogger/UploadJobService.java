@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.util.Log;
 
 import java.io.File;
 
@@ -18,8 +17,6 @@ public class UploadJobService extends JobService {
     // If the phone is not connected to wifi when it wants to upload, a "job" is created. This
     // service handles that job when the criteria are met to begin the upload.
 
-    String TAG = "CRL_JobService";
-
     JobParameters parameters;
 
     // Boolean to tell UploadService it can go ahead with uploading files. An extra, possibly
@@ -28,8 +25,6 @@ public class UploadJobService extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters params) {
-
-        Log.i(TAG, "Starting Upload Job");
 
         String finishedPath = String.valueOf(getExternalFilesDir("Finished"));
         File finishedFolder = new File(finishedPath);
@@ -48,16 +43,13 @@ public class UploadJobService extends JobService {
             startService(uploadService);
 
             return true;
-        } else {
-            Log.i(TAG, "Not the right time to upload files.");
-            return false;
         }
+
+        return false;
     }
 
     @Override
     public boolean onStopJob(JobParameters params) {
-
-        Log.i(TAG, "Stopping Upload Job");
 
         uploading = false;
 

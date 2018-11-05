@@ -8,7 +8,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.IBinder;
-import android.util.Log;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_F_CHECK;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_FS;
@@ -21,8 +20,6 @@ public class FSChecker extends Service implements SensorEventListener {
 // sampling frequency and whether a gyroscope sensor is present or not, and stores the
 // information in the ShardPreferences. This helps decide what to log in the LoggingService.
 
-    final String TAG = "FSChecker";
-
     SensorManager manager;
     Sensor acc, gyro;
 
@@ -34,7 +31,6 @@ public class FSChecker extends Service implements SensorEventListener {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "onCreate");
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if (manager != null) {      // Mandatory check to remove Android Studio NullPointer warning
             acc = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -77,9 +73,6 @@ public class FSChecker extends Service implements SensorEventListener {
                 if (duration >= 15) {
                     duration -= 5 ;
                     fSample = ( nSamples / duration ) + 1 ;
-                    Log.i(TAG, "Sample Frequency: " + fSample);
-                    Log.i(TAG, "Samples: " + nSamples);
-                    Log.i(TAG, "Seconds: " + duration);
                     manager.unregisterListener(this, acc);
                     stopSelf();
                 }
@@ -90,7 +83,6 @@ public class FSChecker extends Service implements SensorEventListener {
 
                 gPresent = true;
                 manager.unregisterListener(this, gyro);
-                Log.i(TAG, "Gyro Present: " + gPresent);
 
                 break;
 

@@ -2,6 +2,7 @@
 
     <!-- Pattern required for the filename -->
     <string name="file_date_format">yyyy_MM_dd-HH_mm_ss_SSS</string>
+    <string name="id_spacer">-ID</string>
 
     <string name="id_string">Unique ID: \t</string>
     <string name="version_string">\nVersion: \t</string>
