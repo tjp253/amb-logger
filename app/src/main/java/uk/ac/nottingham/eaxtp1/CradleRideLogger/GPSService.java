@@ -46,7 +46,7 @@ public class GPSService extends Service implements LocationListener {
     static short gpsSample;
     private long movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
-    long limitStart = 10*60, limitMax = 20*60;     // TODO: Set limitStart to 10*60 (10 minutes)
+    final long limitStart = getResources().getInteger(R.integer.limit_start), limitMax = getResources().getInteger(R.integer.limit_max);
     float speed;
     static boolean autoStopOn, wifiCheckOn;
 

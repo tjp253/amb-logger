@@ -146,8 +146,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         // Check if there are files available to upload, and schedule the job if need be.
         File finishedFolder = new File(String.valueOf(getExternalFilesDir("Finished")));
+        File uploadedFolder = new File(String.valueOf(getExternalFilesDir("Uploaded")));
         File[] finishedList = finishedFolder.listFiles();
-        if (finishedList != null && finishedList.length != 0) {
+        File[] uploadedList = uploadedFolder.listFiles();
+        if ( (finishedList != null && finishedList.length != 0) ||
+                (uploadedList != null && uploadedList.length != 0) ) {
             sendJobs();
         }
 

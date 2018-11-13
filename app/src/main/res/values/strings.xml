@@ -105,6 +105,7 @@
     <string name="key_pref_test">TestMode</string>
     <string name="key_pref_files">DeleteFiles</string>
 
+    <string name="key_pref_delete_time">DeletingJobTime</string>
     <string name="key_pref_magnets">HeldWithMagnets</string>
 
     <string name="pref_main">myPreferences</string>

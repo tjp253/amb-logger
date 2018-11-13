@@ -115,8 +115,9 @@ public class DeletingJobService extends JobService {
                                 deleteFiles = false;
 
                             } else {
-                                // Cancel the deleting process
-                                jobFinished(jobParameters, false);
+                                // Cancel the deleting process and reschedule it for next
+                                // available time.
+                                jobFinished(jobParameters, true);
                                 return;
                             }
 
@@ -135,6 +136,9 @@ public class DeletingJobService extends JobService {
                 if (BuildConfig.AMB_MODE) {
                     sendStorageUpdate(); // Update the server XML for NTT phones.
                 }
+
+                // Confirm the job has finished, and remove it from the schedule.
+                jobFinished(jobParameters, false);
 
             }
         }).start();
