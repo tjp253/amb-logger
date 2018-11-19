@@ -6,6 +6,22 @@
     <string name="pref_amb_settings">Amb Settings</string>
     <string name="key_pref_ntt">NTT Pref</string>
 
+    <string name="key_amb">PrefAmb</string>
+    <string name="key_troll">PrefTroll</string>
+    <string name="key_pat">PrefPat</string>
+    <string name="key_trans">PrefTrans</string>
+    <string name="key_emerge">PrefEmerge</string>
+
+    <string name="key_amb_opts">PrefList</string>
+    <string name="key_amb_name">PrefName</string>
+    <string name="key_dead">PrefDead</string>
+    <string name="extra_dead">PhoneDead</string>
+    <string name="key_end_name">PrefEndName</string>
+
+    <integer name="ambStart">1132</integer>
+    <integer name="ambEnd">1133</integer>
+    <integer name="ambDead">1111</integer>
+
     <string name="ambTit">Please select current ambulance</string>
     <string name="optOther">Other</string>
     <string name="optSame">Same as before</string>
@@ -26,6 +42,9 @@
     <string name="transReasonTwo">REPAT OR CAPACITY</string>
 
     <string name="emergeTit">Was Emergency Driving used at any time?</string>
+
+    <string name="optForgot">Can\'t remember</string>
+    <string name="optUnknown">UNKNOWN</string>
 
     <string name="choose_ntt">Neonatal Transfer Team</string>
     <string name="ntt_centre">CenTre</string>

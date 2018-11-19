@@ -44,10 +44,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     NotificationUtilities notUtils;
 
-    static boolean gpsOff;  // Only used in Test Mode - can choose to test accelerometers (and audio) only
+    static boolean gpsOff, // Only used in Test Mode - can choose to test accelerometers (and audio) only
+            phoneDead; // Boolean which becomes true if the phone shut down during recording.
 
 //    For Ambulance Mode. Intents start the ambulance-specific services. Ints and String are for onActivityResult.
-    Intent ambSelect, ambGPS;   final int ambStart = 1132, ambEnd = 1133;    final static String ambExtra = "EndSelecting";
+    Intent ambSelect, ambGPS;    final static String ambExtra = "EndSelecting";
 
 //    Declare intents to start services. Self-explanatory.
     Intent uploadService, audioService, gpsService, imuService, loggingService, gpsTimerService;
@@ -72,7 +73,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private ProgressBar loadingAn;  // Declare the progress circle for GPS search.
 
-    boolean initialising, buttPressed, displayOn, buffing, fileEmpty;
+    boolean initialising, buttPressed, displayOn, buffing, fileEmpty, atStart;
     static boolean recording, moving, crashed, forcedStop;    // forcedStop set to true when AutoStop has been used.
 
     @SuppressLint("WifiManagerLeak")    // Android Studio stuff
@@ -158,6 +159,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         if (BuildConfig.AMB_MODE) { // If AMB Build, initialise AMB service intents.
             ambSelect = new Intent(this, AmbSelect.class);
+            ambSelect.putExtra(getString(R.string.extra_dead),false);
             ambGPS = new Intent(this,AmbGPSService.class);
         } else if (BuildConfig.TEST_MODE) { // If Test Build check whether GPS is on or off.
             gpsOff = !PreferenceManager.getDefaultSharedPreferences(this)
@@ -195,9 +197,26 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         }
 
-//        Stop GPS initialising if SOMEHOW get back to MainActivity with 'selectingAmb' true. Crash?
-        if (BuildConfig.AMB_MODE && selectingAmb && !recording) {
-            stopService(ambGPS);
+        if (BuildConfig.AMB_MODE) {
+
+            // Initialise the phoneDead boolean from the AMB SharedPrefs. If the phone was shut
+            // down during recording, this will return as true and the user will be asked for the
+            // AMB options as they normally would at the end of recordings. After selecting, the
+            // file is written and sent to upload.
+            phoneDead = getSharedPreferences(getString(R.string.pref_amb),MODE_PRIVATE)
+                    .getBoolean(getString(R.string.key_dead),false);
+            if (phoneDead) {
+                ambSelect.putExtra(getString(R.string.extra_dead),true);
+                startActivityForResult(ambSelect, getResources().getInteger(R.integer.ambDead));
+            } else {
+                ambSelect.putExtra(getString(R.string.extra_dead),false);
+            }
+
+            if (selectingAmb && !recording) {
+                // Stop GPS initialising if SOMEHOW get back to MainActivity with 'selectingAmb'
+                // true. Crash?
+                stopService(ambGPS);
+            }
         }
 
     }
@@ -262,6 +281,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         startService(loggingService);   // Start the logging service
         if (!BuildConfig.AMB_MODE) {
             startService(imuService);   // Unless AMB, start IMU - AMB starts it earlier
+        } else {
+            registerReceiver(shutdownReceiver,new IntentFilter(Intent.ACTION_SHUTDOWN));
         }
 //        Register for feedback from Logging Service
         registerReceiver(loggingReceiver, new IntentFilter(loggingFilter));
@@ -290,6 +311,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         recordButt.setText(R.string.butt_start);
         recordButt.setEnabled(true);
+
+        if (!initialising && BuildConfig.AMB_MODE && !atStart && !phoneDead) {
+            unregisterReceiver(shutdownReceiver);
+        }
+        initialising = false;
+        atStart = false;
     }
 
 //    Change the info displayed depending on what was recorded (how much)
@@ -326,7 +353,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     instructDisplay.setText(R.string.file_empty);   // Tell user recording was pointless
                     buffing = false;
                 } else if (BuildConfig.AMB_MODE) {
-                    startActivityForResult(ambSelect, ambStart);    // Start the ambulance / trolley selection
+                    startActivityForResult(ambSelect, getResources().getInteger(R.integer.ambStart)); // Start the ambulance / trolley selection
                     startService(imuService);   // Start IMU logging straight away - for entrance matting, etc.
                 } else {
                     startInitialising();    // Recording is go!
@@ -335,7 +362,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             } else { // Stop recording data
 
                 if (BuildConfig.AMB_MODE) {
-                    startActivityForResult(ambSelect, ambEnd);  // Get user selecting transport reasons
+                    startActivityForResult(ambSelect, getResources().getInteger(R.integer.ambEnd));  // Get user selecting transport reasons
                 } else {
                     stopAll();  // Stop all services (doesn't matter if they're not all running)
 
@@ -383,7 +410,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             } else if (buttPressed) {   // Start the recording process
                 if (BuildConfig.AMB_MODE) {
-                    startActivityForResult(ambSelect, ambStart);
+                    startActivityForResult(ambSelect, getResources().getInteger(R.integer.ambStart));
                 } else {
                     startInitialising();
                 }
@@ -481,6 +508,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onStart() {
         super.onStart();
         if (!initialising && !recording && !forcedStop) {
+            atStart = true;
             stopAll();  // Stop all services (doesn't matter if they're not all running)
         }
     }
@@ -490,16 +518,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             if (data.getBooleanExtra(ambExtra, false)) {
-                switch (requestCode) {
-                    case ambStart:
-                        startInitialising();
-                        break;
-                    case ambEnd:
-                        stopAll();  // Stop all services (doesn't matter if they're not all running)
-                        displayOnFinish();      // Notify user that logging has stopped.
-                        break;
+                if (requestCode == getResources().getInteger(R.integer.ambStart)) {
+                    startInitialising();
+
+                } else if (requestCode == getResources().getInteger(R.integer.ambEnd)) {
+                    stopAll();  // Stop all services (doesn't matter if they're not all running)
+                    displayOnFinish();      // Notify user that logging has stopped.
+
+                } else if (requestCode == getResources().getInteger(R.integer.ambDead)) {
+                    getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE).edit()
+                            .putBoolean(getString(R.string.key_dead),false).apply();
+                    stopAll(); // In case services are still running.
+                    startService(new Intent(getApplicationContext(), AmbWriteAfterReboot.class));
+
                 }
-            } else if (!data.getBooleanExtra(ambExtra, false) && requestCode == ambStart) {
+            } else if (!data.getBooleanExtra(ambExtra, false) && requestCode == getResources().getInteger(R.integer.ambStart)) {
                 stopInitialising(); // User has cancelled the recording
             }
         }
@@ -637,6 +670,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
             unregisterReceiver(gpsReceiver);
         }
     };
+
+    private BroadcastReceiver shutdownReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            phoneDead = true;
+            SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
+            ambPref.edit().putBoolean(getString(R.string.key_dead),true).apply();
+            unregisterReceiver(shutdownReceiver);
+        }
+    };
+
 
     public void sendJobs() {
         JobUtilities jobUtils = new JobUtilities(this);

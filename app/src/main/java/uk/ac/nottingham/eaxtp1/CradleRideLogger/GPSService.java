@@ -46,7 +46,7 @@ public class GPSService extends Service implements LocationListener {
     static short gpsSample;
     private long movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
-    final long limitStart = getResources().getInteger(R.integer.limit_start), limitMax = getResources().getInteger(R.integer.limit_max);
+    long limitStart, limitMax;
     float speed;
     static boolean autoStopOn, wifiCheckOn;
 
@@ -69,6 +69,9 @@ public class GPSService extends Service implements LocationListener {
             gpsSample = 0;
             sGPS = "";
         }
+
+        limitStart = getResources().getInteger(R.integer.limit_start);
+        limitMax = getResources().getInteger(R.integer.limit_max);
 
 //        AutoStop stops the recording if stationary for an extended period of time.
         autoStopOn = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(getString(R.string.key_pref_as), true);

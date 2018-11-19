@@ -25,11 +25,6 @@ import java.util.TimerTask;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyAmb;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyEmerge;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyPat;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyTrans;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.keyTroll;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.date;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.myQ;
@@ -39,6 +34,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingFilter;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.phoneDead;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
@@ -55,7 +51,8 @@ public class LoggingService extends Service {
 
     NotificationUtilities notUtils;
 
-    SharedPreferences preferences;
+    SharedPreferences preferences, ambPref;
+    SharedPreferences.Editor ambEd;
     CountDownTimer waitTimer;
     PowerManager.WakeLock wakelock;
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
@@ -70,7 +67,7 @@ public class LoggingService extends Service {
     final int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
 
     String filepath = "Recording", digitAdjuster = "-0", filename, mainPath, gzipPath, ambPath,
-            toFile, outputTitle, endName;
+            toFile, outputTitle, endName, ambList;
 
     StringBuilder stringBuilder = new StringBuilder();  // You don't need to say the string is empty
 
@@ -93,7 +90,7 @@ public class LoggingService extends Service {
             Date todayDate = new Date();
             date = dateFormat.format(todayDate);
         }
-        filename = date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + zipPart + ".csv.gz";
+        filename = date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + zipPart + getString(R.string.file_type);
 
         if (!crashed) {
             preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
@@ -125,8 +122,10 @@ public class LoggingService extends Service {
     }
 
     public void crashCheck() { // Check if the app has crashed and restarted the activity falsely.
+        // Also checks if the phone is being shut down during recording, and logs this as a crash
+        // to allow AMB Options to be entered correctly upon restart.
 //        if (userID == 13319625 || userID == 0) {
-        if (userID == 0) {
+        if (userID == 0 || phoneDead) {
             crashed = true;
             stopSelf();
         }
@@ -177,7 +176,6 @@ public class LoggingService extends Service {
 
         dataInFile = true;
     }
-
 
     public void logTitle() { // Create, format and log the file header
         ArrayList<String> titleList, gpsTitleList;
@@ -269,7 +267,7 @@ public class LoggingService extends Service {
 //    Create a new file to continue the recording
     public void fileSplitter(int filePart) {
 
-        gzipPath = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + filePart + ".csv.gz";
+        gzipPath = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + filePart + getString(R.string.file_type);
 
         try {
             myOutputStream.close();
@@ -280,6 +278,10 @@ public class LoggingService extends Service {
         }
 
         gzFile = new File(gzipPath);
+
+        if (BuildConfig.AMB_MODE) {
+            ambEd.putString(getString(R.string.key_end_name), gzipPath).apply();
+        }
 
     }
 
@@ -293,7 +295,7 @@ public class LoggingService extends Service {
         }
 
         if (!crashed && dataInFile) {
-            if (BuildConfig.AMB_MODE) {
+            if (BuildConfig.AMB_MODE && !phoneDead) {
                 logAmb(false);  // Log the entries at the end of ambulance journey.
             }
 
@@ -322,9 +324,10 @@ public class LoggingService extends Service {
             // Edit the final filename to enable PHP to automatically join all parts of the
             // recording
             if (multiFile || BuildConfig.AMB_MODE) {
-                endName = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + zipPart + getResources().getString(R.string.suffix) + ".csv.gz";
+                endName = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) +
+                        digitAdjuster + zipPart + getResources().getString(R.string.suffix) + getString(R.string.file_type);
             } else {
-                endName = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + ".csv.gz";
+                endName = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + getString(R.string.file_type);
             }
             File endFile = new File(endName);
             gzFile.renameTo(endFile);
@@ -386,26 +389,38 @@ public class LoggingService extends Service {
             e.printStackTrace();
         }
         logAmb(true);
+
+        ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
+        ambEd = ambPref.edit();
+        ambEd.putString(getString(R.string.key_amb_opts), ambList);
+        ambEd.putString(getString(R.string.key_amb_name), ambPath);
+        ambEd.putString(getString(R.string.key_end_name), gzipPath);
+        ambEd.apply();
     }
 
     public void logAmb(boolean atStart) { // Log ambulance options
-        String ambList, amb, troll, pat, trans, emerge;
+        String amb, troll, pat, trans, emerge;
 
         SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
 
         if (atStart) {
-            amb = ambPref.getString(keyAmb,"");
-            troll = ambPref.getString(keyTroll,"");
-            if (ambPref.getBoolean(keyPat, true)) {
+            amb = ambPref.getString(getString(R.string.key_amb),"");
+            troll = ambPref.getString(getString(R.string.key_troll),"");
+            if (ambPref.getBoolean(getString(R.string.key_pat), true)) {
                 pat = getString(R.string.yesButt);
             } else {
                 pat = getString(R.string.noButt);
             }
             ambList = TextUtils.join(",", Arrays.asList("Ambulance", amb, "Trolley", troll, "Patient", pat,""));
         } else {
-            trans = ambPref.getString(keyTrans,"");
-            emerge = ambPref.getString(keyEmerge,"");
+            trans = ambPref.getString(getString(R.string.key_trans),"");
+            emerge = ambPref.getString(getString(R.string.key_emerge),"");
             ambList = TextUtils.join(",", Arrays.asList("Reason for Transfer", trans, "Emergency driving used", emerge)) + "\n";
+
+            ambEd.putString(getString(R.string.key_amb_opts),null);
+            ambEd.putString(getString(R.string.key_amb_name),null);
+            ambEd.putString(getString(R.string.key_end_name), null);
+            ambEd.apply();
         }
 
         try {

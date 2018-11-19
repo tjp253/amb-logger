@@ -10,7 +10,7 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.os.Build;
 
-@SuppressLint("NewApi") // This is checked for with the boolean 'newAPI'.
+@SuppressLint("NewApi") // This is checked for with the boolean 'nAPI'.
 public class NotificationUtilities extends ContextWrapper {
 
     // Class to handle all notification duties. This class establishes the Notification Channels

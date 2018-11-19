@@ -23,6 +23,10 @@
         <service android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbGPSService"
             tools:ignore="InnerclassSeparator" />
 
+        <service android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbWriteAfterReboot"
+            tools:ignore="InnerclassSeparator"
+            android:exported="false" />
+
     </application>
 
 </manifest>

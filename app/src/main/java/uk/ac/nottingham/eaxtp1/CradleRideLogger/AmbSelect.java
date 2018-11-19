@@ -23,6 +23,7 @@ import java.util.Objects;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambExtra;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingFilter;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.phoneDead;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class AmbSelect extends Activity implements View.OnClickListener {
@@ -37,8 +38,6 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     SharedPreferences ambPref;
     SharedPreferences.Editor prefEd;
     static boolean selectingAmb, forcedStopAmb;
-    static final String keyAmb = "PrefAmb", keyTroll = "PrefTroll", keyPat = "PrefPat",
-            keyTrans = "PrefTrans", keyEmerge = "PrefEmerge";
 
     AlertDialog inAlert;
     ContextThemeWrapper dialogWrapper = new ContextThemeWrapper(this, R.style.MyAlertDialog);
@@ -47,7 +46,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     String prefStr;
     String[] ambArray, trollArray;
 
-    boolean patient;
+    boolean patient, resuscitated;
     int inputNo, intOne, intTwo, strID;
 
     @SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
@@ -55,6 +54,8 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_amb_select);
+
+        resuscitated = this.getIntent().getBooleanExtra(getString(R.string.extra_dead),false);
 
         forcedStopAmb = this.getIntent().getBooleanExtra(getString(R.string.forcedIntent),false);
 
@@ -85,20 +86,27 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             buttSame.setVisibility(View.VISIBLE);
         }
 
-        if (recording || forcedStopAmb) {   // Ask for transport-end data
+        if (recording || forcedStopAmb || phoneDead) {   // Ask for transport-end data
             butt3.setVisibility(View.INVISIBLE);
             butt4.setVisibility(View.INVISIBLE);
             buttSame.setVisibility(View.GONE);
-            buttOther.setText(R.string.butt_cancel);
-            if (forcedStopAmb) {    // Hide cancel button if recording stopped due to inactivity
+
+            if (resuscitated) {
+                buttOther.setText(R.string.optForgot);
+
+            } else if (forcedStopAmb) { // Hide cancel button if recording stopped due to inactivity
                 buttOther.setVisibility(View.INVISIBLE);
                 asView.setVisibility(View.VISIBLE);
+
+            } else {
+                buttOther.setText(R.string.butt_cancel);
+
             }
 //            Check if baby is on board, and change the question appropriately
-            patient = ambPref.getBoolean(keyPat, false);
+            patient = ambPref.getBoolean(getString(R.string.key_pat), false);
             changeButtsEnd(patient);
             if (!patient) {
-                prefEd.putString(keyTrans,"N/A").commit();
+                prefEd.putString(getString(R.string.key_trans),"N/A").commit();
             }
 
         } else {    // Ask for transport-start data
@@ -184,17 +192,17 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
 //    Store input choices in preferences for logging and to speed up future inputs SLIGHTLY
     public void storeAmb(int optionNo) {
-        if (!(recording || forcedStopAmb)) {   // Selections before journey.
+        if (!(recording || forcedStopAmb || phoneDead)) {   // Selections before journey.
             buttPause.start();
             switch (inputNo) {
                 case 0: // Store ambulance ID
-                    prefEd.putString(keyAmb, ambArray[optionNo-1]).commit();
+                    prefEd.putString(getString(R.string.key_amb), ambArray[optionNo-1]).commit();
                     break;
                 case 1: // Store trolley ID
-                    prefEd.putString(keyTroll, trollArray[optionNo-1]).commit();
+                    prefEd.putString(getString(R.string.key_troll), trollArray[optionNo-1]).commit();
                     break;
                 case 2: // Store baby presence
-                    prefEd.putBoolean(keyPat, optionNo == 1).commit();
+                    prefEd.putBoolean(getString(R.string.key_pat), optionNo == 1).commit();
                     prefEd.putInt(keyDate, Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
                     sendIntentBack(true);   // Start the full recording
                     return;
@@ -203,16 +211,18 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             if (patient) {
                 buttPause.start();
                 switch (optionNo) {
-                    case 1: prefEd.putString(keyTrans, getString(R.string.transReasonOne)); break;
-                    case 2: prefEd.putString(keyTrans, getString(R.string.transReasonTwo)); break;
+                    case 1: prefEd.putString(getString(R.string.key_trans), getString(R.string.transReasonOne)); break;
+                    case 2: prefEd.putString(getString(R.string.key_trans), getString(R.string.transReasonTwo)); break;
                     case 5: finish(); return;
+                    case 9: prefEd.putString(getString(R.string.key_trans), getString(R.string.optUnknown)); break;
                 }
                 patient = false;
             } else {
                 switch (optionNo) {
-                    case 1: prefEd.putString(keyEmerge, getString(R.string.yesButt)).commit(); break;
-                    case 2: prefEd.putString(keyEmerge, getString(R.string.noButt)).commit(); break;
+                    case 1: prefEd.putString(getString(R.string.key_emerge), getString(R.string.yesButt)).commit(); break;
+                    case 2: prefEd.putString(getString(R.string.key_emerge), getString(R.string.noButt)).commit(); break;
                     case 5: finish(); return;
+                    case 9: prefEd.putString(getString(R.string.key_emerge), getString(R.string.optUnknown)).commit(); break;
                 }
                 sendIntentBack(true);
                 return;
@@ -256,7 +266,10 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     }
 
     public void getOther() {
-        if (recording) {
+        if (resuscitated) {
+            storeAmb(9); // Enter in 'Unknown'
+
+        } else if (recording) {
             storeAmb(5);    // Cancel selection and return to recording
 
         } else {    // Give user a window to input their own Ambulance / Trolley ID
@@ -268,12 +281,12 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                 intOne = R.id.ambInput;
                 intTwo = R.id.trollInput;
                 strID = R.string.entAmb;
-                prefStr = keyAmb;
+                prefStr = getString(R.string.key_amb);
             } else {
                 intOne = R.id.trollInput;
                 intTwo = R.id.ambInput;
                 strID = R.string.entTroll;
-                prefStr = keyTroll;
+                prefStr = getString(R.string.key_troll);
             }
             final EditText input = inputView.findViewById(intOne);
             final EditText input2 = inputView.findViewById(intTwo);
