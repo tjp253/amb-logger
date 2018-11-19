@@ -22,7 +22,7 @@
     <string name="permissions">Please grant all permissions to enable recording.</string>
 
     <string name="uploading">Uploading files.</string>
-    <string name="as_message">Recording stopped due to lack of movement.</string>
+    <string name="as_message">Recording stopped due to lack of detected movement.</string>
 
     <string name="ad_title">Disclosure Agreement</string>
     <string name="ad_button">Accept</string>

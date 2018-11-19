@@ -23,8 +23,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AutoStopTimerService.cancelRecording;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AutoStopTimerService.timerServiceRunning;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSampleTime;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
@@ -68,8 +71,9 @@ public class IMUService extends Service implements SensorEventListener {
 
     static BlockingQueue<String> myQ;   // Declare data queue
 
-
     static String date;
+
+    Intent autoStopTimerService;
 
     @Override
     public void onCreate() {
@@ -87,6 +91,8 @@ public class IMUService extends Service implements SensorEventListener {
 
         Notification.Builder notBuild = notUtils.getForegroundNotification();
         startForeground(getResources().getInteger(R.integer.foregroundID), notBuild.build());
+
+        autoStopTimerService = new Intent(getApplicationContext(),AutoStopTimerService.class);
     }
 
 //    Initialise the IMU sensors and the wakelock
@@ -144,6 +150,21 @@ public class IMUService extends Service implements SensorEventListener {
                 currTime = System.currentTimeMillis();  // Time to be logged
                 if (!gpsOff) {
                     sampleTime = String.valueOf(currTime - startTime);
+
+                    // The following code handles the AutoStop service, depending on how long it
+                    // has been since the last GPS Sample.
+                    if (gpsSampleTime > 0) { // GPS Service has started
+                        long timeSinceGPS = currTime - gpsSampleTime;
+                        if (timeSinceGPS < 60000) { // TODO: Set to 1 minute (60000)
+                            if (timerServiceRunning) {
+                                stopService(autoStopTimerService);
+                                cancelRecording = false;
+                            }
+                        } else if (!timerServiceRunning) {
+                            startService(autoStopTimerService);
+                        }
+                    }
+
                 } else {
                     sampleTime = String.valueOf(currTime);  // Outputs time since 1970, when testing.
                 }
@@ -254,6 +275,7 @@ public class IMUService extends Service implements SensorEventListener {
         // Reset the static variables for the next recording.
         sGPS = "";
         amp = 0;
+        gpsSampleTime = 0;
 
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();

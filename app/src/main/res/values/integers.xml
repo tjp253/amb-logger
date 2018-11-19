@@ -9,7 +9,7 @@
     <integer name="buff_max">5</integer>
 
     <integer name="limit_start">600</integer> <!-- TODO: Set limitStart to 10 minutes (600) -->
-    <integer name="limit_max">1200</integer>
+    <integer name="limit_max">1200</integer> <!-- TODO: Set limitMax to 20 minutes (1200) -->
 
     <!-- Notification IDs -->
     <!-- For running services in foreground -->
