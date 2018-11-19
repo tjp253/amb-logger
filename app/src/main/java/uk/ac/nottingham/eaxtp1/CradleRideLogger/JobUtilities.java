@@ -9,6 +9,7 @@ import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.os.Build;
 
+import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +37,30 @@ public class JobUtilities extends ContextWrapper {
             scheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
         }
         return scheduler;
+    }
+
+    public void checkFiles() {
+        // Check if there are files available to upload, and schedule the job if need be.
+        File finishedFolder = new File(String.valueOf(getExternalFilesDir("Finished")));
+        File uploadedFolder = new File(String.valueOf(getExternalFilesDir("Uploaded")));
+        File[] finishedList = finishedFolder.listFiles();
+        File[] uploadedList = uploadedFolder.listFiles();
+        if (finishedList != null && finishedList.length != 0) scheduleUpload();
+        if (uploadedList != null && uploadedList.length != 0) scheduleDelete();
+    }
+
+    public void scheduleUpload() {
+        getScheduler().schedule(uploadJob());
+    }
+
+    public void scheduleDelete() {
+        if (jobNeedsCreating(DELETING_JOB_INT)) {
+            getScheduler().schedule(deletingJob());
+        }
+    }
+
+    public void scheduleWifi() {
+        getScheduler().schedule(wifiJob());
     }
 
     // Check if the job needs creating (if it does NOT exist)

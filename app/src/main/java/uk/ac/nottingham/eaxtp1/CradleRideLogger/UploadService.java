@@ -185,7 +185,7 @@ public class UploadService extends IntentService {
             if (filesLeft == 0) {
                 notificationSender();
 
-                scheduleDeleting();
+                new JobUtilities(this).scheduleDelete();
             }
 
         }
@@ -249,15 +249,6 @@ public class UploadService extends IntentService {
 
         Notification.Builder notBuild = notUtils.getUploadedNotification(false, fText);
         notUtils.getManager().notify(getResources().getInteger(R.integer.failedUploadID),notBuild.build());
-    }
-
-    private void scheduleDeleting() {
-        JobUtilities jobUtils = new JobUtilities(this);
-
-        if (jobUtils.jobNeedsCreating(jobUtils.DELETING_JOB_INT)) {
-            jobUtils.getScheduler().schedule(jobUtils.deletingJob());
-        }
-
     }
 
     private void moveFile(String fileToMove) { // Moves the uploaded files to the 'uploaded' folder

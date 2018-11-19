@@ -91,8 +91,7 @@ public class MovingService extends IntentService {
         moving = false;
 
         // Schedule an upload job to try and get the files which were just recorded to upload
-        JobUtilities jobUtils = new JobUtilities(this);
-        jobUtils.getScheduler().schedule(jobUtils.uploadJob());
+        new JobUtilities(this).scheduleUpload();
 
     }
 

@@ -5,7 +5,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.CountDownTimer;
 import android.os.IBinder;
-import android.util.Log;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
@@ -37,8 +36,7 @@ public class AutoStopTimerService extends Service {
         // As of API 26, Manifest-registered BroadcastReceivers are essentially disabled.
         // Therefore, Wifi needs to be 'manually' searched for. When stationary, a Job is created
         // which starts if connected to wifi and stops if then disconnected.
-        JobUtilities jobUtils = new JobUtilities(this);
-        jobUtils.getScheduler().schedule( jobUtils.wifiJob() );
+        new JobUtilities(this).scheduleWifi();
 
         wifiCheckOn = true;
 

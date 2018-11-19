@@ -30,7 +30,6 @@ import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.io.File;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -145,15 +144,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         gpsTimerService = new Intent(getApplicationContext(), GPSTimerService.class);
         uploadService = new Intent(this, UploadService.class);
 
-        // Check if there are files available to upload, and schedule the job if need be.
-        File finishedFolder = new File(String.valueOf(getExternalFilesDir("Finished")));
-        File uploadedFolder = new File(String.valueOf(getExternalFilesDir("Uploaded")));
-        File[] finishedList = finishedFolder.listFiles();
-        File[] uploadedList = uploadedFolder.listFiles();
-        if ( (finishedList != null && finishedList.length != 0) ||
-                (uploadedList != null && uploadedList.length != 0) ) {
-            sendJobs();
-        }
+        new JobUtilities(this).checkFiles();
 
         setUpToolbar(); // Sets up the toolbar - method lower down.
 
@@ -680,15 +671,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
             unregisterReceiver(shutdownReceiver);
         }
     };
-
-
-    public void sendJobs() {
-        JobUtilities jobUtils = new JobUtilities(this);
-        jobUtils.getScheduler().schedule(jobUtils.uploadJob());
-        if (jobUtils.jobNeedsCreating(jobUtils.DELETING_JOB_INT)) {
-            jobUtils.getScheduler().schedule(jobUtils.deletingJob());
-        }
-    }
 
 // Disable Back button when used as the HOME SCREEN (AMB Mode)
     @Override
