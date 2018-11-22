@@ -20,7 +20,7 @@ public class AutoStopTimerService extends Service {
     CountDownTimer firstTimer, finalTimer;
     long limitStart, limitMax;
 
-    NotificationUtilities notUtils = new NotificationUtilities(this);
+    NotificationUtilities notUtils;
 
     @Override
     public void onCreate() {
@@ -91,6 +91,13 @@ public class AutoStopTimerService extends Service {
 
     }
 
+    NotificationUtilities getUtilities() {
+        if (notUtils == null) {
+            notUtils = new NotificationUtilities(this);
+        }
+        return notUtils;
+    }
+
     public void cancelRecording() {
 
         recording = false;
@@ -111,8 +118,8 @@ public class AutoStopTimerService extends Service {
         }
 
 
-        Notification.Builder notBuild = notUtils.getStoppedNotification();
-        notUtils.getManager().notify(getResources().getInteger(R.integer.stoppedID),notBuild.build());
+        Notification.Builder notBuild = getUtilities().getStoppedNotification();
+        getUtilities().getManager().notify(getResources().getInteger(R.integer.stoppedID),notBuild.build());
 
         stopSelf();
     }
