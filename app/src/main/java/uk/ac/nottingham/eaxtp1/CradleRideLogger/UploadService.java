@@ -1,7 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.IntentService;
-import android.app.Notification;
 import android.content.Intent;
 
 import java.io.File;
@@ -65,8 +64,7 @@ public class UploadService extends IntentService {
         notUtils.getManager().cancel(getResources().getInteger(R.integer.oversizedID));
         notUtils.getManager().cancel(getResources().getInteger(R.integer.failedUploadID));
 
-        Notification.Builder notBuild = notUtils.getUploadingNotification();
-        startForeground(getResources().getInteger(R.integer.foregroundID),notBuild.build());
+        startForeground(notUtils.FOREGROUND_INT,notUtils.getUploadingNotification().build());
     }
 
     @Override
@@ -82,6 +80,17 @@ public class UploadService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         handleUploads();
+    }
+
+    private URL getURL() {
+        if (url == null) {
+            try {
+                url = new URL(getResources().getString(R.string.uploadURL));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return url;
     }
     
     public void handleUploads() {
@@ -107,12 +116,6 @@ public class UploadService extends IntentService {
             return;
         }
 
-        try {
-            url = new URL(getResources().getString(R.string.uploadURL));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         int sourceLength = sourceFolder.getParent().length() + 9;
 
         for (File file : fileList) { // For each file in the 'finished' folder
@@ -136,7 +139,10 @@ public class UploadService extends IntentService {
                                     RequestBody.create(MediaType.parse(parse), fileToUpload))
                             .build();
 
-                    Request request = new Request.Builder().url(url).post(requestBody).build();
+                    Request request = new Request.Builder()
+                            .url(getURL())
+                            .post(requestBody)
+                            .build();
                     Response response;
                     try {
                         response = okHttpClient.newCall(request).execute();
@@ -185,6 +191,11 @@ public class UploadService extends IntentService {
             if (filesLeft == 0) {
                 notificationSender();
 
+                if (BuildConfig.AMB_MODE) {
+                    // Update the server XML for NTT phones.
+                    new FileCheckUtilities(this).sendStorageUpdate();
+                }
+
                 new JobUtilities(this).scheduleDelete();
             }
 
@@ -219,8 +230,10 @@ public class UploadService extends IntentService {
 
         uploadFileCount = 0;
 
-        Notification.Builder notBuild = notUtils.getUploadedNotification(true, uText);
-        notUtils.getManager().notify(getResources().getInteger(R.integer.uploadedID),notBuild.build());
+        notUtils.getManager()
+                .notify(notUtils.UPLOADED_INT,
+                        notUtils.getUploadedNotification(true, uText)
+                                .build());
     }
 
     public void oversizedNotification() {
@@ -233,8 +246,10 @@ public class UploadService extends IntentService {
 
         oversizedFileCount = 0;
 
-        Notification.Builder notBuild = notUtils.getUploadedNotification(false, oText);
-        notUtils.getManager().notify(getResources().getInteger(R.integer.oversizedID),notBuild.build());
+        notUtils.getManager()
+                .notify(notUtils.OVERSIZED_INT,
+                        notUtils.getUploadedNotification(false, oText)
+                                .build());
     }
 
     private void failedNotification() {
@@ -247,8 +262,10 @@ public class UploadService extends IntentService {
 
         failedFileCount = 0;
 
-        Notification.Builder notBuild = notUtils.getUploadedNotification(false, fText);
-        notUtils.getManager().notify(getResources().getInteger(R.integer.failedUploadID),notBuild.build());
+        notUtils.getManager()
+                .notify(notUtils.FAILED_INT,
+                        notUtils.getUploadedNotification(false, fText)
+                                .build());
     }
 
     private void moveFile(String fileToMove) { // Moves the uploaded files to the 'uploaded' folder

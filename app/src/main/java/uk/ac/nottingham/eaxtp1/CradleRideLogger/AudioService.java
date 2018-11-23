@@ -1,6 +1,5 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -46,8 +45,7 @@ public class AudioService extends Service {
 
         notUtils = new NotificationUtilities(this);
 
-        Notification.Builder notBuild = notUtils.getForegroundNotification();
-        startForeground(getResources().getInteger(R.integer.foregroundID), notBuild.build());
+        startForeground(notUtils.FOREGROUND_INT,notUtils.getForegroundNotification().build());
     }
 
     public void prepAudio() {

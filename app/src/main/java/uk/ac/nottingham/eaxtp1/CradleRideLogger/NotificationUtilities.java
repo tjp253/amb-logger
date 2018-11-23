@@ -31,6 +31,11 @@ public class NotificationUtilities extends ContextWrapper {
             FAILED_CHANNEL_NAME = "FAILED CHANNEL",
             STOPPED_CHANNEL_NAME = "STOPPED CHANNEL";
 
+    public final int UPLOADED_INT = getResources().getInteger(R.integer.uploadedID),
+            OVERSIZED_INT = getResources().getInteger(R.integer.oversizedID),
+            FAILED_INT = getResources().getInteger(R.integer.failedID),
+            FOREGROUND_INT = getResources().getInteger(R.integer.foregroundID);
+
     public NotificationUtilities(Context context) {
         super(context);
         if (newAPI) {

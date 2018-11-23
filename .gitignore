@@ -7,3 +7,7 @@
 /build
 /captures
 .externalNativeBuild
+/app/ambulance/release
+/.idea/caches/build_file_checksums.ser
+/.idea/codeStyles/Project.xml
+/gradle

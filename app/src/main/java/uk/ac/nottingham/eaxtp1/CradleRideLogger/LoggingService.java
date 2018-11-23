@@ -1,7 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.annotation.SuppressLint;
-import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -117,8 +116,7 @@ public class LoggingService extends Service {
 
         notUtils = new NotificationUtilities(this);
 
-        Notification.Builder notBuild = notUtils.getForegroundNotification();
-        startForeground(getResources().getInteger(R.integer.foregroundID), notBuild.build());
+        startForeground(notUtils.FOREGROUND_INT,notUtils.getForegroundNotification().build());
     }
 
     public void crashCheck() { // Check if the app has crashed and restarted the activity falsely.

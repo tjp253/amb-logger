@@ -72,7 +72,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private ProgressBar loadingAn;  // Declare the progress circle for GPS search.
 
-    boolean initialising, buttPressed, displayOn, buffing, fileEmpty, atStart;
+    boolean initialising, buttPressed, displayOn, buffing, fileEmpty;
     static boolean recording, moving, crashed, forcedStop;    // forcedStop set to true when AutoStop has been used.
 
     @SuppressLint("WifiManagerLeak")    // Android Studio stuff
@@ -303,11 +303,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         recordButt.setText(R.string.butt_start);
         recordButt.setEnabled(true);
 
-        if (!initialising && BuildConfig.AMB_MODE && !atStart && !phoneDead) {
-            unregisterReceiver(shutdownReceiver);
-        }
         initialising = false;
-        atStart = false;
     }
 
 //    Change the info displayed depending on what was recorded (how much)
@@ -499,7 +495,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onStart() {
         super.onStart();
         if (!initialising && !recording && !forcedStop) {
-            atStart = true;
             stopAll();  // Stop all services (doesn't matter if they're not all running)
         }
     }
@@ -601,6 +596,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     displayOnFinish();
                     forcedStop = false;
                     stopService(loggingService);
+                    unregisterReceiver(shutdownReceiver);
                     break;
 
                 case 99: // Flash the screen if there's an error reading from the logging queue

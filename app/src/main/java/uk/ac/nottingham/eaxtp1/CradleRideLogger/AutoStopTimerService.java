@@ -11,8 +11,10 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiCheckService.wifiConnected;
 
 public class AutoStopTimerService extends Service {
-    public AutoStopTimerService() {
-    }
+    public AutoStopTimerService() {}
+
+    // This service handles a CountdownTimer used to cancel recordings if there isn't a GPS
+    // sample within the required thresholds.
 
     static boolean timerServiceRunning, cancelRecording, wifiCheckOn;
     boolean firstTimerOn, finalTimerOn;
