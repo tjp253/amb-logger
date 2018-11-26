@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Notification;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -168,7 +167,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         super.onResume();
 
 //        Cancels 'GPS Failed [to lock]' notification when User resumes app
-        notUtils.getManager().cancel(getResources().getInteger(R.integer.failedID));
+        notUtils.getManager().cancel(notUtils.FAILED_INT);
         displayOn = true;   // Tells the app this Activity is being used
 
         if (crashed) {
@@ -559,8 +558,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     stopInitialising();
                     instructDisplay.setText(R.string.failed);
                     if (!displayOn) {   // Send notification if user is not in MainActivity
-                        Notification.Builder notBuild = notUtils.getFailedNotification();
-                        notUtils.getManager().notify(getResources().getInteger(R.integer.failedID),notBuild.build());
+                        notUtils.getManager().notify(notUtils.FAILED_INT,
+                                notUtils.getFailedNotification().build());
                     }
                     unregisterReceiver(timerReceiver);
                     break;

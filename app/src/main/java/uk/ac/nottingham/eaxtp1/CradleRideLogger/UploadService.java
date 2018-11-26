@@ -60,9 +60,7 @@ public class UploadService extends IntentService {
 
         notUtils = new NotificationUtilities(this);
         // Cancel uploaded / oversized / failed notifications when starting a new lot of uploads
-        notUtils.getManager().cancel(getResources().getInteger(R.integer.uploadedID));
-        notUtils.getManager().cancel(getResources().getInteger(R.integer.oversizedID));
-        notUtils.getManager().cancel(getResources().getInteger(R.integer.failedUploadID));
+        notUtils.cancelNotifications(false);
 
         startForeground(notUtils.FOREGROUND_INT,notUtils.getUploadingNotification().build());
     }

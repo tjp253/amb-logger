@@ -1,6 +1,5 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.os.CountDownTimer;
@@ -93,7 +92,7 @@ public class AutoStopTimerService extends Service {
 
     }
 
-    NotificationUtilities getUtilities() {
+    NotificationUtilities getNotUtils() {
         if (notUtils == null) {
             notUtils = new NotificationUtilities(this);
         }
@@ -119,9 +118,8 @@ public class AutoStopTimerService extends Service {
             this.stopService(new Intent(this, LoggingService.class));
         }
 
-
-        Notification.Builder notBuild = getUtilities().getStoppedNotification();
-        getUtilities().getManager().notify(getResources().getInteger(R.integer.stoppedID),notBuild.build());
+        getNotUtils().getManager().notify(getNotUtils().STOPPED_INT,
+                getNotUtils().getStoppedNotification().build());
 
         stopSelf();
     }

@@ -34,7 +34,8 @@ public class NotificationUtilities extends ContextWrapper {
     public final int UPLOADED_INT = getResources().getInteger(R.integer.uploadedID),
             OVERSIZED_INT = getResources().getInteger(R.integer.oversizedID),
             FAILED_INT = getResources().getInteger(R.integer.failedID),
-            FOREGROUND_INT = getResources().getInteger(R.integer.foregroundID);
+            FOREGROUND_INT = getResources().getInteger(R.integer.foregroundID),
+            STOPPED_INT = getResources().getInteger(R.integer.stoppedID);
 
     public NotificationUtilities(Context context) {
         super(context);
@@ -188,6 +189,16 @@ public class NotificationUtilities extends ContextWrapper {
                     .setContentTitle(getString(R.string.app_name))
                     .setContentText(getString(R.string.as_message))
                     .setSmallIcon(R.drawable.stop_symb);
+        }
+    }
+
+    // Cancel old notifications.
+    public void cancelNotifications(boolean newRecording) {
+        getManager().cancel(UPLOADED_INT);
+        getManager().cancel(OVERSIZED_INT);
+        getManager().cancel(FAILED_INT);
+        if (newRecording) {
+            getManager().cancel(STOPPED_INT);
         }
     }
 

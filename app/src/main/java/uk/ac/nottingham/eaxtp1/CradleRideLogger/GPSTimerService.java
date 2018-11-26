@@ -77,6 +77,9 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
         posTimer(); // Allow time for phone positioning before recording
 
+        // Cancel all previous notifications.
+        new NotificationUtilities(this).cancelNotifications(true);
+
     }
 
     @Nullable

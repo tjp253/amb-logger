@@ -104,9 +104,15 @@ public class FileCheckUtilities extends ContextWrapper {
 
         File root = Environment.getDataDirectory();
         StatFs stat = new StatFs(root.getPath());
-        String availableBytes = String.valueOf(stat.getAvailableBytes());
+        String availableBytes = String.valueOf(stat.getAvailableBytes()),
+                id = String.valueOf(userID),
+                version = "";
 
-        String id = String.valueOf(userID);
+        try {
+            version = version + getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         try {
 
@@ -117,6 +123,7 @@ public class FileCheckUtilities extends ContextWrapper {
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("id", id)
                     .addFormDataPart("storage", availableBytes)
+                    .addFormDataPart("version", version) // Send Version Name for info
                     .build();
 
             Request request = new Request.Builder()
