@@ -45,9 +45,7 @@ public class GPSService extends Service implements LocationListener {
     // Number of GPS samples (seconds) before journey is considered "finished".
     long limitStart, limitMax;
     float speed;
-    static boolean autoStopOn, wifiCheckOn;
-
-    boolean timerOn;
+    static boolean autoStopOn, wifiCheckOn, timerOn_Slow;
 
     Intent autoStopTimerService;
 
@@ -104,7 +102,7 @@ public class GPSService extends Service implements LocationListener {
         }
 
         wifiCheckOn = false;
-        timerOn = false;
+        timerOn_Slow = false;
 
         gpsSample = 0;
 
@@ -145,17 +143,17 @@ public class GPSService extends Service implements LocationListener {
     public void stationaryChecker() {
         if (speed <= 2) {   // Less than 5 miles per hour
 
-            if (!timerOn) {
+            if (!timerOn_Slow) {
                 // Start the AutoStop timer service to check the limits have passed.
                 startService(autoStopTimerService);
-                timerOn = true;
+                timerOn_Slow = true;
             }
 
-        } else if (timerOn) {
+        } else if (timerOn_Slow) {
 
             if (speed > 10 || movingSamples > 10) { // True (?) movement detected
                 stopService(autoStopTimerService);
-                timerOn = false;
+                timerOn_Slow = false;
             } else {    // Count towards possible movement
                 movingSamples++;
             }

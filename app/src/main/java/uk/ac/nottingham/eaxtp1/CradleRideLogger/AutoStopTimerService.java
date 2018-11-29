@@ -15,7 +15,7 @@ public class AutoStopTimerService extends Service {
     // This service handles a CountdownTimer used to cancel recordings if there isn't a GPS
     // sample within the required thresholds.
 
-    static boolean timerServiceRunning, cancelRecording, wifiCheckOn;
+    static boolean cancelRecording, wifiCheckOn;
     boolean firstTimerOn, finalTimerOn;
 
     CountDownTimer firstTimer, finalTimer;
@@ -26,8 +26,6 @@ public class AutoStopTimerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        timerServiceRunning = true;
 
         limitStart = getResources().getInteger(R.integer.limit_start);
         limitMax = getResources().getInteger(R.integer.limit_max);
@@ -136,7 +134,6 @@ public class AutoStopTimerService extends Service {
             finalTimerOn = false;
         }
 
-        timerServiceRunning = false;
         wifiCheckOn = false;
 
     }

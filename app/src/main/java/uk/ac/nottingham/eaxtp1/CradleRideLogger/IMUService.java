@@ -23,11 +23,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AutoStopTimerService.cancelRecording;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AutoStopTimerService.timerServiceRunning;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSampleTime;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.timerOn_Slow;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
@@ -50,7 +50,7 @@ public class IMUService extends Service implements SensorEventListener {
 
     SensorManager manager;
     Sensor accelerometer, gravity, magnetic, gyroscope;
-    boolean gyroPresent;
+    boolean gyroPresent, timerOn_Samples;
     static boolean heldWithMagnets;
 
     private long sampleID;
@@ -150,15 +150,21 @@ public class IMUService extends Service implements SensorEventListener {
                     sampleTime = String.valueOf(currTime - startTime);
 
                     // The following code handles the AutoStop service, depending on how long it
-                    // has been since the last GPS Sample.
-                    if (gpsSampleTime > 0) { // GPS Service has started
+                    // has been since the last GPS Sample. If the AutoStop Timer is NOT on due to
+                    // slow speed, check if the GPS has lost signal.
+                    if (!timerOn_Slow && gpsSampleTime > 0) { // GPS Service has started
                         long timeSinceGPS = currTime - gpsSampleTime;
+
                         if (timeSinceGPS < 60000) { // TODO: Set to 1 minute (60000)
-                            if (timerServiceRunning) {
+                            // If AutoStopTimer is on because of lack of GPS cancel the Timer.
+                            if (timerOn_Samples) {
+                                timerOn_Samples = false;
                                 stopService(autoStopTimerService);
                                 cancelRecording = false;
                             }
-                        } else if (!timerServiceRunning) {
+                        // If it's been a minute without a GPS sample, start the AutoStop Timer
+                        } else if (!timerOn_Samples) {
+                            timerOn_Samples = true;
                             startService(autoStopTimerService);
                         }
                     }
