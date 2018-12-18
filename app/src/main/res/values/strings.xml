@@ -33,8 +33,14 @@
         \n\nThe data collected is sent securely to our server for analysis and use in a research project.
     </string>
 
+    <!-- Set strings for the Launcher Dialog -->
+    <string name="lc_title">Please Set App as Launcher</string>
+    <string name="lc_mess">To aid the ease of use of the research phone, please go into the phone\'s
+        settings and set the Ambulance Logger as HOME / LAUNCHER.\n\nThank you.</string>
+
     <string name="butt_ok">@android:string/ok</string>
     <string name="butt_cancel">@android:string/cancel</string>
+    <string name="butt_later">later</string>
 
     <string name="menu_policy">Privacy Policy</string>
     <string name="privacy_title">CradleRide Privacy Policy</string>

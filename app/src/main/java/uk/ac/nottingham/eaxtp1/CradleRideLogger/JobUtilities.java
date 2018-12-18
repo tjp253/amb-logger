@@ -13,15 +13,14 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@SuppressLint("NewApi") // This is checked for with the booleans 'nAPI' and 'oAPI'.
+@SuppressLint("NewApi") // This is checked for with the boolean 'nAPI'.
 public class JobUtilities extends ContextWrapper {
 
     // Class to handle all job scheduler duties. This class establishes the JobScheduler and each
     // job.
 
     // Check if the Android version supports notification channels
-    final boolean nAPI = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N,
-            oAPI = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+    final boolean nAPI = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
 
     private JobScheduler scheduler;
     public final int DELETING_JOB_INT = getResources().getInteger(R.integer.deletingJobID),
@@ -124,12 +123,6 @@ public class JobUtilities extends ContextWrapper {
         JobInfo.Builder newJob = new JobInfo.Builder(DELETING_JOB_INT, jobName)
                 .setPersisted(true)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED); // Only execute on Wi-Fi
-
-        if (oAPI) {
-            newJob.setRequiresBatteryNotLow(true);
-        } else {
-            newJob.setRequiresCharging(true);
-        }
 
         return newJob.build();
     }

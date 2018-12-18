@@ -1,8 +1,6 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -20,7 +18,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.Toolbar;
-import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -41,6 +38,8 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 public class MainActivity extends Activity implements View.OnClickListener {
 
     NotificationUtilities notUtils;
+    PermissionHandler perms;
+    DialogHandler dialogHandler;
 
     static boolean gpsOff, // Only used in Test Mode - can choose to test accelerometers (and audio) only
             phoneDead; // Boolean which becomes true if the phone shut down during recording.
@@ -54,16 +53,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
 //    Declare variables needed for the preferences / settings
     SharedPreferences preferences;
     SharedPreferences.Editor prefEditor;
-    ContextThemeWrapper dialogWrapper = new ContextThemeWrapper(this, R.style.MyAlertDialog);
-    AlertDialog disclosureDialog, policyDialog;
+    AlertDialog disclosureDialog, launcherDialog;
     Button adButt;
     final static String KEY_G = "Gravity Present", KEY_FS = "MaxFS", KEY_F_CHECK = "CheckFS";
     final String user_ID = "User ID", KEY_DISC = "NotSeenDisclosure2", KEY_INST = "FirstInstance", KEY_FIRST = "firstLogin";
 
     static int userID;  // Declare unique user ID
-
-//    Initialise ints for app permissions
-    final int PERMISSION_GPS = 2, PERMISSION_AUDIO = 25;
 
 //    Declare UI objects.
     Button recordButt, cancelButt;
@@ -81,6 +76,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         setContentView(R.layout.activity_main); // Associates this activity with the stated layout
 
         notUtils = new NotificationUtilities(this);
+        perms = new PermissionHandler(this);
+        dialogHandler = new DialogHandler(this);
 
 //        Initialise textboxes and buttons
         instructDisplay = findViewById(R.id.instructDisplay);
@@ -113,6 +110,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
             prefEditor.putBoolean(KEY_DISC, true);
             prefEditor.commit();
             showDisclosure();   // Starts the 'showDisclosure' method to deal with usage agreement.
+        } else {
+            setAsLauncher(); // Check if app is launcher, and ask to set if it isn't.
         }
 
         userID = preferences.getInt(user_ID, 1);    // Initialises the User ID
@@ -324,11 +323,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             if (!recording && !forcedStop) { // Handle whether to start recording
 
-                //        Re-checks (and asks for) the GPS and audio permissions required
-                if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                        !(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                                checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) ) {
+                // Re-checks (and asks for) the GPS and audio permissions required
+                if (perms.needsPerms()) {
 
                     buttPressed = true; // Tells permission handler to record if permission given
 
@@ -367,22 +363,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     }
 
-//    For Marshmallow and above (APIs 23+) check whether the user has granted permission to use
-// the GPS and audio, and asks for permission if not.
-    @TargetApi(Build.VERSION_CODES.M)
+// For Marshmallow and above (APIs 23+) check whether the user has granted permission to use the
+// GPS and audio, and asks for permission if not.
     public void permissionCheck() {
-//            Checks if GPS permission is NOT granted. Asks for permission if it isn't.
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_GPS);
-
-        }
-
-//            Checks if audio permission is NOT granted. Asks for permission if it isn't.
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSION_AUDIO);
+        if (perms.needsLocationPerms()) {
+            ActivityCompat.requestPermissions(this,perms.locPerms, perms.PERMISSION_GPS);
+        } else if (perms.needsAudioPerm()) {
+            ActivityCompat.requestPermissions(this,perms.audPerm, perms.PERMISSION_AUDIO);
         }
     }
 
@@ -390,9 +377,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (requestCode == PERMISSION_GPS) {
+            if (requestCode == perms.PERMISSION_GPS) {
 
-                permissionCheck();  // Now ask for audio
+                if (perms.needsAudioPerm())
+                    ActivityCompat.requestPermissions(this, perms.audPerm, perms.PERMISSION_AUDIO);
 
             } else if (buttPressed) {   // Start the recording process
                 if (BuildConfig.AMB_MODE) {
@@ -400,6 +388,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 } else {
                     startInitialising();
                 }
+            } else {
+                setAsLauncher(); // Check if app is launcher, and ask to set if it isn't.
             }
         } else {    // Inform user permissions are required to record data
             instructDisplay.setText(R.string.permissions);
@@ -423,11 +413,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
         });
 
-//        Set up the disclosure window
-        AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
-        builder .setTitle(R.string.ad_title)
+        // Set up the disclosure window
+        AlertDialog.Builder builder = dialogHandler.buildDisclosureDialog()
                 .setView(checkboxView)  // Layout used by the window
-                .setCancelable(false)   // User cannot back out of it. Only way is to accept.
                 .setPositiveButton(R.string.ad_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int BUTTON_POSITIVE) {
@@ -435,7 +423,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         prefEditor.putBoolean(KEY_INST, true);  // Ensure only one instance.
                         prefEditor.commit();
 
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (perms.mAPI) {
                             permissionCheck();  // Asks for GPS & audio permissions
                         }
                     }
@@ -454,21 +442,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     }
 
-//    Show the privacy policy for the app
-    public void showPolicy() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
-        builder .setTitle(R.string.privacy_title)
-                .setMessage(R.string.privacy_policy)
-                .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int buttInt) {
-//                  Close the Privacy Policy
-                    }
-                });
-        policyDialog = builder.create();
-        policyDialog.show();
-    }
-
 //    Initialises the toolbar and handles any toolbar interactions
     public void setUpToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -480,8 +453,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     case R.id.setButt:          // Go to the settings screen
                         startActivity(new Intent(getApplicationContext(), Settings.class));
                         return true;
-                    case R.id.privacyPolicy:    // SHow privacy policy
-                        showPolicy();
+                    case R.id.privacyPolicy:    // Show privacy policy
+                        dialogHandler.getPolicyDialog().show();
                         return true;
                 }
                 return false;
@@ -501,7 +474,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 //    Handle the outcome of the AmbSelect screen
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
+        if (resultCode == RESULT_OK && requestCode != 0) {
             if (data.getBooleanExtra(ambExtra, false)) {
                 if (requestCode == getResources().getInteger(R.integer.ambStart)) {
                     startInitialising();
@@ -672,6 +645,22 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void onBackPressed() {
         if (!BuildConfig.AMB_MODE) {
             super.onBackPressed();
+        }
+    }
+
+    public void setAsLauncher() {
+        if (BuildConfig.AMB_MODE && dialogHandler.appNotLauncher()) {
+
+            launcherDialog = dialogHandler.buildLauncherPrompt()
+                    .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int buttInt) {
+                            // Take user to the relevant settings.
+                            startActivityForResult(new Intent(android.provider.Settings
+                                    .ACTION_HOME_SETTINGS), 0);
+                        }
+                    }).create();
+            launcherDialog.show();
         }
     }
 }
