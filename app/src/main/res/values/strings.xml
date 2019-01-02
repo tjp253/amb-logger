@@ -38,6 +38,8 @@
     <string name="lc_mess">To aid the ease of use of the research phone, please go into the phone\'s
         settings and set the Ambulance Logger as HOME / LAUNCHER.\n\nThank you.</string>
 
+    <string name="menu_launcher">Set App As Launcher</string>
+
     <string name="butt_ok">@android:string/ok</string>
     <string name="butt_cancel">@android:string/cancel</string>
     <string name="butt_later">later</string>

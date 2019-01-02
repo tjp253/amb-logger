@@ -9,4 +9,10 @@
         android:id="@+id/setButt"
         android:title="@string/setTit" />
 
+    <!-- If AMB Build, show a shortcut to the Launcher selector -->
+    <item
+        android:id="@+id/setAsLauncher"
+        android:title="@string/menu_launcher"
+        android:visible="@bool/launcher_in_toolbar" />
+
 </menu>

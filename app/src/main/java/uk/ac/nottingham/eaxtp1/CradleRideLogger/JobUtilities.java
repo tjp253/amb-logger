@@ -74,10 +74,11 @@ public class JobUtilities extends ContextWrapper {
             // Check if a week has passed since the last FileCheck job
             if ( currTime - prevTime < weekly) {
                 return false;
-            } else {
-                // Store the latest Job Time
-                preferences.edit().putLong(getString(R.string.key_pref_delete_time), currTime).apply();
             }
+
+            // Store the latest Job Time & tell app to create new job.
+            preferences.edit().putLong(getString(R.string.key_pref_delete_time), currTime).apply();
+            return true;
         }
 
         if (scheduler == null) {
@@ -103,7 +104,7 @@ public class JobUtilities extends ContextWrapper {
         // No job found that matches the JobID
         // Old version of job executed once a week, when idle. Now removed the idle
         // requirement and increased the frequency to once a day.
-        return job == null || job.isRequireDeviceIdle() || job.isPeriodic();
+        return job == null;
     }
 
     // Create job to upload files when connected to wifi

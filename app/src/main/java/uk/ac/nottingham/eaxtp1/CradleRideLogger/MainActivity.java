@@ -456,6 +456,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     case R.id.privacyPolicy:    // Show privacy policy
                         dialogHandler.getPolicyDialog().show();
                         return true;
+                    case R.id.setAsLauncher: // Shortcut to Launcher selector (only in AMB Build)
+                        startActivityForResult(new Intent(android.provider.Settings
+                                .ACTION_HOME_SETTINGS), 0);
+                        return true;
                 }
                 return false;
             }

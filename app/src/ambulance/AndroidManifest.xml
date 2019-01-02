@@ -18,7 +18,8 @@
 
         <activity android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect"
             tools:ignore="InnerclassSeparator"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true"/>
 
         <service android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbGPSService"
             tools:ignore="InnerclassSeparator" />
