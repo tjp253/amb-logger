@@ -31,7 +31,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 //    Activity for user to input which ambulance / trolley was used for the journey, whether a
 // baby was on board, whether emergency driving was used, and the reason for transfer.
 
-    Button butt1, butt2, butt3, butt4, buttOther, buttSame;
+    Button buttOther, buttSame, allButts[] = new Button[4];
     TextView titleView, asView;
 
 //    Declare AMB-specific preferences and variables.
@@ -44,10 +44,10 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     final String keyDate = "PrefDate";
     String prefStr;
-    String[] ambArray, trollArray;
+    String[] ambArray, trollArray, boolArray, reasonArray;
 
     boolean patient, resuscitated;
-    int inputNo, intOne, intTwo, strID;
+    int inputNo, intOne, intTwo, strID, viewSame, viewOther = View.VISIBLE;
 
     @SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
     @Override
@@ -66,36 +66,36 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 //        Initialise textboxes and buttons
         titleView = findViewById(R.id.optTitle);
         asView    = findViewById(R.id.forcedText);
-        butt1     = findViewById(R.id.opt1);
-        butt2     = findViewById(R.id.opt2);
-        butt3     = findViewById(R.id.opt3);
-        butt4     = findViewById(R.id.opt4);
         buttOther = findViewById(R.id.optOther);
         buttSame  = findViewById(R.id.optSame);
 
-        butt1.setOnClickListener(this);
-        butt2.setOnClickListener(this);
-        butt3.setOnClickListener(this);
-        butt4.setOnClickListener(this);
+        allButts[0] = findViewById(R.id.opt1);
+        allButts[1] = findViewById(R.id.opt2);
+        allButts[2] = findViewById(R.id.opt3);
+        allButts[3] = findViewById(R.id.opt4);
+
+        for (Button allButt : allButts) {
+            allButt.setOnClickListener(this);
+        }
         buttOther.setOnClickListener(this);
         buttSame.setOnClickListener(this);
 
 //        If the app has been used before during the same day, offer a 'Same as Previous' option
 // for ambulance & trolley options - potentially saving time.
         if (ambPref.getInt(keyDate,0) == Calendar.getInstance().get(Calendar.DAY_OF_YEAR)) {
-            buttSame.setVisibility(View.VISIBLE);
+            viewSame = View.VISIBLE;
         }
 
+        boolArray = getResources().getStringArray(R.array.boolean_options);
+        reasonArray = getResources().getStringArray(R.array.reason_options);
+
         if (recording || forcedStopAmb || phoneDead) {   // Ask for transport-end data
-            butt3.setVisibility(View.INVISIBLE);
-            butt4.setVisibility(View.INVISIBLE);
-            buttSame.setVisibility(View.GONE);
 
             if (resuscitated) {
                 buttOther.setText(R.string.optForgot);
 
             } else if (forcedStopAmb) { // Hide cancel button if recording stopped due to inactivity
-                buttOther.setVisibility(View.INVISIBLE);
+                viewOther = View.INVISIBLE;
                 asView.setVisibility(View.VISIBLE);
 
             } else {
@@ -103,7 +103,9 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
             }
 //            Check if baby is on board, and change the question appropriately
-            patient = ambPref.getBoolean(getString(R.string.key_pat), false);
+            patient = Objects.equals(
+                    ambPref.getString(getString(R.string.key_bob), "NO"),
+                    getResources().getString(R.string.yesButt));
             changeButtsEnd(patient);
             if (!patient) {
                 prefEd.putString(getString(R.string.key_trans),"N/A").commit();
@@ -130,16 +132,29 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View v) {   // Store different results depending on button pressed
         switch (v.getId()) {
-            case R.id.opt1: storeAmb(1); break;
-            case R.id.opt2: storeAmb(2); break;
-            case R.id.opt3: storeAmb(3); break;
-            case R.id.opt4: storeAmb(4); break;
             case R.id.optOther: getOther(); break;
             case R.id.optSame:  // Don't change the preference value
                 buttPause.start();
                 inputNo++;
                 break;
+            default:
+                storeAmb( ((Button) v).getText().toString() );
         }
+    }
+
+    public void changeButts(String[] options, int sameVisibility, int otherVisibility) {
+        int opt;
+        for (opt = 0; opt < options.length; opt++) {
+            allButts[opt].setText(options[opt]);
+            allButts[opt].setVisibility(View.VISIBLE);
+        }
+
+        for (int hide = opt; hide < allButts.length; hide++) {
+            allButts[hide].setVisibility(View.INVISIBLE);
+        }
+
+        buttSame.setVisibility(sameVisibility);
+        buttOther.setVisibility(otherVisibility);
     }
 
 //    Set up inputs at start of recording
@@ -147,32 +162,15 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         switch (inputNo) {  // How many questions have already been answered?
             case 0: // Ask for ambulance ID
                 titleView.setText(R.string.ambTit);
-                butt1.setText(ambArray[0]);
-                butt2.setText(ambArray[1]);
-                butt3.setText(ambArray[2]);
-                butt4.setText(ambArray[3]);
+                changeButts(ambArray, viewSame, viewOther);
                 break;
             case 1: // Ask for trolley ID
                 titleView.setText(R.string.trollTit);
-                butt1.setText(trollArray[0]);
-                butt2.setText(trollArray[1]);
-                butt3.setText(trollArray[2]);
-                butt4.setText(trollArray[3]);
-                butt3.setVisibility(View.VISIBLE);
-                butt4.setVisibility(View.VISIBLE);
-                buttOther.setVisibility(View.VISIBLE);
-                if (ambPref.getInt(keyDate,0) == Calendar.getInstance().get(Calendar.DAY_OF_YEAR)) {
-                    buttSame.setVisibility(View.VISIBLE);
-                }
+                changeButts(trollArray, viewSame, View.INVISIBLE);
                 break;
             case 2: // Ask whether a baby is on board
                 titleView.setText(R.string.patTit);
-                butt1.setText(R.string.yesButt);
-                butt2.setText(R.string.noButt);
-                butt3.setVisibility(View.INVISIBLE);
-                butt4.setVisibility(View.INVISIBLE);
-                buttOther.setVisibility(View.INVISIBLE);
-                buttSame.setVisibility(View.GONE);
+                changeButts(boolArray, View.GONE, View.INVISIBLE);
                 break;
         }
     }
@@ -181,28 +179,26 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     public void changeButtsEnd(boolean baby) {
         if (baby) { // Ask reason for transfer
             titleView.setText(R.string.transTit);
-            butt1.setText(R.string.transReasonOne);
-            butt2.setText(R.string.transReasonTwo);
+            changeButts(reasonArray, View.GONE, viewOther);
         } else {    // Ask about emergency driving
             titleView.setText(R.string.emergeTit);
-            butt1.setText(R.string.yesButt);
-            butt2.setText(R.string.noButt);
+            changeButts(boolArray, View.GONE, viewOther);
         }
     }
 
 //    Store input choices in preferences for logging and to speed up future inputs SLIGHTLY
-    public void storeAmb(int optionNo) {
+    public void storeAmb(String metaText) {
         if (!(recording || forcedStopAmb || phoneDead)) {   // Selections before journey.
             buttPause.start();
             switch (inputNo) {
                 case 0: // Store ambulance ID
-                    prefEd.putString(getString(R.string.key_amb), ambArray[optionNo-1]).commit();
+                    prefEd.putString(getString(R.string.key_amb), metaText).commit();
                     break;
                 case 1: // Store trolley ID
-                    prefEd.putString(getString(R.string.key_troll), trollArray[optionNo-1]).commit();
+                    prefEd.putString(getString(R.string.key_troll), metaText).commit();
                     break;
                 case 2: // Store baby presence
-                    prefEd.putBoolean(getString(R.string.key_pat), optionNo == 1).commit();
+                    prefEd.putString(getString(R.string.key_bob), metaText).commit();
                     prefEd.putInt(keyDate, Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
                     sendIntentBack(true);   // Start the full recording
                     return;
@@ -210,20 +206,10 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         } else {    // Selections after journey.
             if (patient) {
                 buttPause.start();
-                switch (optionNo) {
-                    case 1: prefEd.putString(getString(R.string.key_trans), getString(R.string.transReasonOne)); break;
-                    case 2: prefEd.putString(getString(R.string.key_trans), getString(R.string.transReasonTwo)); break;
-                    case 5: finish(); return;
-                    case 9: prefEd.putString(getString(R.string.key_trans), getString(R.string.optUnknown)); break;
-                }
+                prefEd.putString(getString(R.string.key_trans), metaText);
                 patient = false;
             } else {
-                switch (optionNo) {
-                    case 1: prefEd.putString(getString(R.string.key_emerge), getString(R.string.yesButt)).commit(); break;
-                    case 2: prefEd.putString(getString(R.string.key_emerge), getString(R.string.noButt)).commit(); break;
-                    case 5: finish(); return;
-                    case 9: prefEd.putString(getString(R.string.key_emerge), getString(R.string.optUnknown)).commit(); break;
-                }
+                prefEd.putString(getString(R.string.key_emerge), metaText).commit();
                 sendIntentBack(true);
                 return;
             }
@@ -234,7 +220,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
 //    Timer to allow a slight pause between input changes. Otherwise the user may doubt they've
 // answered correctly.
-    public CountDownTimer buttPause = new CountDownTimer(500,500) {
+    public CountDownTimer buttPause = new CountDownTimer(200,200) {
         @Override
         public void onTick(long millisUntilFinished) {}
 
@@ -267,10 +253,10 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     public void getOther() {
         if (resuscitated) {
-            storeAmb(9); // Enter in 'Unknown'
+            storeAmb("UNKNOWN"); // Enter in 'Unknown'
 
         } else if (recording) {
-            storeAmb(5);    // Cancel selection and return to recording
+            finish();   // Cancel selection and return to recording
 
         } else {    // Give user a window to input their own Ambulance / Trolley ID
 

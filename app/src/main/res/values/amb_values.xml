@@ -8,7 +8,7 @@
 
     <string name="key_amb">PrefAmb</string>
     <string name="key_troll">PrefTroll</string>
-    <string name="key_pat">PrefPat</string>
+    <string name="key_bob">PrefBOB</string><!--baby on board-->
     <string name="key_trans">PrefTrans</string>
     <string name="key_emerge">PrefEmerge</string>
 
@@ -48,28 +48,28 @@
 
     <string name="choose_ntt">Neonatal Transfer Team</string>
     <string name="ntt_centre">CenTre</string>
-    <string name="ntt_north">North</string>
+    <string name="ntt_neocapsule">NeoCapsule</string>
 
     <string-array name="ntt_choice">
         <item>@string/ntt_centre</item>
-        <!--<item>@string/ntt_north</item>-->
+        <item>@string/ntt_neocapsule</item>
     </string-array>
 
     <string-array name="ntt_number">
         <item>0</item>
-        <!--<item>1</item>-->
+        <item>1</item>
     </string-array>
 
     <string name="ntt_default">1</string>
 
     <array name="amb_ntt">
         <item>@array/amb_centre</item>
-        <item>@array/amb_north</item>
+        <item>@array/amb_neocapsule</item>
     </array>
 
     <array name="troll_ntt">
         <item>@array/troll_centre</item>
-        <item>@array/troll_north</item>
+        <item>@array/troll_neocapsule</item>
     </array>
 
     <!--CenTre data-->
@@ -90,18 +90,24 @@
 
     <!--Example of other NTT data-->
 
-    <string-array name="amb_north">
-        <item>AMB 1</item>
-        <item>AMB 2</item>
-        <item>AMB 3</item>
-        <item>AMB 4</item>
+    <string-array name="amb_neocapsule">
+        <item>AMBULAB</item>
     </string-array>
 
-    <string-array name="troll_north">
-        <item>TROLLEY 1</item>
-        <item>TROLLEY 2</item>
-        <item>TROLLEY 3</item>
-        <item>TROLLEY 4</item>
+    <string-array name="troll_neocapsule">
+        <item>ISOLATORS</item>
+        <item>BLOCKS</item>
+    </string-array>
+
+    <!--Other arrays for use with AmbSelect-->
+    <string-array name="boolean_options">
+        <item>@string/yesButt</item>
+        <item>@string/noButt</item>
+    </string-array>
+
+    <string-array name="reason_options">
+        <item>@string/transReasonOne</item>
+        <item>@string/transReasonTwo</item>
     </string-array>
 
     <!--Button Placeholders-->

@@ -388,8 +388,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 } else {
                     startInitialising();
                 }
-            } else {
-                setAsLauncher(); // Check if app is launcher, and ask to set if it isn't.
             }
         } else {    // Inform user permissions are required to record data
             instructDisplay.setText(R.string.permissions);
@@ -488,6 +486,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     displayOnFinish();      // Notify user that logging has stopped.
 
                 } else if (requestCode == getResources().getInteger(R.integer.ambDead)) {
+                    // Amb options inputted after reboot. Recording can be finished.
                     getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE).edit()
                             .putBoolean(getString(R.string.key_dead),false).apply();
                     stopAll(); // In case services are still running.
@@ -637,9 +636,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private BroadcastReceiver shutdownReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            phoneDead = true;
-            SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
-            ambPref.edit().putBoolean(getString(R.string.key_dead),true).apply();
+            if (recording) {
+                phoneDead = true;
+                SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
+                ambPref.edit().putBoolean(getString(R.string.key_dead), true).apply();
+            }
             unregisterReceiver(shutdownReceiver);
         }
     };

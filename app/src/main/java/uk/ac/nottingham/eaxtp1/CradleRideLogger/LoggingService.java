@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -195,7 +196,7 @@ public class LoggingService extends Service {
         outputTitle = outputTitle + "\n";
 
         try {
-            myOutputStream.write(outputTitle.getBytes("UTF-8"));
+            myOutputStream.write(outputTitle.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -256,7 +257,7 @@ public class LoggingService extends Service {
         toFile = stringBuilder.toString();
 
         try {
-            myOutputStream.write(toFile.getBytes("UTF-8"));
+            myOutputStream.write(toFile.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -404,11 +405,7 @@ public class LoggingService extends Service {
         if (atStart) {
             amb = ambPref.getString(getString(R.string.key_amb),"");
             troll = ambPref.getString(getString(R.string.key_troll),"");
-            if (ambPref.getBoolean(getString(R.string.key_pat), true)) {
-                pat = getString(R.string.yesButt);
-            } else {
-                pat = getString(R.string.noButt);
-            }
+            pat = ambPref.getString(getString(R.string.key_bob), "");
             ambList = TextUtils.join(",", Arrays.asList("Ambulance", amb, "Trolley", troll, "Patient", pat,""));
         } else {
             trans = ambPref.getString(getString(R.string.key_trans),"");
@@ -422,7 +419,7 @@ public class LoggingService extends Service {
         }
 
         try {
-            myAmbStream.write(ambList.getBytes("UTF-8"));
+            myAmbStream.write(ambList.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -455,7 +452,7 @@ public class LoggingService extends Service {
         }
 
         try {
-            debugStream.write(error.getBytes("UTF-8"));
+            debugStream.write(error.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
         }
