@@ -43,11 +43,10 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     ContextThemeWrapper dialogWrapper = new ContextThemeWrapper(this, R.style.MyAlertDialog);
 
     final String keyDate = "PrefDate";
-    String prefStr;
     String[] ambArray, trollArray, boolArray, reasonArray;
 
     boolean patient, resuscitated;
-    int inputNo, intOne, intTwo, strID, viewSame, viewOther = View.VISIBLE;
+    int inputNo, viewSame = View.GONE, viewOther = View.VISIBLE;
 
     @SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
     @Override
@@ -99,7 +98,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                 asView.setVisibility(View.VISIBLE);
 
             } else {
-                buttOther.setText(R.string.butt_cancel);
+                buttOther.setText(R.string.optCancel);
 
             }
 //            Check if baby is on board, and change the question appropriately
@@ -129,19 +128,6 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     }
 
-    @Override
-    public void onClick(View v) {   // Store different results depending on button pressed
-        switch (v.getId()) {
-            case R.id.optOther: getOther(); break;
-            case R.id.optSame:  // Don't change the preference value
-                buttPause.start();
-                inputNo++;
-                break;
-            default:
-                storeAmb( ((Button) v).getText().toString() );
-        }
-    }
-
     public void changeButts(String[] options, int sameVisibility, int otherVisibility) {
         int opt;
         for (opt = 0; opt < options.length; opt++) {
@@ -162,15 +148,17 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         switch (inputNo) {  // How many questions have already been answered?
             case 0: // Ask for ambulance ID
                 titleView.setText(R.string.ambTit);
+                buttOther.setText(R.string.optOther);
                 changeButts(ambArray, viewSame, viewOther);
                 break;
             case 1: // Ask for trolley ID
                 titleView.setText(R.string.trollTit);
-                changeButts(trollArray, viewSame, View.INVISIBLE);
+                buttOther.setText(R.string.optReturn);
+                changeButts(trollArray, viewSame, View.VISIBLE);
                 break;
             case 2: // Ask whether a baby is on board
                 titleView.setText(R.string.patTit);
-                changeButts(boolArray, View.GONE, View.INVISIBLE);
+                changeButts(boolArray, View.INVISIBLE, View.VISIBLE);
                 break;
         }
     }
@@ -218,6 +206,19 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         inputNo++;  // How many questions have now been answered?
     }
 
+    @Override
+    public void onClick(View v) {   // Store different results depending on button pressed
+        switch (v.getId()) {
+            case R.id.optOther: getOther(); break;
+            case R.id.optSame:  // Don't change the preference value
+                buttPause.start();
+                inputNo++;
+                break;
+            default:
+                storeAmb( ((Button) v).getText().toString() );
+        }
+    }
+
 //    Timer to allow a slight pause between input changes. Otherwise the user may doubt they've
 // answered correctly.
     public CountDownTimer buttPause = new CountDownTimer(200,200) {
@@ -254,36 +255,28 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     public void getOther() {
         if (resuscitated) {
             storeAmb("UNKNOWN"); // Enter in 'Unknown'
+            inputNo++;
 
         } else if (recording) {
             finish();   // Cancel selection and return to recording
 
-        } else {    // Give user a window to input their own Ambulance / Trolley ID
+        } else if (inputNo > 0) { // Act as Back Button
+            onBackPressed();
+
+        } else {    // Give user a window to input their own Ambulance ID
 
             AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
             View inputView = View.inflate(this, R.layout.amb_input, null);
 //            Tell the app what to show and what to hide
-            if (inputNo == 0) {
-                intOne = R.id.ambInput;
-                intTwo = R.id.trollInput;
-                strID = R.string.entAmb;
-                prefStr = getString(R.string.key_amb);
-            } else {
-                intOne = R.id.trollInput;
-                intTwo = R.id.ambInput;
-                strID = R.string.entTroll;
-                prefStr = getString(R.string.key_troll);
-            }
-            final EditText input = inputView.findViewById(intOne);
-            final EditText input2 = inputView.findViewById(intTwo);
-            input2.setVisibility(View.INVISIBLE);
 
-            builder.setMessage(strID)
+            final EditText input = inputView.findViewById(R.id.ambInput);
+
+            builder.setMessage(R.string.entAmb)
                     .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
 //                            Commit ID inputted by user
-                            prefEd.putString(prefStr, input.getText().toString()).commit();
+                            prefEd.putString(getString(R.string.key_amb), input.getText().toString()).commit();
                             changeButtsStart();
                         }
                     })
@@ -300,7 +293,8 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
 //                        Bring up the keyboard
-                        Objects.requireNonNull(inAlert.getWindow()).setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                        Objects.requireNonNull(inAlert.getWindow())
+                                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
                     }
                 }
             });
@@ -322,9 +316,9 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                 @Override
                 public void afterTextChanged(Editable s) {}
             });
-        }
 
-        inputNo++;
+            inputNo++;
+        }
     }
 
     @Override
