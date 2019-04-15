@@ -106,7 +106,7 @@
     <string name="setTit">Settings</string>
     <string name="setScreen">PrefScreen</string>
 
-    <string name="key_pref_as">AutoStop</string>
+    <string name="key_pref_as">AutoStopOn</string>
     <string name="key_pref_delay">DelayTime</string>
     <string name="key_pref_timeout">GPS Timeout</string>
     <string name="key_pref_buff_start">BuffStart</string>
