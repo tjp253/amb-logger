@@ -53,10 +53,10 @@ public class UploadService extends IntentService {
         super.onCreate();
 
         mainPath = String.valueOf(getExternalFilesDir(""));
-        finishedPath = mainPath + "/Finished";
-        movedPath = mainPath + "/Uploaded";
-        oversizedPath = mainPath + "/Oversized";
-        failedPath = mainPath + "/FailedUploads";
+        finishedPath = mainPath + "/Finished/";
+        movedPath = mainPath + "/Uploaded/";
+        oversizedPath = mainPath + "/Oversized/";
+        failedPath = mainPath + "/FailedUploads/";
 
         notUtils = new NotificationUtilities(this);
         // Cancel uploaded / oversized / failed notifications when starting a new lot of uploads
@@ -77,7 +77,11 @@ public class UploadService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        handleUploads();
+        if (intent.hasExtra("Resend")) {
+            uploadFile(new File(intent.getStringExtra("Resend")));
+        } else {
+            handleUploads();
+        }
     }
 
     private URL getURL() {
@@ -114,73 +118,10 @@ public class UploadService extends IntentService {
             return;
         }
 
-        int sourceLength = sourceFolder.getParent().length() + 9;
-
         for (File file : fileList) { // For each file in the 'finished' folder
 
             if (uploading) {
-
-                uploadFilePath = file.getAbsolutePath();
-                fileName = uploadFilePath.substring(sourceLength);
-                parse = fileName.substring(0, fileName.length() - 2) + "/gz";
-
-                try {
-
-                    OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                            .writeTimeout((long) 60, TimeUnit.SECONDS)
-                            .build();
-                    File fileToUpload = new File(uploadFilePath);
-
-                    RequestBody requestBody = new MultipartBody.Builder()
-                            .setType(MultipartBody.FORM)
-                            .addFormDataPart("fileToUpload", fileName,
-                                    RequestBody.create(MediaType.parse(parse), fileToUpload))
-                            .build();
-
-                    Request request = new Request.Builder()
-                            .url(getURL())
-                            .post(requestBody)
-                            .build();
-                    Response response;
-                    try {
-                        response = okHttpClient.newCall(request).execute();
-                    } catch (UnknownHostException uhe) {
-                        throw new IOException("UnknownHostException - Upload connection failed.");
-                    } catch (SocketException se) {
-                        throw new IOException("Socket Exception");
-                    }
-
-                    // Receives the PHP response code (programmed myself) to feedback any
-                    // problems / tell the app this file was uploaded successfully.
-                    // Using IF-ELSE instead of SWITCH to enable use of resource INTs
-                    if (response.code() == getResources().getInteger(R.integer.successfullyUp)) {
-                        uploadFileCount++;
-
-                    } else if (response.code() == getResources().getInteger(R.integer
-                                .oversizedUp)) {
-                        moveOversized(fileName);
-                        oversizedFileCount++;
-                        fileName = null;
-
-                    } else if (response.code() == getResources().getInteger(R.integer.alreadyUp)) {
-                        // File already uploaded.
-
-                    } else {
-                        fileName = null;
-                        failedFileCount++;
-                    }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    notificationSender();
-                    return;
-                }
-
-            if (fileName != null) {
-                moveFile(fileName);
-            }
-
-                filesLeft--;
+                uploadFile(file);
             } else {
                 sendBroadcast(sourceFolder.listFiles().length == 0);
             }
@@ -199,6 +140,71 @@ public class UploadService extends IntentService {
 
         }
 
+    }
+
+    public void uploadFile(File file) {
+
+        uploadFilePath = file.getAbsolutePath();
+        fileName = file.getName();
+        parse = fileName.substring(0, fileName.length() - 2) + "/gz";
+
+        try {
+
+            OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                    .writeTimeout((long) 60, TimeUnit.SECONDS)
+                    .build();
+            File fileToUpload = new File(uploadFilePath);
+
+            RequestBody requestBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("fileToUpload", fileName,
+                            RequestBody.create(MediaType.parse(parse), fileToUpload))
+                    .build();
+
+            Request request = new Request.Builder()
+                    .url(getURL())
+                    .post(requestBody)
+                    .build();
+            Response response;
+            try {
+                response = okHttpClient.newCall(request).execute();
+            } catch (UnknownHostException uhe) {
+                throw new IOException("UnknownHostException - Upload connection failed.");
+            } catch (SocketException se) {
+                throw new IOException("Socket Exception");
+            }
+
+            // Receives the PHP response code (programmed myself) to feedback any
+            // problems / tell the app this file was uploaded successfully.
+            // Using IF-ELSE instead of SWITCH to enable use of resource INTs
+            if (response.code() == getResources().getInteger(R.integer.successfullyUp)) {
+                uploadFileCount++;
+
+            } else if (response.code() == getResources().getInteger(R.integer
+                    .oversizedUp)) {
+                moveOversized(fileName);
+                oversizedFileCount++;
+                fileName = null;
+
+            } else if (response.code() == getResources().getInteger(R.integer.alreadyUp)) {
+                // File already uploaded.
+
+            } else {
+                fileName = null;
+                failedFileCount++;
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            notificationSender();
+            return;
+        }
+
+        if (fileName != null) {
+            moveFile(fileName);
+        }
+
+        filesLeft--;
     }
 
     public void notificationSender() {

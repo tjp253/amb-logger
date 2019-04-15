@@ -65,9 +65,7 @@ public class MovingService extends IntentService {
             try {
 
                 in = new FileInputStream(file);
-                String fileName = file.getPath();
-                fileName = fileName.substring(file.getParent().length());
-                out = new FileOutputStream(newPath + "/" + fileName);
+                out = new FileOutputStream(newPath + "/" + file.getName());
 
                 int read;
                 while((read = in.read(buffer)) != -1) {

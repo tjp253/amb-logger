@@ -2,6 +2,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.job.JobParameters;
 import android.app.job.JobService;
+import android.content.Intent;
 
 import java.io.File;
 
@@ -71,6 +72,9 @@ public class DeletingJobService extends JobService {
                     } else if (rescheduleDeleting) {
                         jobFinished(jobParameters, true);
                         return;
+                    } else {
+                        startService(new Intent(getApplicationContext(), UploadService.class)
+                                .putExtra("Resend", file.getAbsolutePath()));
                     }
                 }
 
