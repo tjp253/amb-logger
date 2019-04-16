@@ -68,11 +68,10 @@ public class JobUtilities extends ContextWrapper {
         if (jobID == DELETING_JOB_INT) {
             SharedPreferences preferences = getSharedPreferences(getString(R.string.pref_main),MODE_PRIVATE);
             long currTime = System.currentTimeMillis(),
-                    prevTime = preferences.getLong(getString(R.string.key_pref_delete_time),0),
-                    weekly = TimeUnit.DAYS.toMillis(7);
+                    prevTime = preferences.getLong(getString(R.string.key_pref_delete_time),0);
 
-            // Check if a week has passed since the last FileCheck job
-            if ( currTime - prevTime < weekly) {
+            // Check if a day has passed since the last FileCheck job
+            if ( currTime - prevTime < TimeUnit.DAYS.toMillis(1)) {
                 return false;
             }
 
