@@ -47,13 +47,8 @@ public class DeletingJobService extends JobService {
             public void run() {
 
                 for (File file : uploadedFiles) {
-                    String filename = file.getName();
-                    int dateEnd = filename.indexOf(getResources().getString(R.string.id_spacer)), // Find start position of "-ID"
-                            idStart = dateEnd + 3, // Find the start of the 8-digit ID
-                            idEnd = idStart + 8;   // Find the end of the 8-digit ID
-                    newID = filename.substring(idStart,idEnd); // Extract ID from filename
-                    newDate = filename.substring(0, dateEnd); // Extract timestamp from filename
-
+                    newID = fileCheck.getID(file); // Extract ID from filename
+                    newDate = fileCheck.getDate(file); // Extract timestamp from filename
                     // If the ID and Date are not the same as previous, ask the XML if file is to
                     // be deleted. Otherwise, use the previous response found.
                     if (! (newID.equals(id) && newDate.equals(date)) ) {
@@ -67,12 +62,10 @@ public class DeletingJobService extends JobService {
 
                     }
 
-                    if (deleteFiles) {
-                        file.delete();
-                    } else if (rescheduleDeleting) {
+                    if (rescheduleDeleting) {
                         jobFinished(jobParameters, true);
                         return;
-                    } else {
+                    } else if (!deleteFiles){
                         startService(new Intent(getApplicationContext(), UploadService.class)
                                 .putExtra("Resend", file.getAbsolutePath()));
                     }

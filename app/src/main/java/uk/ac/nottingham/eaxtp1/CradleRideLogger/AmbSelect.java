@@ -46,7 +46,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     String[] ambArray, trollArray, boolArray, reasonArray;
 
     boolean patient, resuscitated;
-    int inputNo, viewSame = View.GONE, viewOther = View.VISIBLE;
+    int inputNo, viewSame = View.INVISIBLE, viewOther = View.VISIBLE;
 
     @SuppressLint({"CommitPrefEdits", "ApplySharedPref"})
     @Override

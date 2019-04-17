@@ -121,7 +121,15 @@ public class UploadService extends IntentService {
         for (File file : fileList) { // For each file in the 'finished' folder
 
             if (uploading) {
-                uploadFile(file);
+                if (!uploadFile(file)) {
+                    return;
+                }
+
+                if (fileName != null) {
+                    moveFile(fileName);
+                }
+
+                filesLeft--;
             } else {
                 sendBroadcast(sourceFolder.listFiles().length == 0);
             }
@@ -142,7 +150,7 @@ public class UploadService extends IntentService {
 
     }
 
-    public void uploadFile(File file) {
+    public boolean uploadFile(File file) {
 
         uploadFilePath = file.getAbsolutePath();
         fileName = file.getName();
@@ -197,14 +205,10 @@ public class UploadService extends IntentService {
         } catch (IOException e) {
             e.printStackTrace();
             notificationSender();
-            return;
+            return false;
         }
 
-        if (fileName != null) {
-            moveFile(fileName);
-        }
-
-        filesLeft--;
+        return true;
     }
 
     public void notificationSender() {

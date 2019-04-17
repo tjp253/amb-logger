@@ -54,7 +54,7 @@ public class IMUService extends Service implements SensorEventListener {
     static boolean heldWithMagnets;
 
     private long sampleID;
-    private short prevSample;
+    private long prevSample;
 
     String sID, sX, sY, sZ, sampleTime, toQueue,
             sGyX = "", sGyY = "", sGyZ = "", sE = "", sN = "", sD = "", sAmp = "";

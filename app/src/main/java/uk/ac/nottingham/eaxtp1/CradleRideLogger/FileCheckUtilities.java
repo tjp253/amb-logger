@@ -33,6 +33,10 @@ public class FileCheckUtilities extends ContextWrapper {
 
     URL url;
 
+    int dateEnd, idStart, idEnd;
+
+    String idSeparator;
+
     // Register the URL required.
     private URL getURL() {
         if (url == null) {
@@ -43,6 +47,44 @@ public class FileCheckUtilities extends ContextWrapper {
             }
         }
         return url;
+    }
+
+    // Method of extracting the ID from a filename
+    public String getID(File file) {
+        if (idStart == 0) {
+            idStart = getResources().getInteger(R.integer.idStart);
+        }
+        if (idEnd == 0) {
+            idEnd = getResources().getInteger(R.integer.idEnd);
+        }
+        String tempID = file.getName().substring(idStart,idEnd);
+        // Check if the file is in the old format. If so, adjust.
+        if (tempID.contains("-")) {
+            tempID = file.getName()
+                    .substring(getResources().getInteger(R.integer.idStartOld),
+                            getResources().getInteger(R.integer.idEndOld));
+        }
+        return tempID;
+    }
+
+    private String getIDSeparator() {
+        if (idSeparator == null) {
+            idSeparator = getResources().getString(R.string.id_spacer);
+        }
+        return idSeparator;
+    }
+
+    // Method of extracting the start time from a filename
+    public String getDate(File file) {
+        if (dateEnd == 0) {
+            dateEnd = getResources().getInteger(R.integer.dateEnd);
+        }
+        String tempDate = file.getName().substring(0,dateEnd);
+        // Check if the file is in the old format. If so, adjust.
+        if (tempDate.contains("ID")) {
+            tempDate = tempDate.substring(0, tempDate.indexOf(getIDSeparator()));
+        }
+        return tempDate;
     }
 
     // Check if file is to be deleted or not.
@@ -78,6 +120,7 @@ public class FileCheckUtilities extends ContextWrapper {
             // Using IF-ELSE instead of SWITCH to enable use of resource INTs
             if (response.code() == getResources().getInteger(R.integer.deleteFiles)) {
                 // Delete the files
+                deleteJourney(id, date);
                 return true;
 
             } else if (response.code() == getResources().getInteger(R.integer.doNotDeleteFiles)) {
@@ -142,6 +185,22 @@ public class FileCheckUtilities extends ContextWrapper {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // Method for handling the deletion of all files with a particular ID and Date.
+    // i.e. all files from a specific journey.
+    private void deleteJourney(final String id, final String date) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                File uploadedFolder = new File(String.valueOf(getExternalFilesDir("Uploaded")));
+                for (File file : uploadedFolder.listFiles()) {
+                    if (getID(file).equals(id) && getDate(file).equals(date)) {
+                        file.delete();
+                    }
+                }
+            }
+        }).start();
     }
 
 }
