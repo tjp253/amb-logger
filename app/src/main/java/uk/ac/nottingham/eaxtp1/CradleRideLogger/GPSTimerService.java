@@ -69,7 +69,6 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
             timeOut = preferences.getInt(getString(R.string.key_pref_timeout), getResources().getInteger(R.integer.timeout_default)) * 60000;   // Retrieve timeout
 
             myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            //noinspection ConstantConditions
             myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
             myLocationManager.addGpsStatusListener(this);
             gpsTimer(); // Cancel GPS (and recording) if no GPS signal within requested time

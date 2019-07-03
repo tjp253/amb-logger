@@ -28,7 +28,6 @@ public class AmbGPSService extends Service implements LocationListener {
         super.onCreate();
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        //noinspection ConstantConditions
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
 
     }

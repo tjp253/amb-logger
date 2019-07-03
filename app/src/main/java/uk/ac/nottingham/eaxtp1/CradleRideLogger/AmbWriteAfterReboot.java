@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
@@ -44,8 +45,8 @@ public class AmbWriteAfterReboot extends IntentService {
             ambStream = new GZIPOutputStream(ambStream)
             {{def.setLevel(Deflater.BEST_COMPRESSION);}};
 
-            ambStream.write(ambList1.getBytes("UTF-8"));
-            ambStream.write(ambList2.getBytes("UTF-8"));
+            ambStream.write(ambList1.getBytes(StandardCharsets.UTF_8));
+            ambStream.write(ambList2.getBytes(StandardCharsets.UTF_8));
 
             ambStream.close();
         } catch (IOException e) {

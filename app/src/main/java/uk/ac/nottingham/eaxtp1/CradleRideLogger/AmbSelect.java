@@ -31,7 +31,8 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 //    Activity for user to input which ambulance / trolley was used for the journey, whether a
 // baby was on board, whether emergency driving was used, and the reason for transfer.
 
-    Button buttOther, buttSame, allButts[] = new Button[4];
+    Button buttOther, buttSame;
+    Button[] allButts = new Button[4];
     TextView titleView, asView;
 
 //    Declare AMB-specific preferences and variables.

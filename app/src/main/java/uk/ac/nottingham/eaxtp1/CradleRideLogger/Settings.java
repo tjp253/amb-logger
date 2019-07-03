@@ -20,6 +20,8 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.Objects;
+
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.DeletingJobService.userWantsFilesKept;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.heldWithMagnets;
@@ -60,14 +62,11 @@ public class Settings extends AppCompatActivity  {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) { // Back arrow to return from Settings
-        switch (item.getItemId()) {
-            case android.R.id.home:
-//                NavUtils.navigateUpFromSameTask(this);
-                onBackPressed();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == android.R.id.home) {//                NavUtils.navigateUpFromSameTask(this);
+            onBackPressed();
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     public static class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -158,8 +157,7 @@ public class Settings extends AppCompatActivity  {
                 if (key.equals(nttPref)) {
 
 //                Android Studio thinks 'choice' is not used... but it is. Twice. Inspection disabled.
-                    //noinspection UnusedAssignment
-                    int choice = Integer.parseInt(sharedPreferences.getString(key, ""));
+                    int choice = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString(key, "")));
                     nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[choice]);
 
                     prefEdAmb = prefAmb.edit();

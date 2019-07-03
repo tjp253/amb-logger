@@ -118,7 +118,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 //        Initialise User ID / app version viewer and sets text.
         versionView = findViewById(R.id.versionView);
-        String version = getString(R.string.id_string) + String.valueOf(userID) + getString(R.string.version_string) ;
+        String version = getString(R.string.id_string) + userID + getString(R.string.version_string) ;
 //        Get the versionName from the app gradle to display.
         try {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);

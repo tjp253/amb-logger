@@ -90,7 +90,7 @@ public class LoggingService extends Service {
             Date todayDate = new Date();
             date = dateFormat.format(todayDate);
         }
-        filename = date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + zipPart + getString(R.string.file_type);
+        filename = date + getResources().getString(R.string.id_spacer) + userID + digitAdjuster + zipPart + getString(R.string.file_type);
 
         if (!crashed) {
             preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
@@ -151,7 +151,7 @@ public class LoggingService extends Service {
             wakelock.acquire(wakelockTimeout);
         }
 
-        mainPath = String.valueOf(getExternalFilesDir(filepath)) + "/";
+        mainPath = getExternalFilesDir(filepath) + "/";
         gzipPath = mainPath + filename;
 
         try { // to open a file-writing stream
@@ -236,7 +236,7 @@ public class LoggingService extends Service {
 
         int qSize = myQ.size() - buffSamples;   // Don't record anything within the end buffer time
 
-        int i;
+        int i = 0;
         try {
 //            Extract a chunk of data from the queue to write to the file
             for (i = 0; i < qSize; i++) {
@@ -246,7 +246,7 @@ public class LoggingService extends Service {
         } catch (NoSuchElementException e) {    // If queue is found to be prematurely empty, exit for loop.
 
             if (BuildConfig.TEST_MODE && i < 10) {
-                writeDebug(String.valueOf(System.currentTimeMillis())
+                writeDebug(System.currentTimeMillis()
                         + "- Queue empty. Supposed size: " + qSize + ". Actual size: " + i + "\n");
                 sendBroadcast(99);
             }
@@ -266,7 +266,7 @@ public class LoggingService extends Service {
 //    Create a new file to continue the recording
     public void fileSplitter(int filePart) {
 
-        gzipPath = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + digitAdjuster + filePart + getString(R.string.file_type);
+        gzipPath = mainPath + date + getResources().getString(R.string.id_spacer) + userID + digitAdjuster + filePart + getString(R.string.file_type);
 
         try {
             myOutputStream.close();
@@ -323,10 +323,10 @@ public class LoggingService extends Service {
             // Edit the final filename to enable PHP to automatically join all parts of the
             // recording
             if (multiFile || BuildConfig.AMB_MODE) {
-                endName = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) +
+                endName = mainPath + date + getResources().getString(R.string.id_spacer) + userID +
                         digitAdjuster + zipPart + getResources().getString(R.string.suffix) + getString(R.string.file_type);
             } else {
-                endName = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + getString(R.string.file_type);
+                endName = mainPath + date + getResources().getString(R.string.id_spacer) + userID + getString(R.string.file_type);
             }
             File endFile = new File(endName);
             gzFile.renameTo(endFile);
@@ -379,7 +379,7 @@ public class LoggingService extends Service {
     }
 
     public void prepAmb() {
-        ambPath = mainPath + date + getResources().getString(R.string.id_spacer) + String.valueOf(userID) + "-00.csv.gz";
+        ambPath = mainPath + date + getResources().getString(R.string.id_spacer) + userID + "-00.csv.gz";
         try {
             myAmbStream = new FileOutputStream(ambPath);
             myAmbStream = new GZIPOutputStream(myAmbStream)
@@ -442,7 +442,7 @@ public class LoggingService extends Service {
 
     public void writeDebug(String error) {
         if (debugStream == null) {
-            debugPath = String.valueOf(getExternalFilesDir("")) + "/" + debugName;
+            debugPath = getExternalFilesDir("") + "/" + debugName;
             try {
                 debugStream = new GZIPOutputStream(new FileOutputStream(debugPath)) {{def.setLevel(Deflater.BEST_COMPRESSION);}};
             } catch (IOException e) {
