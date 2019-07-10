@@ -166,7 +166,7 @@ public class UploadService extends IntentService {
             RequestBody requestBody = new MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("fileToUpload", fileName,
-                            RequestBody.create(MediaType.parse(parse), fileToUpload))
+                            RequestBody.create(fileToUpload, MediaType.parse(parse)))
                     .build();
 
             Request request = new Request.Builder()
