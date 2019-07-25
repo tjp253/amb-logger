@@ -74,7 +74,7 @@ public class Settings extends AppCompatActivity  {
         SharedPreferences.Editor prefEd, prefEdAmb;
         ListPreference nttList;
         int leftMargin, rightMargin, verticalMargin, topMargin;
-        String asPref, tPref, buffS, buffE, nttPref, magPref, filePref;
+        String asPref, tPref, buffS, buffE, nttPref, magPref, filePref, audPref;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -86,6 +86,7 @@ public class Settings extends AppCompatActivity  {
             preferences = getActivity().getSharedPreferences(getString(R.string.pref_main),MODE_PRIVATE);
             asPref = getActivity().getString(R.string.key_pref_as);
             tPref = getActivity().getString(R.string.key_pref_test);
+            audPref = "AudioCodec";
             buffS = getActivity().getString(R.string.key_pref_buff_start);
             buffE = getActivity().getString(R.string.key_pref_buff_end);
             filePref = getActivity().getResources().getString(R.string.key_pref_files);
@@ -147,6 +148,11 @@ public class Settings extends AppCompatActivity  {
             } else if (key.equals(tPref)) {
 
                 gpsOff = !sharedPreferences.getBoolean(key, false);
+
+            } else if (key.equals(audPref)) {
+
+                int aud_int = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString(key, "")));
+                sharedPreferences.edit().putInt("codec", aud_int).apply();
 
             } else if (key.equals(filePref)) {
 

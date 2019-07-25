@@ -74,6 +74,13 @@
             android:defaultValue="false"
             android:key="@string/key_pref_test"
             android:title="@string/set_testing" />
+
+        <ListPreference
+            android:defaultValue="AMR_NB"
+            android:entries="@array/codecs"
+            android:entryValues="@array/codec_ints"
+            android:key="AudioCodec"
+            android:title="Audio Codec" />
     </PreferenceCategory>
 
     <SwitchPreference

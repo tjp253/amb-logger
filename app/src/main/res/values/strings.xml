@@ -138,4 +138,12 @@
     <string name="uploadURL">"https://optics.eee.nottingham.ac.uk/~tp/upload.php"</string>
     <string name="deleteURL">"https://optics.eee.nottingham.ac.uk/~tp/filecheck.php"</string>
 
+    <string-array name="codecs">
+        <item>AMR_NB</item>
+        <item>AMR_WB</item>
+        <item>AAC</item>
+        <item>HE_AAC</item>
+        <item>AAC_ELD</item>
+    </string-array>
+
 </resources>

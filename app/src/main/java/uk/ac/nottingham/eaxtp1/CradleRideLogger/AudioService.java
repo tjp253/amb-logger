@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.media.MediaRecorder;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,6 +31,8 @@ public class AudioService extends Service {
 
     static int amp; // Declare the global MaxAmplitude variable
 
+    private int audio_codec;
+
 //    Declare timer for MaxAmplitude check
     Timer timer;
 
@@ -40,6 +43,12 @@ public class AudioService extends Service {
         if (crashed) {
             onDestroy();
         } else {
+            if (BuildConfig.TEST_MODE) {
+                audio_codec = PreferenceManager.getDefaultSharedPreferences(this)
+                        .getInt("codec", MediaRecorder.AudioEncoder.AMR_NB);
+            } else {
+                audio_codec = MediaRecorder.AudioEncoder.AMR_NB;
+            }
             prepAudio();
         }
 
@@ -53,7 +62,7 @@ public class AudioService extends Service {
         noiseDetector = new MediaRecorder();
         noiseDetector.setAudioSource(MediaRecorder.AudioSource.MIC);
         noiseDetector.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        noiseDetector.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        noiseDetector.setAudioEncoder(audio_codec);
         noiseDetector.setOutputFile("/dev/null");
         try {
             noiseDetector.prepare();
