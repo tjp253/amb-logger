@@ -51,7 +51,7 @@ public class LoggingService extends Service {
 
     NotificationUtilities notUtils;
 
-    SharedPreferences preferences, ambPref;
+    SharedPreferences preferences;
     SharedPreferences.Editor ambEd;
     CountDownTimer waitTimer;
     PowerManager.WakeLock wakelock;
@@ -66,12 +66,12 @@ public class LoggingService extends Service {
 
     final int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
 
-    String filepath = "Recording", digitAdjuster = "-0", filename, mainPath, gzipPath, ambPath,
-            toFile, outputTitle, endName, ambList;
+    static String mainPath, gzipPath;
+    String filepath = "Recording", digitAdjuster = "-0", filename, toFile, outputTitle, endName;
 
     StringBuilder stringBuilder = new StringBuilder();  // You don't need to say the string is empty
 
-    OutputStream myOutputStream, myAmbStream;
+    OutputStream myOutputStream;
     File gzFile;
 
     @Override
@@ -162,8 +162,8 @@ public class LoggingService extends Service {
 
         gzFile = new File(gzipPath);    // Initialise file variable for size check
 
-        if (BuildConfig.AMB_MODE) { // Prepare the ambulance header
-            prepAmb();
+        if (BuildConfig.AMB_MODE) { // Log the initial ambulance options
+            startService(new Intent(this, AmbLoggingService.class));
         }
 
         logTitle();
@@ -295,7 +295,9 @@ public class LoggingService extends Service {
 
         if (!crashed && dataInFile) {
             if (BuildConfig.AMB_MODE && !phoneDead) {
-                logAmb(false);  // Log the entries at the end of ambulance journey.
+                // Log the entries at the end of ambulance journey.
+                startService(new Intent(this, AmbLoggingService.class)
+                        .putExtra(getString(R.string.bool_at_start), false));
             }
 
             if (logTimer != null) {
@@ -376,63 +378,6 @@ public class LoggingService extends Service {
         Intent intent = new Intent(loggingFilter);
         intent.putExtra(loggingInt, response);
         sendBroadcast(intent);
-    }
-
-    public void prepAmb() {
-        ambPath = mainPath + date + getResources().getString(R.string.id_spacer) + userID + "-00.csv.gz";
-        try {
-            myAmbStream = new FileOutputStream(ambPath);
-            myAmbStream = new GZIPOutputStream(myAmbStream)
-            {{def.setLevel(Deflater.BEST_COMPRESSION);}};
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        logAmb(true);
-
-        ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
-        ambEd = ambPref.edit();
-        ambEd.putString(getString(R.string.key_amb_opts), ambList);
-        ambEd.putString(getString(R.string.key_amb_name), ambPath);
-        ambEd.putString(getString(R.string.key_end_name), gzipPath);
-        ambEd.apply();
-    }
-
-    public void logAmb(boolean atStart) { // Log ambulance options
-        String amb, troll, pat, trans, emerge;
-
-        SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
-
-        if (atStart) {
-            amb = ambPref.getString(getString(R.string.key_amb),"");
-            troll = ambPref.getString(getString(R.string.key_troll),"");
-            pat = ambPref.getString(getString(R.string.key_bob), "");
-            ambList = TextUtils.join(",", Arrays.asList("Ambulance", amb, "Trolley", troll, "Patient", pat,""));
-        } else {
-            trans = ambPref.getString(getString(R.string.key_trans),"");
-            emerge = ambPref.getString(getString(R.string.key_emerge),"");
-            ambList = TextUtils.join(",", Arrays.asList("Reason for Transfer", trans, "Emergency driving used", emerge)) + "\n";
-
-            ambEd.putString(getString(R.string.key_amb_opts),null);
-            ambEd.putString(getString(R.string.key_amb_name),null);
-            ambEd.putString(getString(R.string.key_end_name), null);
-            ambEd.apply();
-        }
-
-        try {
-            myAmbStream.write(ambList.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (!atStart) {
-            if (myAmbStream != null) {
-                try {
-                    myAmbStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
 //    DEBUGGING FILE ZONE

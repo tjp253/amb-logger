@@ -7,8 +7,8 @@ android {
         applicationId "uk.ac.nottingham.eaxtp1.CradleRideLogger"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 67
-        versionName "3.3.14"
+        versionCode 68
+        versionName "3.3.15"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resValue "string", "app_name", "CradleRide Logger"
         buildConfigField 'boolean', 'CROWD_MODE', 'false'

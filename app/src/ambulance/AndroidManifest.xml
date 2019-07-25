@@ -28,6 +28,9 @@
             tools:ignore="InnerclassSeparator"
             android:exported="false" />
 
+        <service android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbLoggingService"
+            tools:ignore="InnerclassSeparator"/>
+
     </application>
 
 </manifest>

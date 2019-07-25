@@ -11,6 +11,12 @@
     <string name="key_bob">PrefBOB</string><!--baby on board-->
     <string name="key_trans">PrefTrans</string>
     <string name="key_emerge">PrefEmerge</string>
+    <!-- Array of amb keys to be reset after each recording -->
+    <string-array name="amb_opt_keys">
+        <item>@string/key_bob</item>
+        <item>@string/key_trans</item>
+        <item>@string/key_emerge</item>
+    </string-array>
 
     <string name="key_amb_opts">PrefList</string>
     <string name="key_amb_name">PrefName</string>
@@ -46,6 +52,22 @@
     <string name="optCancel">keep recording</string>
     <string name="optForgot">Can\'t remember</string>
     <string name="optUnknown">UNKNOWN</string>
+
+    <string name="bool_at_start">AT START</string><!-- boolean ID for amb logging -->
+
+    <!-- array template for amb options header file -->
+    <string-array name="amb_file_template">
+        <item>Ambulance</item>
+        <item> </item>
+        <item>Trolley</item>
+        <item> </item>
+        <item>Patient</item>
+        <item> </item>
+        <item>Reason for Transfer</item>
+        <item> </item>
+        <item>Emergency driving used</item>
+        <item> </item>
+    </string-array>
 
     <string name="choose_ntt">Neonatal Transfer Team</string>
     <string name="ntt_centre">CenTre</string>

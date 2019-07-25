@@ -3,16 +3,10 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.text.TextUtils;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.zip.Deflater;
-import java.util.zip.GZIPOutputStream;
+
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbLoggingService.ambPath;
 
 public class AmbWriteAfterReboot extends IntentService {
 
@@ -25,31 +19,18 @@ public class AmbWriteAfterReboot extends IntentService {
         writeAmbOpts();
     }
 
-    OutputStream ambStream;
-
     public void writeAmbOpts() {
 
         SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
-        String ambList1 = ambPref.getString(getString(R.string.key_amb_opts),null),
-                ambPath = ambPref.getString(getString(R.string.key_amb_name),null);
+        ambPath = ambPref.getString(getString(R.string.key_amb_name),null);
 
-        if (ambList1 == null || ambPath == null) return;
+        startService(new Intent(this, AmbLoggingService.class)
+                .putExtra(getString(R.string.bool_at_start), false));
 
-        String trans = ambPref.getString(getString(R.string.key_trans),""),
-                emerge = ambPref.getString(getString(R.string.key_emerge),""),
-                ambList2 = TextUtils.join(",", Arrays.asList("Reason for Transfer", trans,
-                        "Emergency driving used", emerge)) + "\n";
-
+        // Allow time for amb options to be written
         try {
-            ambStream = new FileOutputStream(ambPath);
-            ambStream = new GZIPOutputStream(ambStream)
-            {{def.setLevel(Deflater.BEST_COMPRESSION);}};
-
-            ambStream.write(ambList1.getBytes(StandardCharsets.UTF_8));
-            ambStream.write(ambList2.getBytes(StandardCharsets.UTF_8));
-
-            ambStream.close();
-        } catch (IOException e) {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
