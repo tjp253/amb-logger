@@ -3,6 +3,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.text.TextUtils;
 
 import java.io.FileOutputStream;
@@ -30,6 +31,7 @@ public class AmbLoggingService extends IntentService {
     boolean atStart;
     static String ambPath;
     OutputStream myAmbStream;
+    Resources res;
 
     public AmbLoggingService() {
         super("AmbLoggingService");
@@ -37,13 +39,14 @@ public class AmbLoggingService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        res = getResources();
         atStart = intent.getBooleanExtra(getString(R.string.bool_at_start), true);
         prepLog();
     }
 
     public void prepLog() { // Prepare file to write amb options to
         if (ambPath == null) {
-            ambPath = mainPath + date + getResources().getString(R.string.id_spacer) + userID + "-00.csv.gz";
+            ambPath = mainPath + date + res.getString(R.string.id_spacer) + userID + "-00.csv.gz";
         }
         try {
             myAmbStream = new FileOutputStream(ambPath);
@@ -57,7 +60,7 @@ public class AmbLoggingService extends IntentService {
     }
 
     public void logAmb() { // Log ambulance options
-        String[] template = getResources().getStringArray(R.array.amb_file_template);
+        String[] template = res.getStringArray(R.array.amb_file_template);
 
         SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
 
@@ -65,11 +68,11 @@ public class AmbLoggingService extends IntentService {
         template[3] = ambPref.getString(getString(R.string.key_troll),"");
         template[5] = ambPref.getString(getString(R.string.key_bob),"");
         if ("YES".equals(template[5])) {
-            template[7] = ambPref.getString(getString(R.string.key_trans), getResources().getString(R.string.optUnknown));
+            template[7] = ambPref.getString(getString(R.string.key_trans), res.getString(R.string.optUnknown));
         } else {
             template[7] = "N/A";
         }
-        template[9] = ambPref.getString(getString(R.string.key_emerge),getResources().getString(R.string.optUnknown));
+        template[9] = ambPref.getString(getString(R.string.key_emerge),res.getString(R.string.optUnknown));
 
         String ambList = TextUtils.join(",", template);
 
@@ -87,7 +90,7 @@ public class AmbLoggingService extends IntentService {
         } else {
             ambEd.putString(getString(R.string.key_amb_name),null);
             ambEd.putString(getString(R.string.key_end_name), null);
-            for (String key : getResources().getStringArray(R.array.amb_opt_keys)) {
+            for (String key : res.getStringArray(R.array.amb_opt_keys)) {
                 ambEd.remove(key);
             }
 

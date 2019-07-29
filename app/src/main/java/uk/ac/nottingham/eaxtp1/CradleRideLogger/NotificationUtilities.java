@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Build;
 
 @SuppressLint("NewApi") // This is checked for with the boolean 'newAPI'.
@@ -18,6 +19,8 @@ public class NotificationUtilities extends ContextWrapper {
 
     // Check if the Android version supports notification channels
     final boolean newAPI = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+
+    Resources res = getResources();
 
     private NotificationManager manager;
     public final String FOREGROUND_CHANNEL_ID = BuildConfig.APPLICATION_ID + ".RECORDING",
@@ -31,11 +34,11 @@ public class NotificationUtilities extends ContextWrapper {
             FAILED_CHANNEL_NAME = "FAILED CHANNEL",
             STOPPED_CHANNEL_NAME = "STOPPED CHANNEL";
 
-    public final int UPLOADED_INT = getResources().getInteger(R.integer.uploadedID),
-            OVERSIZED_INT = getResources().getInteger(R.integer.oversizedID),
-            FAILED_INT = getResources().getInteger(R.integer.failedID),
-            FOREGROUND_INT = getResources().getInteger(R.integer.foregroundID),
-            STOPPED_INT = getResources().getInteger(R.integer.stoppedID);
+    public final int UPLOADED_INT = res.getInteger(R.integer.uploadedID),
+            OVERSIZED_INT = res.getInteger(R.integer.oversizedID),
+            FAILED_INT = res.getInteger(R.integer.failedID),
+            FOREGROUND_INT = res.getInteger(R.integer.foregroundID),
+            STOPPED_INT = res.getInteger(R.integer.stoppedID);
 
     public NotificationUtilities(Context context) {
         super(context);

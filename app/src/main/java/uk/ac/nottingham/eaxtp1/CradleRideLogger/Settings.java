@@ -2,6 +2,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.PreferenceCategory;
@@ -31,9 +32,13 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class Settings extends AppCompatActivity  {
 
+    static Resources resources;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        resources = getResources();
 
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
@@ -89,14 +94,14 @@ public class Settings extends AppCompatActivity  {
             audPref = "AudioCodec";
             buffS = getActivity().getString(R.string.key_pref_buff_start);
             buffE = getActivity().getString(R.string.key_pref_buff_end);
-            filePref = getActivity().getResources().getString(R.string.key_pref_files);
+            filePref = resources.getString(R.string.key_pref_files);
 
             if (BuildConfig.AMB_MODE) {
                 prefAmb = getActivity().getSharedPreferences(getString(R.string.pref_amb),MODE_PRIVATE);
                 nttPref = getActivity().getString(R.string.key_pref_ntt);
                 magPref = getActivity().getString(R.string.key_pref_magnets);
                 nttList = (ListPreference) findPreference(nttPref);
-                nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[prefAmb.getInt(nttPref,0)]);
+                nttList.setTitle(resources.getStringArray(R.array.ntt_choice)[prefAmb.getInt(nttPref,0)]);
             }
 
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
@@ -163,8 +168,8 @@ public class Settings extends AppCompatActivity  {
                 if (key.equals(nttPref)) {
 
 //                Android Studio thinks 'choice' is not used... but it is. Twice. Inspection disabled.
-                    int choice = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString(key, "")));
-                    nttList.setTitle(getActivity().getResources().getStringArray(R.array.ntt_choice)[choice]);
+                    int choice = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString(key, "0")));
+                    nttList.setTitle(resources.getStringArray(R.array.ntt_choice)[choice]);
 
                     prefEdAmb = prefAmb.edit();
                     prefEdAmb.putInt(key, choice).apply();

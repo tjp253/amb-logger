@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -50,9 +51,9 @@ public class LoggingService extends Service {
     }
 
     NotificationUtilities notUtils;
+    Resources res;
 
     SharedPreferences preferences;
-    SharedPreferences.Editor ambEd;
     CountDownTimer waitTimer;
     PowerManager.WakeLock wakelock;
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
@@ -83,20 +84,22 @@ public class LoggingService extends Service {
 
         crashCheck();
 
+        res = getResources();
+
         if (date == null) {
             //    Creates a string of the current date and time
             @SuppressLint("SimpleDateFormat")
-            SimpleDateFormat dateFormat = new SimpleDateFormat(getResources().getString(R.string.file_date_format));
+            SimpleDateFormat dateFormat = new SimpleDateFormat(res.getString(R.string.file_date_format));
             Date todayDate = new Date();
             date = dateFormat.format(todayDate);
         }
-        filename = date + getResources().getString(R.string.id_spacer) + userID + digitAdjuster + zipPart + getString(R.string.file_type);
+        filename = date + res.getString(R.string.id_spacer) + userID + digitAdjuster + zipPart + getString(R.string.file_type);
 
         if (!crashed) {
             preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
 
             if (BuildConfig.CROWD_MODE) {    // Get end buffer details
-                buffBy = preferences.getInt(getString(R.string.key_pref_buff_end),getResources().getInteger(R.integer.buff_default));
+                buffBy = preferences.getInt(getString(R.string.key_pref_buff_end),res.getInteger(R.integer.buff_default));
                 bufferOn = buffBy != 0;
             }
 
@@ -266,7 +269,7 @@ public class LoggingService extends Service {
 //    Create a new file to continue the recording
     public void fileSplitter(int filePart) {
 
-        gzipPath = mainPath + date + getResources().getString(R.string.id_spacer) + userID + digitAdjuster + filePart + getString(R.string.file_type);
+        gzipPath = mainPath + date + res.getString(R.string.id_spacer) + userID + digitAdjuster + filePart + getString(R.string.file_type);
 
         try {
             myOutputStream.close();
@@ -279,7 +282,8 @@ public class LoggingService extends Service {
         gzFile = new File(gzipPath);
 
         if (BuildConfig.AMB_MODE) {
-            ambEd.putString(getString(R.string.key_end_name), gzipPath).apply();
+            getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE).edit()
+                    .putString(getString(R.string.key_end_name), gzipPath).apply();
         }
 
     }
@@ -325,10 +329,10 @@ public class LoggingService extends Service {
             // Edit the final filename to enable PHP to automatically join all parts of the
             // recording
             if (multiFile || BuildConfig.AMB_MODE) {
-                endName = mainPath + date + getResources().getString(R.string.id_spacer) + userID +
-                        digitAdjuster + zipPart + getResources().getString(R.string.suffix) + getString(R.string.file_type);
+                endName = mainPath + date + res.getString(R.string.id_spacer) + userID +
+                        digitAdjuster + zipPart + res.getString(R.string.suffix) + getString(R.string.file_type);
             } else {
-                endName = mainPath + date + getResources().getString(R.string.id_spacer) + userID + getString(R.string.file_type);
+                endName = mainPath + date + res.getString(R.string.id_spacer) + userID + getString(R.string.file_type);
             }
             File endFile = new File(endName);
             gzFile.renameTo(endFile);

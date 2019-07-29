@@ -2,6 +2,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.res.Resources;
 import android.os.Environment;
 import android.os.StatFs;
 
@@ -37,11 +38,13 @@ public class FileCheckUtilities extends ContextWrapper {
 
     String idSeparator;
 
+    Resources res = getResources();
+
     // Register the URL required.
     private URL getURL() {
         if (url == null) {
             try {
-                url = new URL(getResources().getString(R.string.deleteURL));
+                url = new URL(res.getString(R.string.deleteURL));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -52,24 +55,24 @@ public class FileCheckUtilities extends ContextWrapper {
     // Method of extracting the ID from a filename
     public String getID(File file) {
         if (idStart == 0) {
-            idStart = getResources().getInteger(R.integer.idStart);
+            idStart = res.getInteger(R.integer.idStart);
         }
         if (idEnd == 0) {
-            idEnd = getResources().getInteger(R.integer.idEnd);
+            idEnd = res.getInteger(R.integer.idEnd);
         }
         String tempID = file.getName().substring(idStart,idEnd);
         // Check if the file is in the old format. If so, adjust.
         if (tempID.contains("-")) {
             tempID = file.getName()
-                    .substring(getResources().getInteger(R.integer.idStartOld),
-                            getResources().getInteger(R.integer.idEndOld));
+                    .substring(res.getInteger(R.integer.idStartOld),
+                            res.getInteger(R.integer.idEndOld));
         }
         return tempID;
     }
 
     private String getIDSeparator() {
         if (idSeparator == null) {
-            idSeparator = getResources().getString(R.string.id_spacer);
+            idSeparator = res.getString(R.string.id_spacer);
         }
         return idSeparator;
     }
@@ -77,7 +80,7 @@ public class FileCheckUtilities extends ContextWrapper {
     // Method of extracting the start time from a filename
     public String getDate(File file) {
         if (dateEnd == 0) {
-            dateEnd = getResources().getInteger(R.integer.dateEnd);
+            dateEnd = res.getInteger(R.integer.dateEnd);
         }
         String tempDate = file.getName().substring(0,dateEnd);
         // Check if the file is in the old format. If so, adjust.
@@ -118,12 +121,12 @@ public class FileCheckUtilities extends ContextWrapper {
             // Depending on the response code from the PHP, either delete the
             // files or don't!
             // Using IF-ELSE instead of SWITCH to enable use of resource INTs
-            if (response.code() == getResources().getInteger(R.integer.deleteFiles)) {
+            if (response.code() == res.getInteger(R.integer.deleteFiles)) {
                 // Delete the files
                 deleteJourney(id, date);
                 return true;
 
-            } else if (response.code() == getResources().getInteger(R.integer.doNotDeleteFiles)) {
+            } else if (response.code() == res.getInteger(R.integer.doNotDeleteFiles)) {
                 // File not ready to be deleted yet
                 return false;
 

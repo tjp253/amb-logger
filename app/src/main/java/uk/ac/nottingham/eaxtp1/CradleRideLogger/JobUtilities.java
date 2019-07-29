@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Build;
 
 import java.io.File;
@@ -22,10 +23,12 @@ public class JobUtilities extends ContextWrapper {
     // Check if the Android version supports notification channels
     final boolean nAPI = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
 
+    Resources res = getResources();
+
     private JobScheduler scheduler;
-    public final int DELETING_JOB_INT = getResources().getInteger(R.integer.deletingJobID),
-            UPLOAD_JOB_INT = getResources().getInteger(R.integer.uploadJobID),
-            WIFI_CHECK_JOB_INT = getResources().getInteger(R.integer.wifiJobID);
+    public final int DELETING_JOB_INT = res.getInteger(R.integer.deletingJobID),
+            UPLOAD_JOB_INT = res.getInteger(R.integer.uploadJobID),
+            WIFI_CHECK_JOB_INT = res.getInteger(R.integer.wifiJobID);
 
     public JobUtilities(Context context) {
         super(context);

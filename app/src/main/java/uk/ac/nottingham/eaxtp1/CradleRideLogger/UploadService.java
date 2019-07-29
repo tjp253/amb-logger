@@ -2,6 +2,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.res.Resources;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,6 +38,8 @@ public class UploadService extends IntentService {
 
     NotificationUtilities notUtils;
 
+    Resources res;
+
     URL url;
 
     String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
@@ -51,6 +54,7 @@ public class UploadService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
+        res = getResources();
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         finishedPath = mainPath + "/Finished/";
@@ -87,7 +91,7 @@ public class UploadService extends IntentService {
     private URL getURL() {
         if (url == null) {
             try {
-                url = new URL(getResources().getString(R.string.uploadURL));
+                url = new URL(res.getString(R.string.uploadURL));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -185,16 +189,16 @@ public class UploadService extends IntentService {
             // Receives the PHP response code (programmed myself) to feedback any
             // problems / tell the app this file was uploaded successfully.
             // Using IF-ELSE instead of SWITCH to enable use of resource INTs
-            if (response.code() == getResources().getInteger(R.integer.successfullyUp)) {
+            if (response.code() == res.getInteger(R.integer.successfullyUp)) {
                 uploadFileCount++;
 
-            } else if (response.code() == getResources().getInteger(R.integer
+            } else if (response.code() == res.getInteger(R.integer
                     .oversizedUp)) {
                 moveOversized(fileName);
                 oversizedFileCount++;
                 fileName = null;
 
-            } else if (response.code() == getResources().getInteger(R.integer.alreadyUp)) {
+            } else if (response.code() == res.getInteger(R.integer.alreadyUp)) {
                 // File already uploaded.
 
             } else {

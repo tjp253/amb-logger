@@ -276,7 +276,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 //        Register for feedback from Logging Service
         registerReceiver(loggingReceiver, new IntentFilter(loggingFilter));
         // Unregister feedback from GPSTimerService
-        unregisterReceiver(timerReceiver);
+        unregisterReceiverAllInstances(timerReceiver);
     }
 
 //    Separate the display / UI changes - to enable buffer to work nicely.
@@ -351,7 +351,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     displayOnFinish();      // Notify user that logging has stopped.
 
                     if (BuildConfig.TEST_MODE) {
-                        unregisterReceiver(loggingReceiver);
+                        unregisterReceiverAllInstances(loggingReceiver);
                     }
                 }
             }
@@ -483,6 +483,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                 } else if (requestCode == getResources().getInteger(R.integer.ambEnd)) {
                     stopAll();  // Stop all services (doesn't matter if they're not all running)
+                    unregisterReceiverAllInstances(loggingReceiver);
+                    unregisterReceiverAllInstances(shutdownReceiver);
                     displayOnFinish();      // Notify user that logging has stopped.
 
                 } else if (requestCode == getResources().getInteger(R.integer.ambDead)) {
@@ -537,7 +539,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         notUtils.getManager().notify(notUtils.FAILED_INT,
                                 notUtils.getFailedNotification().build());
                     }
-                    unregisterReceiver(timerReceiver);
+                    unregisterReceiverAllInstances(timerReceiver);
                     break;
 
                 case 2: // Let User know GPS is fixed, but waiting for buffer before recording.
@@ -546,7 +548,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     break;
 
                 case 3: // Cancel the Broadcast Receiver if GPSTimerService destroyed before lock
-                    unregisterReceiver(timerReceiver);
+                    unregisterReceiverAllInstances(timerReceiver);
                     break;
             }
         }
@@ -563,7 +565,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 case 1: // Recording has some data
                     fileEmpty = false;
                     if (BuildConfig.CROWD_MODE) {
-                        unregisterReceiver(loggingReceiver); // Cancel Broadcast Receiver for regular users
+                        unregisterReceiverAllInstances(loggingReceiver); // Cancel Broadcast Receiver for regular users
                     }
                     return;
 
@@ -571,7 +573,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     displayOnFinish();
                     forcedStop = false;
                     stopService(loggingService);
-                    unregisterReceiver(shutdownReceiver);
+                    unregisterReceiverAllInstances(loggingReceiver);
+                    unregisterReceiverAllInstances(shutdownReceiver);
                     break;
 
                 case 99: // Flash the screen if there's an error reading from the logging queue
@@ -609,7 +612,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     }
                     return;
             }
-            unregisterReceiver(loggingReceiver);
+            unregisterReceiverAllInstances(loggingReceiver);
         }
     };
 
@@ -623,13 +626,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 if (!BuildConfig.AMB_MODE) {
                     forcedStop = false;
                 }
-                try {
-                    unregisterReceiver(loggingReceiver);
-                } catch (Exception e) {
-                    // Receiver is already unregistered... move along.
-                }
+                unregisterReceiverAllInstances(loggingReceiver);
             }
-            unregisterReceiver(gpsReceiver);
+            unregisterReceiverAllInstances(gpsReceiver);
         }
     };
 
@@ -641,7 +640,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                 SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
                 ambPref.edit().putBoolean(getString(R.string.key_dead), true).apply();
             }
-            unregisterReceiver(shutdownReceiver);
+            unregisterReceiverAllInstances(shutdownReceiver);
         }
     };
 
@@ -666,6 +665,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         }
                     }).create();
             launcherDialog.show();
+        }
+    }
+
+// Simple looping method to remove all instances of a receiver, in case it was not cleared
+    public void unregisterReceiverAllInstances(BroadcastReceiver receiver) {
+        while (true) {
+            try {
+                unregisterReceiver(receiver);
+            } catch (Exception e) {
+                break;
+            }
         }
     }
 }
