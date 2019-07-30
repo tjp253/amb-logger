@@ -74,7 +74,7 @@ public class AmbLoggingService extends IntentService {
         }
         template[9] = ambPref.getString(getString(R.string.key_emerge),res.getString(R.string.optUnknown));
 
-        String ambList = TextUtils.join(",", template);
+        String ambList = TextUtils.join(",", template) + "\n";
 
         try {
             myAmbStream.write(ambList.getBytes(StandardCharsets.UTF_8));
