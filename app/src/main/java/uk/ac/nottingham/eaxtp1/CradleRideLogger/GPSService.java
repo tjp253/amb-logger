@@ -39,7 +39,8 @@ public class GPSService extends Service implements LocationListener {
     String sLat, sLong, sSpeed, sAcc, sAlt, sBear, sRT, sGTime;
     static String gpsData, sGPS = "";
     List<String> dataList;
-    static long gpsSample, gpsSampleTime;
+    long gpsSample;
+    static long gpsSampleTime;
     private long movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
     long limitStart, limitMax;
@@ -61,7 +62,6 @@ public class GPSService extends Service implements LocationListener {
             gpsSample = 1;
             sGPS = "1";
         } else {
-            gpsSample = 0;
             sGPS = "";
         }
 
@@ -102,8 +102,6 @@ public class GPSService extends Service implements LocationListener {
 
         wifiCheckOn = false;
         timerOn_Slow = false;
-
-        gpsSample = 0;
 
         sendBroadcast(forcedStop);
 

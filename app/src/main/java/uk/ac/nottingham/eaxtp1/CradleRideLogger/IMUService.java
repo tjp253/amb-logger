@@ -24,7 +24,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AudioService.amp;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AutoStopTimerService.cancelRecording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSample;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsSampleTime;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.timerOn_Slow;
@@ -54,13 +53,11 @@ public class IMUService extends Service implements SensorEventListener {
     static boolean heldWithMagnets;
 
     private long sampleID;
-    private long prevSample;
 
     String sID, sX, sY, sZ, sampleTime, toQueue,
             sGyX = "", sGyY = "", sGyZ = "", sE = "", sN = "", sD = "", sAmp = "";
     List<String> outputList;
     long startTime, currTime;
-    int prevAmp;
 
 //    Declare matrices for IMU data and for converting from device to world coordinates
     private float[] deviceValues = new float[4], gravityValues = new float[3],
@@ -212,9 +209,9 @@ public class IMUService extends Service implements SensorEventListener {
                 }
 
 //                If a new Audio value is available, store it. Otherwise, save space in CSV log
-                if (amp != 0 && amp != prevAmp) {
+                if (amp != 0) {
                     sAmp = String.valueOf(amp);
-                    prevAmp = amp;
+                    amp = 0;
                 } else {
                     sAmp = "";
                 }
@@ -223,19 +220,19 @@ public class IMUService extends Service implements SensorEventListener {
 
 //                Combine data to be logged
                 if (gyroPresent) {
-                    if (gpsSample > prevSample) {
+                    if (gpsData != null) {
                         outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGyX, sGyY, sGyZ,
                                 sN, sE, sD, sGPS, sAmp, gpsData);
-                        prevSample = gpsSample;
+                        gpsData = null;
                     } else {
                         outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGyX, sGyY, sGyZ,
                                 sN, sE, sD, sGPS, sAmp);
                     }
 
                 } else {
-                    if (gpsSample > prevSample) {
+                    if (gpsData != null) {
                         outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGPS, sAmp, gpsData);
-                        prevSample = gpsSample;
+                        gpsData = null;
                     } else {
                         outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGPS, sAmp);
                     }
