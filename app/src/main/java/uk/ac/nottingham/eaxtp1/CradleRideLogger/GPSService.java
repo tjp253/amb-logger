@@ -41,9 +41,9 @@ public class GPSService extends Service implements LocationListener {
     List<String> dataList;
     long gpsSample;
     static long gpsSampleTime;
-    private long movingSamples;
+    private byte movingSamples;
     // Number of GPS samples (seconds) before journey is considered "finished".
-    long limitStart, limitMax;
+    int limitStart, limitMax;
     float speed;
     static boolean autoStopOn, wifiCheckOn, timerOn_Slow;
 
@@ -141,6 +141,7 @@ public class GPSService extends Service implements LocationListener {
         if (speed <= 2) {   // Less than 5 miles per hour
 
             if (!timerOn_Slow) {
+                movingSamples = 0; // Reset number of moving samples to zero
                 // Start the AutoStop timer service to check the limits have passed.
                 startService(autoStopTimerService);
                 timerOn_Slow = true;
