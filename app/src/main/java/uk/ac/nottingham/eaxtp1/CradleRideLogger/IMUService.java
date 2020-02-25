@@ -9,12 +9,15 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.opengl.Matrix;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -30,8 +33,9 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.timerOn_Slow;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
-public class IMUService extends Service implements SensorEventListener {
+public class IMUService extends Service /*implements SensorEventListener*/ {
     public IMUService() {}
 
 //    This service accesses the IMU to output accelerometer and gyroscope values. For every
@@ -41,6 +45,10 @@ public class IMUService extends Service implements SensorEventListener {
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+    HandlerThread imuHandlerThread;
+    Handler imuHandler;
+    SensorEventListener imuListener;
 
     NotificationUtilities notUtils;
 
@@ -54,16 +62,14 @@ public class IMUService extends Service implements SensorEventListener {
 
     private long sampleID;
 
-    String sID, sX, sY, sZ, sampleTime, toQueue,
-            sGyX = "", sGyY = "", sGyZ = "", sE = "", sN = "", sD = "", sAmp = "";
-    List<String> outputList;
+    String toQueue;
+    List<String> outputList = new ArrayList<>();
     long startTime, currTime;
 
 //    Declare matrices for IMU data and for converting from device to world coordinates
     private float[] deviceValues = new float[4], gravityValues = new float[3],
-            magneticValues = new float[3], rMatrix = new float[16], iMatrix = new float[16],
-            worldMatrix = new float[16], inverse = new float[16];
-    float fN, fE, fD;
+        gyroValues = new float[3], magneticValues = new float[3], rMatrix = new float[16],
+        iMatrix = new float[16], worldMatrix = new float[16], inverse = new float[16];
 
     static BlockingQueue<String> myQ;   // Declare data queue
 
@@ -80,7 +86,8 @@ public class IMUService extends Service implements SensorEventListener {
         if(crashed) {
             stopSelf();
         } else {
-            initialiseIMU();
+            generateHandler();
+//            initialiseIMU();
         }
 
         notUtils = new NotificationUtilities(this);
@@ -90,29 +97,41 @@ public class IMUService extends Service implements SensorEventListener {
         autoStopTimerService = new Intent(getApplicationContext(),AutoStopTimerService.class);
     }
 
+    private void generateHandler() {
+        imuHandlerThread = new HandlerThread("IMU_Handler");
+        imuHandlerThread.start();
+
+        imuHandler = new Handler(imuHandlerThread.getLooper());
+
+        setupListener();
+
+        initialiseIMU();
+    }
+
 //    Initialise the IMU sensors and the wakelock
     public void initialiseIMU() {
         gyroPresent = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE)
                 .getBoolean(KEY_G, true);
 
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        int delay = SensorManager.SENSOR_DELAY_FASTEST;
         if (manager != null) {
             accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-            manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+            manager.registerListener(imuListener, accelerometer, delay, imuHandler);
 
             if (gyroPresent) {
                 gravity = manager.getDefaultSensor(Sensor.TYPE_GRAVITY);
                 magnetic = manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
                 gyroscope = manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-                manager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_FASTEST);
-                manager.registerListener(this, magnetic, SensorManager.SENSOR_DELAY_FASTEST);
-                manager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
+                manager.registerListener(imuListener, gravity, delay, imuHandler);
+                manager.registerListener(imuListener, magnetic, delay, imuHandler);
+                manager.registerListener(imuListener, gyroscope, delay, imuHandler);
 
                 deviceValues[3] = 0;
 
                 if (BuildConfig.AMB_MODE) {
-                    heldWithMagnets = PreferenceManager.getDefaultSharedPreferences(this).getBoolean
-                            (getString(R.string.key_pref_magnets), true);
+                    heldWithMagnets = PreferenceManager.getDefaultSharedPreferences(this)
+                            .getBoolean(getString(R.string.key_pref_magnets), true);
                 }
             }
         }
@@ -132,137 +151,141 @@ public class IMUService extends Service implements SensorEventListener {
         Date todayDate = new Date();
         date = dateFormat.format(todayDate);
 
-        startTime = System.currentTimeMillis();
+        startTime = System.nanoTime();
     }
 
-//    Called when a new sensor value is available
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-
-        switch (event.sensor.getType()) {
-            case Sensor.TYPE_ACCELEROMETER:
-
-                currTime = System.currentTimeMillis();  // Time to be logged
-                if (!gpsOff) {
-                    sampleTime = String.valueOf(currTime - startTime);
-
-                    // The following code handles the AutoStop service, depending on how long it
-                    // has been since the last GPS Sample. If the AutoStop Timer is NOT on due to
-                    // slow speed, check if the GPS has lost signal.
-                    if (!timerOn_Slow && gpsSampleTime > 0) { // GPS Service has started
-                        long timeSinceGPS = currTime - gpsSampleTime;
-
-                        if (timeSinceGPS < 60000) { // TODO: Set to 1 minute (60000)
-                            // If AutoStopTimer is on because of lack of GPS cancel the Timer.
-                            if (timerOn_Samples) {
-                                timerOn_Samples = false;
-                                stopService(autoStopTimerService);
-                                cancelRecording = false;
-                            }
-                        // If it's been a minute without a GPS sample, start the AutoStop Timer
-                        } else if (!timerOn_Samples) {
-                            timerOn_Samples = true;
-                            startService(autoStopTimerService);
-                        }
-                    }
-
-                } else {
-                    sampleTime = String.valueOf(currTime);  // Outputs time since 1970, when testing.
+    private void setupListener() {
+        imuListener = new SensorEventListener() {
+            //    Called when a new sensor value is available
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                if (!recording) {
+                    imuHandlerThread.quit();
                 }
-                sampleID++;
+//                Log.i("IMU", "Handler listener");
+                switch (event.sensor.getType()) {
+                    case Sensor.TYPE_ACCELEROMETER:
 
-//                Store the accelerometer values in device coordinates
-                sX = Float.toString(event.values[0]);
-                sY = Float.toString(event.values[1]);
-                sZ = Float.toString(event.values[2]);
+                        currTime = System.nanoTime();  // Time to be logged
 
-                if (gyroPresent) {  // Calculate accelerometer values in World coordinates
+                        outputList.clear();
 
-                    deviceValues[0] = event.values[0];
-                    deviceValues[1] = event.values[1];
-                    deviceValues[2] = event.values[2];
+                        sampleID++;
+                        outputList.add(Long.toString(sampleID));
 
-                    SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);
+                        // Store the accelerometer values in device coordinates
+                        for (float value : event.values) {
+                            outputList.add(Float.toString(value));
+                        }
 
-                    Matrix.invertM(inverse, 0, rMatrix, 0);
-                    Matrix.multiplyMV(worldMatrix, 0, inverse, 0, deviceValues, 0);
+                        if (!gpsOff) {
+                            outputList.add(Long.toString(currTime - startTime));
 
-                    fE = worldMatrix[0];
-                    fN = worldMatrix[1];
-                    fD = worldMatrix[2];
+                            // The following code handles the AutoStop service, depending on how long it
+                            // has been since the last GPS Sample. If the AutoStop Timer is NOT on due to
+                            // slow speed, check if the GPS has lost signal.
+                            if (!timerOn_Slow && gpsSampleTime > 0) { // GPS Service has started
+                                long timeSinceGPS = currTime - gpsSampleTime;
+
+                                if (timeSinceGPS < 60000) { // TODO: Set to 1 minute (60000)
+                                    // If AutoStopTimer is on because of lack of GPS cancel the Timer.
+                                    if (timerOn_Samples) {
+                                        timerOn_Samples = false;
+                                        stopService(autoStopTimerService);
+                                        cancelRecording = false;
+                                    }
+                                    // If it's been a minute without a GPS sample, start the AutoStop Timer
+                                } else if (!timerOn_Samples) {
+                                    timerOn_Samples = true;
+                                    startService(autoStopTimerService);
+                                }
+                            }
+
+                        } else {
+                            outputList.add(Long.toString(currTime));  // Outputs time since 1970, when testing.
+                        }
+
+                        if (gyroPresent) {  // Calculate accelerometer values in World coordinates
+
+                            for (float value : gyroValues) {
+                                outputList.add(Float.toString(value));
+                            }
+
+                            deviceValues[0] = event.values[0];
+                            deviceValues[1] = event.values[1];
+                            deviceValues[2] = event.values[2];
+
+                            SensorManager.getRotationMatrix(rMatrix, iMatrix, gravityValues, magneticValues);
+
+                            Matrix.invertM(inverse, 0, rMatrix, 0);
+                            Matrix.multiplyMV(worldMatrix, 0, inverse, 0, deviceValues, 0);
 
 //                    Store the accelerometer values in world coordinates
-                    sE = Float.toString(fE);
-                    sN = Float.toString(fN);
-                    sD = Float.toString(fD);
+                            if (worldMatrix[0] + worldMatrix[1] + worldMatrix[2] == 0) {
+                                outputList.add("");
+                                outputList.add("");
+                                outputList.add("");
+                            } else if (BuildConfig.AMB_MODE && heldWithMagnets) {
+                                // If holding the phone in place using magnets on the ambulance trolley,
+                                // the magnetometer (compass) doesn't function properly. Therefore, save
+                                // space by blanking the 'North' and 'East' variables.
+                                outputList.add("");
+                                outputList.add("");
+                                outputList.add(Float.toString(worldMatrix[2]));
+                            } else {
+                                for (float value : Arrays.copyOfRange(worldMatrix, 0, 3)) {
+                                    outputList.add(Float.toString(value));
+                                }
+                            }
 
-//                    If world coordinates are zero, save space in the CSV log
-                    if (fE==fN && fE==fD && fE==0) {
-                        sE = "";    sN = "";    sD = "";
-                    } else if (BuildConfig.AMB_MODE && heldWithMagnets) {
-                        // If holding the phone in place using magnets on the ambulance trolley,
-                        // the magnetometer (compass) doesn't function properly. Therefore, save
-                        // space by blanking the 'North' and 'East' variables.
-                        sE = "";    sN = "";
-                    }
+                        }
 
-                }
+                        outputList.add(sGPS);
 
 //                If a new Audio value is available, store it. Otherwise, save space in CSV log
-                if (amp != 0) {
-                    sAmp = String.valueOf(amp);
-                    amp = 0;
-                } else {
-                    sAmp = "";
-                }
+                        if (amp != 0) {
+                            outputList.add(Integer.toString(amp));
+                            amp = 0;
+                        } else if (!gpsData.isEmpty()){
+                            outputList.add("");
+                        }
 
-                sID = String.valueOf(sampleID);
+                        if (!gpsData.isEmpty()) {
+                            outputList.addAll(gpsData);
+                            gpsData.clear();
+                        }
 
-//                Combine data to be logged
-                if (gyroPresent) {
-                    if (gpsData != null) {
-                        outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGyX, sGyY, sGyZ,
-                                sN, sE, sD, sGPS, sAmp, gpsData);
-                        gpsData = null;
-                    } else {
-                        outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGyX, sGyY, sGyZ,
-                                sN, sE, sD, sGPS, sAmp);
-                    }
+                        toQueue = TextUtils.join(",", outputList) + "\n";
 
-                } else {
-                    if (gpsData != null) {
-                        outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGPS, sAmp, gpsData);
-                        gpsData = null;
-                    } else {
-                        outputList = Arrays.asList(sID, sX, sY, sZ, sampleTime, sGPS, sAmp);
-                    }
-                }
+                        myQ.add(toQueue);
 
-                toQueue = TextUtils.join(",", outputList) + "\n";
+                        break;
 
-                myQ.add(toQueue);
+                    case Sensor.TYPE_GRAVITY:
 
-                break;
+                        gravityValues = event.values;
+                        break;
 
-            case Sensor.TYPE_GRAVITY:
+                    case Sensor.TYPE_MAGNETIC_FIELD:
 
-                gravityValues = event.values;
-                break;
+                        magneticValues = event.values;
+                        break;
 
-            case Sensor.TYPE_MAGNETIC_FIELD:
-
-                magneticValues = event.values;
-                break;
-
-            case Sensor.TYPE_GYROSCOPE:
+                    case Sensor.TYPE_GYROSCOPE:
 
 //                Store the gyroscope values
-                sGyX = Float.toString(event.values[0]);
-                sGyY = Float.toString(event.values[1]);
-                sGyZ = Float.toString(event.values[2]);
+                        gyroValues = event.values;
 
-                break;
-        }
+                        break;
+                }
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+
+        };
     }
 
     @Override
@@ -270,8 +293,10 @@ public class IMUService extends Service implements SensorEventListener {
         super.onDestroy();
 
         if (manager != null) {
-            manager.unregisterListener(this);
+            manager.unregisterListener(imuListener);
         }
+
+        imuHandlerThread.quit();
 
         // Reset the static variables for the next recording.
         sGPS = "";
@@ -282,7 +307,4 @@ public class IMUService extends Service implements SensorEventListener {
             wakeLock.release();
         }
     }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 }

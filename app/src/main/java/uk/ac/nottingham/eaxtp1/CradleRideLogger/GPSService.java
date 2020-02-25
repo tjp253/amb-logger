@@ -10,9 +10,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
@@ -36,9 +35,8 @@ public class GPSService extends Service implements LocationListener {
     PowerManager.WakeLock wakelock;
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
 
-    String sLat, sLong, sSpeed, sAcc, sAlt, sBear, sRT, sGTime;
-    static String gpsData, sGPS = "";
-    List<String> dataList;
+    static String sGPS = "";
+    static List<String> gpsData = new ArrayList<>();
     long gpsSample;
     static long gpsSampleTime;
     private byte movingSamples;
@@ -58,11 +56,11 @@ public class GPSService extends Service implements LocationListener {
             onDestroy();
         }
 
-        if (gpsData != null && !gpsData.equals("")) {
+        if (gpsData.isEmpty()) {
+            sGPS = "";
+        } else {
             gpsSample = 1;
             sGPS = "1";
-        } else {
-            sGPS = "";
         }
 
         gpsSampleTime = 0;
@@ -115,21 +113,20 @@ public class GPSService extends Service implements LocationListener {
     public void onLocationChanged(Location location) {
         gpsSample++;
         gpsSampleTime = System.currentTimeMillis();
-        sGPS = String.valueOf(gpsSample);
+        sGPS = Long.toString(gpsSample);
 
         speed = location.getSpeed();    // Needed for movement check
 
-        sLat   = String.valueOf(location.getLatitude());
-        sLong  = String.valueOf(location.getLongitude());
-        sSpeed = String.valueOf(speed);
-        sGTime = String.valueOf(location.getTime());
-        sAcc   = String.valueOf(location.getAccuracy());
-        sAlt   = String.valueOf(location.getAltitude());
-        sBear  = String.valueOf(location.getBearing());
-        sRT    = String.valueOf(location.getElapsedRealtimeNanos());
+        gpsData.clear();
 
-        dataList = Arrays.asList(sLat,sLong,sSpeed,sGTime,sAcc,sAlt,sBear,sRT);
-        gpsData = TextUtils.join(",", dataList);
+        gpsData.add(Double.toString(location.getLatitude()));
+        gpsData.add(Double.toString(location.getLongitude()));
+        gpsData.add(Float.toString(speed));
+        gpsData.add(Long.toString(location.getTime()));
+        gpsData.add(Float.toString(location.getAccuracy()));
+        gpsData.add(Double.toString(location.getAltitude()));
+        gpsData.add(Float.toString(location.getBearing()));
+        gpsData.add(Long.toString(location.getElapsedRealtimeNanos()));
 
         if (autoStopOn) {
             stationaryChecker();

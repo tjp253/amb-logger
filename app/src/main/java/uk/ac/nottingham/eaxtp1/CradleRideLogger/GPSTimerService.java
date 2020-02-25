@@ -15,10 +15,6 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
-import android.text.TextUtils;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
@@ -208,17 +204,16 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
                 myLastLocation = location;
 
-                String sLat   = String.valueOf(location.getLatitude());
-                String sLong  = String.valueOf(location.getLongitude());
-                String sSpeed = String.valueOf(location.getSpeed());
-                String sGTime = String.valueOf(location.getTime());
-                String sAcc   = String.valueOf(location.getAccuracy());
-                String sAlt   = String.valueOf(location.getAltitude());
-                String sBear  = String.valueOf(location.getBearing());
-                String sRT    = String.valueOf(location.getElapsedRealtimeNanos());
+                gpsData.clear();
 
-                List<String> dataList = Arrays.asList(sLat, sLong, sSpeed, sGTime, sAcc, sAlt, sBear, sRT);
-                gpsData = TextUtils.join(",", dataList);
+                gpsData.add(Double.toString(location.getLatitude()));
+                gpsData.add(Double.toString(location.getLongitude()));
+                gpsData.add(Float.toString(location.getSpeed()));
+                gpsData.add(Long.toString(location.getTime()));
+                gpsData.add(Float.toString(location.getAccuracy()));
+                gpsData.add(Double.toString(location.getAltitude()));
+                gpsData.add(Float.toString(location.getBearing()));
+                gpsData.add(Long.toString(location.getElapsedRealtimeNanos()));
             }
 
             if (BuildConfig.AMB_MODE && !ambGPSOff) {   // Cancel AMB-specific GPS
