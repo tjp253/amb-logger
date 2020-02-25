@@ -2,13 +2,18 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.annotation.SuppressLint;
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.CountDownTimer;
 import android.os.IBinder;
+import android.os.ParcelUuid;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import java.io.File;
@@ -21,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.zip.Deflater;
@@ -59,8 +65,10 @@ public class LoggingService extends Service {
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
 
     static boolean logging;
-    boolean sentIntents, bufferOn, multiFile, writingToFile, dataInFile;
+    boolean sentIntents, bufferOn, multiFile, writingToFile, dataInFile, sendToPi;
     int buffBy, buffSamples, zipPart = 1, logPeriod = 5;
+
+    BluetoothSocket blueSock = null;
 
     Timer logTimer;
     TimerTask loggingTask;
@@ -72,7 +80,7 @@ public class LoggingService extends Service {
 
     StringBuilder stringBuilder = new StringBuilder();  // You don't need to say the string is empty
 
-    OutputStream myOutputStream;
+    OutputStream myOutputStream, bluetoothStream;
     File gzFile;
 
     @Override
@@ -116,11 +124,71 @@ public class LoggingService extends Service {
             } else {
                 initialiseLogging();
             }
+
+            setupBluetooth();
         }
 
         notUtils = new NotificationUtilities(this);
 
         startForeground(notUtils.FOREGROUND_INT,notUtils.getForegroundNotification().build());
+    }
+
+    public void setupBluetooth() {
+        sendToPi = PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(getString(R.string.key_pref_pi), false);
+        if (sendToPi) {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+            if (pairedDevices.size() == 0) {
+                // TODO: Find and pair to the pi!
+                sendToPi = false;
+                return;
+            }
+            
+            for (BluetoothDevice device : pairedDevices) {
+                if (device.getName().equals("cradleride-1")) {
+                    for (ParcelUuid uuid : device.getUuids()) {
+                        if (uuid.toString().contains("00001101")) { // RFCOMM UUID
+                            try {
+                                blueSock = device.createRfcommSocketToServiceRecord(uuid.getUuid());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (blueSock == null) {
+                return;
+            }
+
+            bluetoothAdapter.cancelDiscovery();
+
+            try {
+                blueSock.connect();
+            } catch (IOException connectExemption) {
+                closeBluetoothSocket();
+            }
+
+            try {
+                bluetoothStream = blueSock.getOutputStream();
+            } catch (IOException e) {
+                sendToPi = false;
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public void closeBluetoothSocket() {
+        sendToPi = false;
+        try {
+            blueSock.close();
+        } catch (IOException closeException) {
+            closeException.printStackTrace();
+        }
     }
 
     public void crashCheck() { // Check if the app has crashed and restarted the activity falsely.
@@ -211,6 +279,10 @@ public class LoggingService extends Service {
             public void run() {
                 if (recording) {
 
+                    if (myQ == null) {
+                        return;
+                    }
+
                     if (gzFile.length() > uploadLimit) {
 //                        Increment the file-part number and create the next file
                         zipPart++;
@@ -259,10 +331,29 @@ public class LoggingService extends Service {
 
         toFile = stringBuilder.toString();
 
+        byte[] bytesToStream = toFile.getBytes(StandardCharsets.UTF_8);
+
         try {
-            myOutputStream.write(toFile.getBytes(StandardCharsets.UTF_8));
+            myOutputStream.write(bytesToStream);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        if (sendToPi) {
+            int finalBytes = bytesToStream.length;
+            String instructPi = "Bytes: " + finalBytes + "\n";
+            byte[] piInstruct = (instructPi).getBytes(StandardCharsets.UTF_8);
+            while (finalBytes != piInstruct.length + bytesToStream.length) {
+                finalBytes = bytesToStream.length + piInstruct.length;
+                instructPi = "Bytes: " + finalBytes + "\n";
+                piInstruct = (instructPi).getBytes(StandardCharsets.UTF_8);
+            }
+            try {
+                bluetoothStream.write(piInstruct);
+                bluetoothStream.write(bytesToStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -315,8 +406,19 @@ public class LoggingService extends Service {
             }
             myQ = null;
 
+            if (sendToPi) {
+                closeBluetoothSocket();
+                if (bluetoothStream != null) {
+                    try {
+                        bluetoothStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
             // Clear the GPS data for the next recording.
-            gpsData = "";
+            gpsData.clear();
 
             if (myOutputStream != null) {
                 try {

@@ -3,6 +3,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -159,6 +160,20 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (preferences.getBoolean(KEY_F_CHECK, true)) {
             startService(new Intent(getApplicationContext(), FSChecker.class));
         }
+
+        setupBluetooth();
+    }
+
+    public void setupBluetooth() {
+        boolean sendToPi = PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean(getString(R.string.key_pref_pi), false);
+        if (sendToPi) {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            if (!bluetoothAdapter.isEnabled()) {
+                // Ask user to allow bluetooth
+                startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), 505);
+            }
+        }
     }
 
     @Override
@@ -232,7 +247,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         instructDisplay.setText(R.string.initialising);
 //        Display the searching (loading) animation and a 'cancel recording' button
         loadingAn.setVisibility(View.VISIBLE);      cancelButt.setVisibility(View.VISIBLE);
-        gpsData = "";   // Initialise the GPS data
+        gpsData.clear();   // Initialise the GPS data
         startService(gpsTimerService);  // Start service to search for GPS and buffer the start
 //        Listen to GPSTimerService to find out what to do next
         registerReceiver(timerReceiver, new IntentFilter(timerFilter));
@@ -476,6 +491,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
 //    Handle the outcome of the AmbSelect screen
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 505) {
+            // Result from turning bluetooth on.
+            if (resultCode == RESULT_OK) {
+                setupBluetooth();
+            }
+            return;
+        }
         if (resultCode == RESULT_OK && requestCode != 0) {
             if (data.getBooleanExtra(ambExtra, false)) {
                 if (requestCode == getResources().getInteger(R.integer.ambStart)) {

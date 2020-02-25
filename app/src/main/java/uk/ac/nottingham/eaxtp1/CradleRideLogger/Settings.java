@@ -79,7 +79,7 @@ public class Settings extends AppCompatActivity  {
         SharedPreferences.Editor prefEd, prefEdAmb;
         ListPreference nttList;
         int leftMargin, rightMargin, verticalMargin, topMargin;
-        String asPref, tPref, buffS, buffE, nttPref, magPref, filePref, audPref;
+        String asPref, buffS, buffE, nttPref, magPref, filePref, audPref, tPref, piPref;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -90,7 +90,6 @@ public class Settings extends AppCompatActivity  {
 
             preferences = getActivity().getSharedPreferences(getString(R.string.pref_main),MODE_PRIVATE);
             asPref = getActivity().getString(R.string.key_pref_as);
-            tPref = getActivity().getString(R.string.key_pref_test);
             audPref = "AudioCodec";
             buffS = getActivity().getString(R.string.key_pref_buff_start);
             buffE = getActivity().getString(R.string.key_pref_buff_end);
@@ -102,6 +101,9 @@ public class Settings extends AppCompatActivity  {
                 magPref = getActivity().getString(R.string.key_pref_magnets);
                 nttList = (ListPreference) findPreference(nttPref);
                 nttList.setTitle(resources.getStringArray(R.array.ntt_choice)[prefAmb.getInt(nttPref,0)]);
+            } else if (BuildConfig.TEST_MODE) {
+                tPref = getActivity().getString(R.string.key_pref_test);
+                piPref = getActivity().getString(R.string.key_pref_pi);
             }
 
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
@@ -145,27 +147,9 @@ public class Settings extends AppCompatActivity  {
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             prefEd = preferences.edit();
 
-            if (key.equals(asPref)) {
+            if (BuildConfig.AMB_MODE) { // Ambulance logger only
 
-                autoStopOn = sharedPreferences.getBoolean(key, true);
-                prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).apply();
-
-            } else if (key.equals(tPref)) {
-
-                gpsOff = !sharedPreferences.getBoolean(key, false);
-
-            } else if (key.equals(audPref)) {
-
-                int aud_int = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString(key, "")));
-                sharedPreferences.edit().putInt("codec", aud_int).apply();
-
-            } else if (key.equals(filePref)) {
-
-                userWantsFilesKept = !sharedPreferences.getBoolean(key,true);
-
-            } else if (BuildConfig.AMB_MODE) {
-
-                if (key.equals(nttPref)) {
+                if (key.equals(nttPref)) { // NTT group selection - to auto-fill amb options
 
 //                Android Studio thinks 'choice' is not used... but it is. Twice. Inspection disabled.
                     int choice = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString(key, "0")));
@@ -174,14 +158,50 @@ public class Settings extends AppCompatActivity  {
                     prefEdAmb = prefAmb.edit();
                     prefEdAmb.putInt(key, choice).apply();
 
-                } else if (key.equals(magPref)) {
+                    return;
+
+                } else if (key.equals(magPref)) { // Using magnets yes/no
 
                     heldWithMagnets = sharedPreferences.getBoolean(key, true);
                     prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).apply();
 
+                    return;
+
                 }
 
-            } else {
+            } else if (BuildConfig.TEST_MODE) { // Test mode only
+
+                if (key.equals(tPref)) { // Test mode on/off
+
+                    gpsOff = !sharedPreferences.getBoolean(key, false);
+
+                    return;
+
+                } else if (key.equals(piPref)) { // Sending to Pi yes/no
+
+                    prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).apply();
+
+                    return;
+
+                }
+
+            }
+
+            if (key.equals(asPref)) { // Auto stop on/off
+
+                autoStopOn = sharedPreferences.getBoolean(key, true);
+                prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).apply();
+
+            } else if (key.equals(audPref)) { // Audio codec selection
+
+                int aud_int = Integer.parseInt(Objects.requireNonNull(sharedPreferences.getString(key, "")));
+                sharedPreferences.edit().putInt("codec", aud_int).apply();
+
+            } else if (key.equals(filePref)) { // Delete files automatically on/off
+
+                userWantsFilesKept = !sharedPreferences.getBoolean(key,true);
+
+            } else { // Set start delay / GPS timeout
 
                 prefEd.putInt(key, sharedPreferences.getInt(key,0)).commit();
                 if ( (key.equals(buffS) && ( recording || buffering )) || (key.equals(buffE) && recording) ) {
@@ -189,6 +209,7 @@ public class Settings extends AppCompatActivity  {
                 }
 
             }
+
         }
 
         public void buffToast() {

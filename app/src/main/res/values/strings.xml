@@ -117,6 +117,9 @@
     <string name="key_pref_delete_time">DeletingJobTime</string>
     <string name="key_pref_magnets">HeldWithMagnets</string>
 
+    <string name="key_pref_pi">SendToPi</string>
+    <string name="set_pi">Send data to Pi feedback</string>
+
     <string name="pref_main">myPreferences</string>
 
     <!--Notification Channel descriptions-->
