@@ -42,43 +42,40 @@ public class DeletingJobService extends JobService {
 
     private void checkAndDeleteFiles(final JobParameters jobParameters) {
         final FileCheckUtilities fileCheck = new FileCheckUtilities(this);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        new Thread(() -> {
 
-                for (File file : uploadedFiles) {
-                    newID = fileCheck.getID(file); // Extract ID from filename
-                    newDate = fileCheck.getDate(file); // Extract timestamp from filename
-                    // If the ID and Date are not the same as previous, ask the XML if file is to
-                    // be deleted. Otherwise, use the previous response found.
-                    if (! (newID.equals(id) && newDate.equals(date)) ) {
+            for (File file : uploadedFiles) {
+                newID = fileCheck.getID(file); // Extract ID from filename
+                newDate = fileCheck.getDate(file); // Extract timestamp from filename
+                // If the ID and Date are not the same as previous, ask the XML if file is to
+                // be deleted. Otherwise, use the previous response found.
+                if (! (newID.equals(id) && newDate.equals(date)) ) {
 
-                        if (cancelJob) return;
+                    if (cancelJob) return;
 
-                        id = newID;
-                        date = newDate;
+                    id = newID;
+                    date = newDate;
 
-                        deleteFiles = fileCheck.deleteThisFile(id, date);
+                    deleteFiles = fileCheck.deleteThisFile(id, date);
 
-                    }
-
-                    if (rescheduleDeleting) {
-                        jobFinished(jobParameters, true);
-                        return;
-                    } else if (!deleteFiles){
-                        startService(new Intent(getApplicationContext(), UploadService.class)
-                                .putExtra("Resend", file.getAbsolutePath()));
-                    }
                 }
 
-                if (BuildConfig.AMB_MODE) {
-                    fileCheck.sendStorageUpdate(); // Update the server XML for NTT phones.
+                if (rescheduleDeleting) {
+                    jobFinished(jobParameters, true);
+                    return;
+                } else if (!deleteFiles){
+                    startService(new Intent(getApplicationContext(), UploadService.class)
+                            .putExtra("Resend", file.getAbsolutePath()));
                 }
-
-                // Confirm the job has finished, and remove it from the schedule.
-                jobFinished(jobParameters, false);
-
             }
+
+            if (BuildConfig.AMB_MODE) {
+                fileCheck.sendStorageUpdate(); // Update the server XML for NTT phones.
+            }
+
+            // Confirm the job has finished, and remove it from the schedule.
+            jobFinished(jobParameters, false);
+
         }).start();
     }
 

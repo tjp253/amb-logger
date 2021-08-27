@@ -2,6 +2,8 @@
 <resources>
     <!--Below is for Neonatal Transport only-->
 
+    <string name="suffix_meta">-META</string>
+
     <string name="pref_amb">ambPref</string>
     <string name="pref_amb_settings">Amb Settings</string>
     <string name="key_pref_ntt">NTT Pref</string>

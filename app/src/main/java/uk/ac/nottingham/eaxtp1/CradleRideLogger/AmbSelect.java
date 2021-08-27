@@ -3,7 +3,6 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
@@ -117,9 +116,9 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 //            Extract the NTT's specific IDs
             int nttInt = ambPref.getInt(getString(R.string.key_pref_ntt),0);
             TypedArray array = getResources().obtainTypedArray(R.array.amb_ntt);
-            int ambChoice   = Integer.valueOf( Objects.requireNonNull(array.getString(nttInt)).substring((1)) );
+            int ambChoice   = Integer.parseInt( Objects.requireNonNull(array.getString(nttInt)).substring((1)) );
             array = getResources().obtainTypedArray(R.array.troll_ntt);
-            int trollChoice = Integer.valueOf( Objects.requireNonNull(array.getString(nttInt)).substring((1)) );
+            int trollChoice = Integer.parseInt( Objects.requireNonNull(array.getString(nttInt)).substring((1)) );
             array.recycle();    // Android was giving me  warning. Can't have that, so added this!
             ambArray   = getResources().getStringArray(ambChoice);
             trollArray = getResources().getStringArray(trollChoice);
@@ -209,14 +208,15 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {   // Store different results depending on button pressed
-        switch (v.getId()) {
-            case R.id.optOther: getOther(); break;
-            case R.id.optSame:  // Don't change the preference value
-                buttPause.start();
-                inputNo++;
-                break;
-            default:
-                storeAmb( ((Button) v).getText().toString() );
+        int vID = v.getId();
+        if (vID == R.id.optOther) {
+            getOther();
+        } else if (vID == R.id.optSame) {
+            // Don't change the preference value
+            buttPause.start();
+            inputNo++;
+        } else {
+            storeAmb( ((Button) v).getText().toString() );
         }
     }
 
@@ -273,13 +273,10 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             final EditText input = inputView.findViewById(R.id.ambInput);
 
             builder.setMessage(R.string.entAmb)
-                    .setPositiveButton(R.string.entButt, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
+                    .setPositiveButton(R.string.entButt, (dialog, which) -> {
 //                            Commit ID inputted by user
-                            prefEd.putString(getString(R.string.key_amb), input.getText().toString()).commit();
-                            changeButtsStart();
-                        }
+                        prefEd.putString(getString(R.string.key_amb), input.getText().toString()).commit();
+                        changeButtsStart();
                     })
                     .setView(inputView)
                     .setCancelable(false).create();
@@ -289,14 +286,11 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             final Button inButt = inAlert.getButton(AlertDialog.BUTTON_POSITIVE);
             inButt.setEnabled(false);
 
-            input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                    if (hasFocus) {
+            input.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
 //                        Bring up the keyboard
-                        Objects.requireNonNull(inAlert.getWindow())
-                                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-                    }
+                    Objects.requireNonNull(inAlert.getWindow())
+                            .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
                 }
             });
 
@@ -307,11 +301,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
 //                    Only allow ID to be saved if it is a reasonable length
-                    if (s.length() > 3 && s.length() < 10) {
-                        inButt.setEnabled(true);
-                    } else {
-                        inButt.setEnabled(false);
-                    }
+                    inButt.setEnabled(s.length() > 3 && s.length() < 10);
                 }
 
                 @Override
@@ -341,17 +331,9 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     public void confirmExit() {
         AlertDialog.Builder builder = new AlertDialog.Builder(dialogWrapper);
         builder .setTitle("Cancel Recording")
-                .setPositiveButton(R.string.yesButt, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        sendIntentBack(false);
-                    }
-                })
-                .setNegativeButton(R.string.noButt, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                .setPositiveButton(R.string.yesButt, (dialog, which) -> sendIntentBack(false))
+                .setNegativeButton(R.string.noButt, (dialog, which) -> {
 //                        Do nothing.
-                    }
                 })
                 .setCancelable(false).create().show();
     }

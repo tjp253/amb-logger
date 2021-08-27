@@ -39,7 +39,8 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTask"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -48,21 +49,33 @@
         </activity>
 
         <service android:name=".UploadService" />
+
         <service android:name=".MovingService" />
-        <service android:name=".AudioService" />
-        <service android:name=".GPSService" />
+
+        <service android:name=".AudioService"
+            android:foregroundServiceType="microphone" />
+
+        <service android:name=".GPSService"
+            android:foregroundServiceType="location" />
+
         <service android:name=".LoggingService" />
+
         <service android:name=".IMUService" />
+
         <service android:name=".UploadJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <service android:name=".GPSTimerService" />
+
         <service android:name=".FSChecker" />
+
         <service android:name=".WifiCheckService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity android:name=".Settings"
             android:theme="@style/MyPrefTheme"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            tools:ignore="LockedOrientationActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
@@ -70,6 +83,7 @@
 
         <service android:name=".DeletingJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
         <service android:name=".AutoStopTimerService" />
     </application>
 

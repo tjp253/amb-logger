@@ -66,7 +66,7 @@ public class UploadJobService extends JobService {
     // uploaded or not. If files remain to be uploaded, the built-in 'jobFinished' method
     // reschedules the job for the next time parameters are met (I think) rather than waiting for
     // the regular period.
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             boolean needsReschedule = !intent.getBooleanExtra(uploadSuccess,false);

@@ -193,14 +193,11 @@ public class FileCheckUtilities extends ContextWrapper {
     // Method for handling the deletion of all files with a particular ID and Date.
     // i.e. all files from a specific journey.
     private void deleteJourney(final String id, final String date) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                File uploadedFolder = new File(String.valueOf(getExternalFilesDir("Uploaded")));
-                for (File file : uploadedFolder.listFiles()) {
-                    if (getID(file).equals(id) && getDate(file).equals(date)) {
-                        file.delete();
-                    }
+        new Thread(() -> {
+            File uploadedFolder = new File(String.valueOf(getExternalFilesDir("Uploaded")));
+            for (File file : uploadedFolder.listFiles()) {
+                if (getID(file).equals(id) && getDate(file).equals(date)) {
+                    file.delete();
                 }
             }
         }).start();

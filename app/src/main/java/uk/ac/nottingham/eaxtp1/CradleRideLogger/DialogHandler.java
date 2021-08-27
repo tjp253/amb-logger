@@ -3,7 +3,6 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.view.ContextThemeWrapper;
@@ -25,11 +24,8 @@ public class DialogHandler extends ContextWrapper {
         return new AlertDialog.Builder(dialogWrapper)
                 .setTitle(R.string.privacy_title)
                 .setMessage(R.string.privacy_policy)
-                .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int buttInt) {
+                .setPositiveButton(R.string.butt_ok, (dialog, buttInt) -> {
 //                  Close the Privacy Policy
-                    }
                 }).create();
     }
 
@@ -56,11 +52,8 @@ public class DialogHandler extends ContextWrapper {
         return new AlertDialog.Builder(dialogWrapper)
                 .setTitle(R.string.lc_title)
                 .setMessage(R.string.lc_mess)
-                .setNegativeButton(R.string.butt_later, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        // Close the Launcher Prompt
-                    }
+                .setNegativeButton(R.string.butt_later, (dialogInterface, i) -> {
+                    // Close the Launcher Prompt
                 });
     }
 }
