@@ -1,6 +1,5 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -16,10 +15,8 @@ import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,6 +30,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.timerOn_Slow;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.gpsOff;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.initialising;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 
 public class IMUService extends Service /*implements SensorEventListener*/ {
@@ -67,7 +65,7 @@ public class IMUService extends Service /*implements SensorEventListener*/ {
     long startTime, currTime;
 
 //    Declare matrices for IMU data and for converting from device to world coordinates
-    private float[] deviceValues = new float[4], gravityValues = new float[3],
+    float[] deviceValues = new float[4], gravityValues = new float[3],
         gyroValues = new float[3], magneticValues = new float[3], rMatrix = new float[16],
         iMatrix = new float[16], worldMatrix = new float[16], inverse = new float[16];
 
@@ -110,6 +108,11 @@ public class IMUService extends Service /*implements SensorEventListener*/ {
 
 //    Initialise the IMU sensors and the wakelock
     public void initialiseIMU() {
+
+        date = new DateFormatter(this).formDate();
+
+        startTime = System.nanoTime();
+
         gyroPresent = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE)
                 .getBoolean(KEY_G, true);
 
@@ -145,13 +148,6 @@ public class IMUService extends Service /*implements SensorEventListener*/ {
             }
         }
 
-        //    Creates a string of the current date and time
-        @SuppressLint("SimpleDateFormat")
-        SimpleDateFormat dateFormat = new SimpleDateFormat(getResources().getString(R.string.file_date_format));
-        Date todayDate = new Date();
-        date = dateFormat.format(todayDate);
-
-        startTime = System.nanoTime();
     }
 
     private void setupListener() {
@@ -159,7 +155,7 @@ public class IMUService extends Service /*implements SensorEventListener*/ {
             //    Called when a new sensor value is available
             @Override
             public void onSensorChanged(SensorEvent event) {
-                if (!recording) {
+                if (!recording && !(BuildConfig.AMB_MODE && initialising)) {
                     imuHandlerThread.quit();
                 }
 //                Log.i("IMU", "Handler listener");

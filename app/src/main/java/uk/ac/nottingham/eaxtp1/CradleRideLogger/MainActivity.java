@@ -6,7 +6,6 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -16,14 +15,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.widget.Toolbar;
-import android.view.MenuItem;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -44,6 +41,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     static boolean gpsOff, // Only used in Test Mode - can choose to test accelerometers (and audio) only
             phoneDead; // Boolean which becomes true if the phone shut down during recording.
+
+    static String versionNum = ""; // Used to aid both debugging and future processing
 
 //    For Ambulance Mode. Intents start the ambulance-specific services. Ints and String are for onActivityResult.
     Intent ambSelect, ambGPS;    final static String ambExtra = "EndSelecting";
@@ -67,8 +66,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     private ProgressBar loadingAn;  // Declare the progress circle for GPS search.
 
-    boolean initialising, buttPressed, displayOn, buffing, fileEmpty;
-    static boolean recording, moving, crashed, forcedStop;    // forcedStop set to true when AutoStop has been used.
+    boolean buttPressed, displayOn, buffing, fileEmpty;
+    static boolean initialising, recording, moving, crashed, forcedStop;    // forcedStop set to true when AutoStop has been used.
 
     @SuppressLint("WifiManagerLeak")    // Android Studio stuff
     @Override
@@ -123,7 +122,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
 //        Get the versionName from the app gradle to display.
         try {
             PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            version = version + packageInfo.versionName;
+            versionNum = packageInfo.versionName;
+            version = version + versionNum;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -351,6 +351,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     buffing = false;
                 } else if (BuildConfig.AMB_MODE) {
                     startActivityForResult(ambSelect, getResources().getInteger(R.integer.ambStart)); // Start the ambulance / trolley selection
+                    initialising = true;  // to prevent IMU thread being wrongly terminated
                     startService(imuService);   // Start IMU logging straight away - for entrance matting, etc.
                 } else {
                     startInitialising();    // Recording is go!
@@ -414,31 +415,21 @@ public class MainActivity extends Activity implements View.OnClickListener {
 //        Initialise the 'consent' checkbox
         View checkboxView = View.inflate(this, R.layout.disclosure, null);
         CheckBox checkBox = checkboxView.findViewById(R.id.checkbox);
-        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
 //                Enable the 'accept' button only when checkbox is checked
-                if (isChecked) {
-                    adButt.setEnabled(true);
-                } else {
-                    adButt.setEnabled(false);
-                }
-            }
+            adButt.setEnabled(isChecked);
         });
 
         // Set up the disclosure window
         AlertDialog.Builder builder = dialogHandler.buildDisclosureDialog()
                 .setView(checkboxView)  // Layout used by the window
-                .setPositiveButton(R.string.ad_button, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int BUTTON_POSITIVE) {
-                        prefEditor.putBoolean(KEY_DISC, false); // Accept the disclosure agreement!
-                        prefEditor.putBoolean(KEY_INST, true);  // Ensure only one instance.
-                        prefEditor.commit();
+                .setPositiveButton(R.string.ad_button, (dialog, BUTTON_POSITIVE) -> {
+                    prefEditor.putBoolean(KEY_DISC, false); // Accept the disclosure agreement!
+                    prefEditor.putBoolean(KEY_INST, true);  // Ensure only one instance.
+                    prefEditor.commit();
 
-                        if (perms.mAPI) {
-                            permissionCheck();  // Asks for GPS & audio permissions
-                        }
+                    if (perms.mAPI) {
+                        permissionCheck();  // Asks for GPS & audio permissions
                     }
                 });
         disclosureDialog = builder.create();    // Create the disclosure window
@@ -459,23 +450,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void setUpToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.inflateMenu(R.menu.main_menu);
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.setButt:          // Go to the settings screen
-                        startActivity(new Intent(getApplicationContext(), Settings.class));
-                        return true;
-                    case R.id.privacyPolicy:    // Show privacy policy
-                        dialogHandler.getPolicyDialog().show();
-                        return true;
-                    case R.id.setAsLauncher: // Shortcut to Launcher selector (only in AMB Build)
-                        startActivityForResult(new Intent(android.provider.Settings
-                                .ACTION_HOME_SETTINGS), 0);
-                        return true;
-                }
-                return false;
+        toolbar.setOnMenuItemClickListener(item -> {
+            int itemID = item.getItemId();
+            if (itemID == R.id.setButt) {
+                // Go to the settings screen
+                startActivity(new Intent(getApplicationContext(), Settings.class));
+                return true;
+            } else if (itemID == R.id.privacyPolicy) {
+                // Show privacy policy
+                dialogHandler.getPolicyDialog().show();
+                return true;
+            } else if (itemID == R.id.setAsLauncher) {
+                // Shortcut to Launcher selector (only in AMB Build)
+                startActivityForResult(new Intent(android.provider.Settings
+                        .ACTION_HOME_SETTINGS), 0);
+                return true;
             }
+            return false; // Else...
         });
     }
 
@@ -544,7 +535,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     PowerManager.WakeLock screenLock;
     Timer screenFlashTimer;
     TimerTask flashingTask;
-    private BroadcastReceiver timerReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver timerReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (intent.getIntExtra(timerInt, 1)) {  // GPS Timer communication
@@ -576,7 +567,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     };
 
-    private BroadcastReceiver loggingReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver loggingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (intent.getIntExtra(loggingInt,1)) { // Logging Service communication
@@ -640,7 +631,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     // Find out whether the recording was stopped due to lack of movement or not. If it was,
     // refresh the screen in case the screen was still on.
-    private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getBooleanExtra(gpsBool,false)) {
@@ -654,7 +645,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     };
 
-    private BroadcastReceiver shutdownReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver shutdownReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (recording) {
@@ -675,16 +666,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
     }
 
     public void setAsLauncher() {
-        if (BuildConfig.AMB_MODE && dialogHandler.appNotLauncher()) {
+        if (BuildConfig.AMB_MODE && !BuildConfig.DEBUG && dialogHandler.appNotLauncher()) {
 
             launcherDialog = dialogHandler.buildLauncherPrompt()
-                    .setPositiveButton(R.string.butt_ok, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int buttInt) {
-                            // Take user to the relevant settings.
-                            startActivityForResult(new Intent(android.provider.Settings
-                                    .ACTION_HOME_SETTINGS), 0);
-                        }
+                    .setPositiveButton(R.string.butt_ok, (dialog, buttInt) -> {
+                        // Take user to the relevant settings.
+                        startActivityForResult(new Intent(android.provider.Settings
+                                .ACTION_HOME_SETTINGS), 0);
                     }).create();
             launcherDialog.show();
         }

@@ -1,9 +1,10 @@
 <resources>
 
     <!-- Pattern required for the filename -->
-    <string name="file_date_format">yyyy_MM_dd-HH_mm_ss_SSS</string>
+    <string name="file_date_format">yyyyMMdd HHmmss.SSSZ</string>
     <string name="id_spacer">-ID</string>
     <string name="file_type">.csv.gz</string>
+    <string name="chunk_formatter">-%02d</string>
 
     <string name="id_string">Unique ID: \t</string>
     <string name="version_string">\nVersion: \t</string>

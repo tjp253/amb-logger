@@ -46,7 +46,7 @@ public class AmbLoggingService extends IntentService {
 
     public void prepLog() { // Prepare file to write amb options to
         if (ambPath == null) {
-            ambPath = mainPath + date + res.getString(R.string.id_spacer) + userID + "-00.csv.gz";
+            ambPath = mainPath + date + res.getString(R.string.id_spacer) + userID + res.getString(R.string.suffix_meta) + res.getString(R.string.file_type);
         }
         try {
             myAmbStream = new FileOutputStream(ambPath);

@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.content.res.Resources;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,6 +14,7 @@ import java.io.OutputStream;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.MediaType;
@@ -23,6 +25,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.moving;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.versionNum;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploadFilter;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploading;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.UploadJobService.uploadSuccess;
@@ -42,19 +45,21 @@ public class UploadService extends IntentService {
 
     URL url;
 
-    String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath;
+    String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, oversizedPath, failedPath, fullFilePath;
 
     File sourceFolder; // Have the sourceFolder available to the whole class to enable
     // 'NotificationSender' to count the amount of files left to be uploaded.
 
-    int uploadFileCount = 0, oversizedFileCount = 0, failedFileCount = 0;
+    int uploadFileCount = 0, oversizedFileCount = 0, failedFileCount = 0, uploadLimit;
 
-    int filesLeft;
+    long fullFileLength;
 
     @Override
     public void onCreate() {
         super.onCreate();
         res = getResources();
+
+        uploadLimit = res.getInteger(R.integer.limit_upload);
 
         mainPath = String.valueOf(getExternalFilesDir(""));
         finishedPath = mainPath + "/Finished/";
@@ -116,42 +121,90 @@ public class UploadService extends IntentService {
 
         sourceFolder = new File(finishedPath);
         File[] fileList = sourceFolder.listFiles();
-        filesLeft = fileList.length;
-        if (filesLeft == 0) {
-            sendBroadcast(true);
-            return;
+        if (fileList.length == 0) {
+            return; // nothing to upload. should not reach here, but catch anyway
         }
 
         for (File file : fileList) { // For each file in the 'finished' folder
 
             if (uploading) {
-                if (!uploadFile(file)) {
-                    return;
+
+                fullFileLength = file.length();
+                if (fullFileLength > uploadLimit) {
+
+                    if (!uploadInChunks(file)) {
+                        return;
+                    }
+
+                } else {
+
+                    if (!uploadFile(file)) {
+                        return;
+                    }
+
                 }
 
-                if (fileName != null) {
-                    moveFile(fileName);
-                }
+                moveFile(file.getName());
 
-                filesLeft--;
             } else {
                 sendBroadcast(sourceFolder.listFiles().length == 0);
             }
 
-//      Displays notification once the last file has been uploaded
-            if (filesLeft == 0) {
-                notificationSender();
-
-                if (BuildConfig.AMB_MODE) {
-                    // Update the server XML for NTT phones.
-                    new FileCheckUtilities(this).sendStorageUpdate();
-                }
-
-                new JobUtilities(this).scheduleDelete();
-            }
-
         }
 
+//      Displays notification once the last file has been uploaded
+        notificationSender();
+
+        if (BuildConfig.AMB_MODE) {
+            // Update the server XML for NTT phones.
+            new FileCheckUtilities(this).sendStorageUpdate();
+        }
+
+        new JobUtilities(this).scheduleDelete();
+
+    }
+
+    public boolean uploadInChunks(File file) {
+
+        fullFilePath = file.getAbsolutePath();
+
+        try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
+
+            int chunks = (int) fullFileLength / uploadLimit;
+            byte[] buffer = new byte[uploadLimit];
+            int chunk = 0;
+            while (in.read(buffer) != -1) {
+
+                // create a new file of each chunk and send to upload
+                File chunkFile = new File(formChunkName(chunk, chunk == chunks));
+                FileOutputStream out = new FileOutputStream(chunkFile);
+                out.write(buffer);
+                out.flush();
+                out.close();
+                if (!uploadFile(chunkFile)) {
+                    return false;
+                }
+                chunkFile.delete();
+                chunk++;
+
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+    public String formChunkName(int chunk, boolean finalPart) {
+        String toInsert = String.format(Locale.UK, res.getString(R.string.chunk_formatter), chunk);
+        if (finalPart) {
+            toInsert += res.getString(R.string.suffix);
+        }
+        return fullFilePath.replace(
+                res.getString(R.string.file_type),
+                toInsert + res.getString(R.string.file_type)
+        );
     }
 
     public boolean uploadFile(File file) {
@@ -163,7 +216,7 @@ public class UploadService extends IntentService {
         try {
 
             OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                    .writeTimeout((long) 60, TimeUnit.SECONDS)
+                    .writeTimeout( 60, TimeUnit.SECONDS)
                     .build();
             File fileToUpload = new File(uploadFilePath);
 
@@ -171,6 +224,7 @@ public class UploadService extends IntentService {
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("fileToUpload", fileName,
                             RequestBody.create(fileToUpload, MediaType.parse(parse)))
+                    .addFormDataPart("appVersion", versionNum) // to aid future processing
                     .build();
 
             Request request = new Request.Builder()

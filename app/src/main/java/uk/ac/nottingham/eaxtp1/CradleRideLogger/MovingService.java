@@ -2,6 +2,7 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.res.Resources;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,11 +50,41 @@ public class MovingService extends IntentService {
 
         InputStream in;
         OutputStream out;
-        byte[] buffer = new byte[2048];
+        byte[] buffer = new byte[2048]; // amount of bytes to read & write each pass
+        int read;
 
         File oldFolder = new File(oldPath);
 
         File[] fileList = oldFolder.listFiles();
+
+        if (BuildConfig.AMB_MODE) { // Combine the AMB metadata with the main file
+            Resources res = getResources();
+            for (File file : fileList) {
+                if (file.getName().contains(res.getString(R.string.suffix_meta))) {
+                    file.delete();
+                    continue;
+                }
+                String nameMain = file.getAbsolutePath();
+                String nameMeta = nameMain.replace(res.getString(R.string.suffix), res.getString(R.string.suffix_meta));
+                // Define final name for combined parts
+                String nameFull = nameMain.replace(res.getString(R.string.suffix), "");
+                try {
+                    out = new FileOutputStream(nameFull); // to write new file
+                    for (String filename : new String[]{nameMeta, nameMain}) {
+                        in = new FileInputStream(filename);
+                        while ((read = in.read(buffer)) >= 0) {
+                            out.write(buffer, 0, read);
+                        }
+                        in.close();
+                    }
+                    file.delete();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            fileList = oldFolder.listFiles();
+        }
 
         for (File file : fileList) {
 
@@ -67,7 +98,6 @@ public class MovingService extends IntentService {
                 in = new FileInputStream(file);
                 out = new FileOutputStream(newPath + "/" + file.getName());
 
-                int read;
                 while((read = in.read(buffer)) != -1) {
                     out.write(buffer, 0 ,read);
                 }

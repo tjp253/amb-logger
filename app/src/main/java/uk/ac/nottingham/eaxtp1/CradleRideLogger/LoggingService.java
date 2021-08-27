@@ -1,6 +1,5 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 
-import android.annotation.SuppressLint;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -9,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.ParcelUuid;
@@ -21,10 +21,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Timer;
@@ -44,6 +42,7 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.phoneDead;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.versionNum;
 
 public class LoggingService extends Service {
     public LoggingService() {}
@@ -65,18 +64,17 @@ public class LoggingService extends Service {
     long wakelockTimeout = 5 * 60 * 60 * 1000;  // 5 hour timeout to remove AndroidStudio warning.
 
     static boolean logging;
-    boolean sentIntents, bufferOn, multiFile, writingToFile, dataInFile, sendToPi;
-    int buffBy, buffSamples, zipPart = 1, logPeriod = 5;
+    boolean sentIntents, bufferOn, writingToFile, dataInFile, sendToPi;
+    int buffBy, buffSamples;
+    long logPeriod;
 
     BluetoothSocket blueSock = null;
 
     Timer logTimer;
     TimerTask loggingTask;
 
-    final int uploadLimit = 10350000; // TODO: Set to 10350000 to restrict file size to ~9.9mb
-
     static String mainPath, gzipPath;
-    String filepath = "Recording", digitAdjuster = "-0", filename, toFile, outputTitle, endName;
+    String filepath = "Recording", filename, toFile, outputTitle;
 
     StringBuilder stringBuilder = new StringBuilder();  // You don't need to say the string is empty
 
@@ -93,15 +91,15 @@ public class LoggingService extends Service {
         crashCheck();
 
         res = getResources();
+        logPeriod = res.getInteger(R.integer.logging_period);
 
         if (date == null) {
-            //    Creates a string of the current date and time
-            @SuppressLint("SimpleDateFormat")
-            SimpleDateFormat dateFormat = new SimpleDateFormat(res.getString(R.string.file_date_format));
-            Date todayDate = new Date();
-            date = dateFormat.format(todayDate);
+            date = new DateFormatter(this).formDate();
         }
-        filename = date + res.getString(R.string.id_spacer) + userID + digitAdjuster + zipPart + getString(R.string.file_type);
+        filename = date + res.getString(R.string.id_spacer) + userID + getString(R.string.file_type);
+        if (BuildConfig.AMB_MODE) {
+            filename = filename.replace(res.getString(R.string.file_type), res.getString(R.string.suffix) + res.getString(R.string.file_type));
+        }
 
         if (!crashed) {
             preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
@@ -234,7 +232,7 @@ public class LoggingService extends Service {
         gzFile = new File(gzipPath);    // Initialise file variable for size check
 
         if (BuildConfig.AMB_MODE) { // Log the initial ambulance options
-            startService(new Intent(this, AmbLoggingService.class));
+            startLoggingAmb(true);
         }
 
         logTitle();
@@ -242,7 +240,7 @@ public class LoggingService extends Service {
         // Set a timer to log data to file every 5 seconds
         logTimer = new Timer();
         loggingTT();
-        logTimer.schedule(loggingTask, 1000 * logPeriod, 1000 * logPeriod);
+        logTimer.schedule(loggingTask, logPeriod, logPeriod);
 
         dataInFile = true;
     }
@@ -264,7 +262,8 @@ public class LoggingService extends Service {
         }
 
         outputTitle = TextUtils.join(",", titleList);
-        outputTitle = outputTitle + "\n";
+        // Include version and model as comments to aid processing
+        outputTitle = outputTitle + "#Version=" + versionNum + "#Model=" + Build.MODEL + "\n";
 
         try {
             myOutputStream.write(outputTitle.getBytes(StandardCharsets.UTF_8));
@@ -283,19 +282,9 @@ public class LoggingService extends Service {
                         return;
                     }
 
-                    if (gzFile.length() > uploadLimit) {
-//                        Increment the file-part number and create the next file
-                        zipPart++;
-                        if (zipPart == 10) {
-                            digitAdjuster = "-";
-                        }
-                        fileSplitter(zipPart);
-                        multiFile = true;
-                    }
-
-//                    Write some data!
+                    // Booleans used to prevent onDestroy killing the writing process prematurely.
                     writingToFile = true;
-                    writeToFile();
+                    writeToFile(); // Write some data!
                     writingToFile = false;
                 } else {
                     logTimer.cancel();
@@ -357,28 +346,6 @@ public class LoggingService extends Service {
         }
     }
 
-//    Create a new file to continue the recording
-    public void fileSplitter(int filePart) {
-
-        gzipPath = mainPath + date + res.getString(R.string.id_spacer) + userID + digitAdjuster + filePart + getString(R.string.file_type);
-
-        try {
-            myOutputStream.close();
-            myOutputStream = new GZIPOutputStream(new FileOutputStream(gzipPath))
-            {{def.setLevel(Deflater.BEST_COMPRESSION);}};
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        gzFile = new File(gzipPath);
-
-        if (BuildConfig.AMB_MODE) {
-            getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE).edit()
-                    .putString(getString(R.string.key_end_name), gzipPath).apply();
-        }
-
-    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -390,9 +357,7 @@ public class LoggingService extends Service {
 
         if (!crashed && dataInFile) {
             if (BuildConfig.AMB_MODE && !phoneDead) {
-                // Log the entries at the end of ambulance journey.
-                startService(new Intent(this, AmbLoggingService.class)
-                        .putExtra(getString(R.string.bool_at_start), false));
+                startLoggingAmb(false); // Log the entries at the end of ambulance journey.
             }
 
             if (logTimer != null) {
@@ -427,17 +392,6 @@ public class LoggingService extends Service {
                     e.printStackTrace();
                 }
             }
-
-            // Edit the final filename to enable PHP to automatically join all parts of the
-            // recording
-            if (multiFile || BuildConfig.AMB_MODE) {
-                endName = mainPath + date + res.getString(R.string.id_spacer) + userID +
-                        digitAdjuster + zipPart + res.getString(R.string.suffix) + getString(R.string.file_type);
-            } else {
-                endName = mainPath + date + res.getString(R.string.id_spacer) + userID + getString(R.string.file_type);
-            }
-            File endFile = new File(endName);
-            gzFile.renameTo(endFile);
         }
 
         if (!sentIntents) {
@@ -484,6 +438,11 @@ public class LoggingService extends Service {
         Intent intent = new Intent(loggingFilter);
         intent.putExtra(loggingInt, response);
         sendBroadcast(intent);
+    }
+
+    private void startLoggingAmb(boolean atStart) {
+        startService(new Intent(this, AmbLoggingService.class)
+                .putExtra(getString(R.string.bool_at_start), atStart));
     }
 
 //    DEBUGGING FILE ZONE

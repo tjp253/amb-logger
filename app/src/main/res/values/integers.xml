@@ -8,8 +8,18 @@
     <integer name="buff_min">0</integer>
     <integer name="buff_max">5</integer>
 
+    <integer name="logging_period">5000</integer> <!-- write to file every 5 seconds (5000 ms) -->
+
+    <integer name="acc_max">35</integer> <!-- Radial accuracy threshold -->
+    <integer name="speed_min">2</integer> <!-- Equivalent to ~5 mph -->
+    <integer name="speed_moving">10</integer>
+
+    <!-- AutoStop time limits. -->
     <integer name="limit_start">600</integer> <!-- TODO: Set limitStart to 10 minutes (600) -->
     <integer name="limit_max">1200</integer> <!-- TODO: Set limitMax to 20 minutes (1200) -->
+
+    <!-- TODO: Set below to 10480000 to restrict file size to ~10 MB -->
+    <integer name="limit_upload">10480000</integer>
 
     <!-- Notification IDs -->
     <!-- For running services in foreground -->
