@@ -13,7 +13,7 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:gravity="center"
-        android:text="@string/ambTit"
+        android:text="@string/manTit"
         android:textAlignment="center"
         android:textAllCaps="true"
         android:textSize="32sp"
@@ -59,7 +59,7 @@
         android:layout_marginStart="8dp"
         android:text="@string/butt3"
         android:textSize="27sp"
-        app:layout_constraintBottom_toTopOf="@+id/optOther"
+        app:layout_constraintBottom_toTopOf="@+id/opt5"
         app:layout_constraintEnd_toStartOf="@+id/opt4"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -76,8 +76,36 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/opt3"
-        app:layout_constraintTop_toTopOf="@+id/opt3"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toTopOf="@+id/opt3" />
+
+    <Button
+        android:id="@+id/opt5"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="@string/butt5"
+        android:textSize="27sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/optOther"
+        app:layout_constraintEnd_toStartOf="@+id/opt6"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/opt3" />
+
+    <Button
+        android:id="@+id/opt6"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/butt6"
+        android:textSize="27sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/opt5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/opt5"
+        app:layout_constraintTop_toTopOf="@+id/opt5" />
 
     <Button
         android:id="@+id/optOther"
@@ -93,7 +121,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toEndOf="@+id/optSame"
-        app:layout_constraintTop_toBottomOf="@+id/opt3" />
+        app:layout_constraintTop_toBottomOf="@+id/opt5" />
 
     <Button
         android:id="@+id/optSame"

@@ -5,10 +5,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Editable;
+import android.text.InputFilter;
 import android.text.TextWatcher;
 import android.view.ContextThemeWrapper;
 import android.view.View;
@@ -31,7 +33,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 // baby was on board, whether emergency driving was used, and the reason for transfer.
 
     Button buttOther, buttSame;
-    Button[] allButts = new Button[4];
+    Button[] allButts = new Button[6];
     TextView titleView, asView;
 
 //    Declare AMB-specific preferences and variables.
@@ -43,7 +45,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
     ContextThemeWrapper dialogWrapper = new ContextThemeWrapper(this, R.style.MyAlertDialog);
 
     final String keyDate = "PrefDate";
-    String[] ambArray, trollArray, boolArray, reasonArray;
+    String[] manArray, engArray, trollArray, boolArray, reasonArray;
 
     boolean patient, resuscitated;
     int inputNo, viewSame = View.INVISIBLE, viewOther = View.VISIBLE;
@@ -63,15 +65,18 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         prefEd = ambPref.edit();
 
 //        Initialise textboxes and buttons
-        titleView = findViewById(R.id.optTitle);
-        asView    = findViewById(R.id.forcedText);
-        buttOther = findViewById(R.id.optOther);
-        buttSame  = findViewById(R.id.optSame);
+        titleView = findViewById(R.id.optTitle); // FOR THE OPTION QUESTION, AT TOP
+        asView    = findViewById(R.id.forcedText); // APPEARS AT BOTTOM IF AUTOSTOP KICKED IN
+        buttOther = findViewById(R.id.optOther); // EITHER FULL WIDTH OR ON THE RIGHT
+        buttSame  = findViewById(R.id.optSame); // APPEARS ON THE LEFT
 
-        allButts[0] = findViewById(R.id.opt1);
-        allButts[1] = findViewById(R.id.opt2);
-        allButts[2] = findViewById(R.id.opt3);
-        allButts[3] = findViewById(R.id.opt4);
+        // DEFAULT OPTION BUTTONS
+        allButts[0] = findViewById(R.id.opt1); // TOP LEFT
+        allButts[1] = findViewById(R.id.opt2); // TOP RIGHT
+        allButts[2] = findViewById(R.id.opt3); // MIDDLE LEFT
+        allButts[3] = findViewById(R.id.opt4); // MIDDLE RIGHT
+        allButts[4] = findViewById(R.id.opt5); // BOTTOM LEFT
+        allButts[5] = findViewById(R.id.opt6); // BOTTOM RIGHT
 
         for (Button allButt : allButts) {
             allButt.setOnClickListener(this);
@@ -85,8 +90,10 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             viewSame = View.VISIBLE;
         }
 
-        boolArray = getResources().getStringArray(R.array.boolean_options);
-        reasonArray = getResources().getStringArray(R.array.reason_options);
+        Resources res = getResources();
+
+        boolArray = res.getStringArray(R.array.boolean_options);
+        reasonArray = res.getStringArray(R.array.reason_options);
 
         if (recording || forcedStopAmb || phoneDead) {   // Ask for transport-end data
 
@@ -104,7 +111,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 //            Check if baby is on board, and change the question appropriately
             patient = Objects.equals(
                     ambPref.getString(getString(R.string.key_bob), "NO"),
-                    getResources().getString(R.string.yesButt));
+                    res.getString(R.string.yesButt));
             changeButtsEnd(patient);
             if (!patient) {
                 prefEd.putString(getString(R.string.key_trans),"N/A").commit();
@@ -113,15 +120,18 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         } else {    // Ask for transport-start data
 //            Start GPS initialising
             startService(new Intent(getApplicationContext(), AmbGPSService.class));
-//            Extract the NTT's specific IDs
+
+            // Grab the list of ambulance manufacturers
+            manArray = res.getStringArray(R.array.amb_manufacturer);
+            // Grab the list of possible engine types
+            engArray = res.getStringArray(R.array.amb_engine);
+
+            // Grab the NTT-specific trolley codes
             int nttInt = ambPref.getInt(getString(R.string.key_pref_ntt),0);
-            TypedArray array = getResources().obtainTypedArray(R.array.amb_ntt);
-            int ambChoice   = Integer.parseInt( Objects.requireNonNull(array.getString(nttInt)).substring((1)) );
-            array = getResources().obtainTypedArray(R.array.troll_ntt);
+            TypedArray array = res.obtainTypedArray(R.array.troll_ntt);
             int trollChoice = Integer.parseInt( Objects.requireNonNull(array.getString(nttInt)).substring((1)) );
             array.recycle();    // Android was giving me  warning. Can't have that, so added this!
-            ambArray   = getResources().getStringArray(ambChoice);
-            trollArray = getResources().getStringArray(trollChoice);
+            trollArray = res.getStringArray(trollChoice);
 
             changeButtsStart();  // Setup the question and buttons
         }
@@ -135,8 +145,12 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             allButts[opt].setVisibility(View.VISIBLE);
         }
 
+        int visibility = View.INVISIBLE;
         for (int hide = opt; hide < allButts.length; hide++) {
-            allButts[hide].setVisibility(View.INVISIBLE);
+            if (hide == 4) { // HIDE THE BOTTOM ROW, AS NOT REQUIRED (and ease button presses)
+                visibility = View.GONE;
+            }
+            allButts[hide].setVisibility(visibility);
         }
 
         buttSame.setVisibility(sameVisibility);
@@ -146,17 +160,25 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 //    Set up inputs at start of recording
     public void changeButtsStart() {
         switch (inputNo) {  // How many questions have already been answered?
-            case 0: // Ask for ambulance ID
-                titleView.setText(R.string.ambTit);
+
+            case 0: // Ask for ambulance manufacturer
+                titleView.setText(R.string.manTit);
                 buttOther.setText(R.string.optOther);
-                changeButts(ambArray, viewSame, viewOther);
+                changeButts(manArray, viewSame, viewOther);
                 break;
-            case 1: // Ask for trolley ID
-                titleView.setText(R.string.trollTit);
+
+            case 1: // Ask for ambulance engine type
+                titleView.setText(R.string.engTit);
                 buttOther.setText(R.string.optReturn);
+                changeButts(engArray, viewSame, View.VISIBLE);
+                break;
+
+            case 2: // Ask for trolley ID
+                titleView.setText(R.string.trollTit);
                 changeButts(trollArray, viewSame, View.VISIBLE);
                 break;
-            case 2: // Ask whether a baby is on board
+
+            case 3: // Ask whether a baby is on board
                 titleView.setText(R.string.patTit);
                 changeButts(boolArray, View.INVISIBLE, View.VISIBLE);
                 break;
@@ -174,22 +196,30 @@ public class AmbSelect extends Activity implements View.OnClickListener {
         }
     }
 
-//    Store input choices in preferences for logging and to speed up future inputs SLIGHTLY
+//    Store input choices in preferences for logging and to speed up future inputs (SLIGHTLY)
     public void storeAmb(String metaText) {
         if (!(recording || forcedStopAmb || phoneDead)) {   // Selections before journey.
             buttPause.start();
             switch (inputNo) {
-                case 0: // Store ambulance ID
-                    prefEd.putString(getString(R.string.key_amb), metaText).commit();
+
+                case 0: // Store ambulance manufacturer
+                    prefEd.putString(getString(R.string.key_man), metaText).commit();
                     break;
-                case 1: // Store trolley ID
+
+                case 1: // Store ambulance engine type
+                    prefEd.putString(getString(R.string.key_eng), metaText).commit();
+                    break;
+
+                case 2: // Store trolley ID
                     prefEd.putString(getString(R.string.key_troll), metaText).commit();
                     break;
-                case 2: // Store baby presence
+
+                case 3: // Store baby presence
                     prefEd.putString(getString(R.string.key_bob), metaText).commit();
                     prefEd.putInt(keyDate, Calendar.getInstance().get(Calendar.DAY_OF_YEAR)).commit();
                     sendIntentBack(true);   // Start the full recording
                     return;
+
             }
         } else {    // Selections after journey.
             if (patient) {
@@ -216,7 +246,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
             buttPause.start();
             inputNo++;
         } else {
-            storeAmb( ((Button) v).getText().toString() );
+            storeAmb( ((Button) v).getText().toString().replace("\n", "-") );
         }
     }
 
@@ -271,11 +301,12 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 //            Tell the app what to show and what to hide
 
             final EditText input = inputView.findViewById(R.id.ambInput);
+            input.setFilters(new InputFilter[] {new InputFilter.AllCaps()}); // Ensure all caps
 
-            builder.setMessage(R.string.entAmb)
+            builder.setMessage(R.string.entMan)
                     .setPositiveButton(R.string.entButt, (dialog, which) -> {
 //                            Commit ID inputted by user
-                        prefEd.putString(getString(R.string.key_amb), input.getText().toString()).commit();
+                        prefEd.putString(getString(R.string.key_man), input.getText().toString()).commit();
                         changeButtsStart();
                     })
                     .setView(inputView)

@@ -64,15 +64,16 @@ public class AmbLoggingService extends IntentService {
 
         SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
 
-        template[1] = ambPref.getString(getString(R.string.key_amb),"");
-        template[3] = ambPref.getString(getString(R.string.key_troll),"");
-        template[5] = ambPref.getString(getString(R.string.key_bob),"");
-        if ("YES".equals(template[5])) {
-            template[7] = ambPref.getString(getString(R.string.key_trans), res.getString(R.string.optUnknown));
+        template[1] = ambPref.getString(getString(R.string.key_man),"");
+        template[3] = ambPref.getString(getString(R.string.key_eng),"");
+        template[5] = ambPref.getString(getString(R.string.key_troll),"");
+        template[7] = ambPref.getString(getString(R.string.key_bob),"");
+        if ("YES".equals(template[7])) {
+            template[9] = ambPref.getString(getString(R.string.key_trans), res.getString(R.string.optUnknown));
         } else {
-            template[7] = "N/A";
+            template[9] = "N/A";
         }
-        template[9] = ambPref.getString(getString(R.string.key_emerge),res.getString(R.string.optUnknown));
+        template[11] = ambPref.getString(getString(R.string.key_emerge),res.getString(R.string.optUnknown));
 
         String ambList = TextUtils.join(",", template) + "\n";
 

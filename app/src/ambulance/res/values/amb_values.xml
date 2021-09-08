@@ -8,7 +8,8 @@
     <string name="pref_amb_settings">Amb Settings</string>
     <string name="key_pref_ntt">NTT Pref</string>
 
-    <string name="key_amb">PrefAmb</string>
+    <string name="key_man">PrefMan</string>
+    <string name="key_eng">PrefEng</string>
     <string name="key_troll">PrefTroll</string>
     <string name="key_bob">PrefBOB</string><!--baby on board-->
     <string name="key_trans">PrefTrans</string>
@@ -30,8 +31,9 @@
     <integer name="ambEnd">1133</integer>
     <integer name="ambDead">1111</integer>
 
-    <string name="ambTit">Please select current ambulance</string>
-    <string name="entAmb">Please enter the ambulance ID</string>
+    <string name="manTit">Please select the ambulance manufacturer</string>
+    <string name="engTit">Please select the ambulance engine type</string>
+    <string name="entMan">Please enter the ambulance manufacturer</string>
     <string name="entButt">Enter</string>
     <string name="forcedAmbSelect">Recording stopped due to lack of movement.\n\nPlease input selections to return to the Start Screen.</string>
     <string name="forcedIntent">Forced Stop</string>
@@ -59,7 +61,9 @@
 
     <!-- array template for amb options header file -->
     <string-array name="amb_file_template">
-        <item>Ambulance</item>
+        <item>Manufacturer</item>
+        <item> </item>
+        <item>Engine</item>
         <item> </item>
         <item>Trolley</item>
         <item> </item>
@@ -87,24 +91,12 @@
 
     <string name="ntt_default">1</string>
 
-    <array name="amb_ntt">
-        <item>@array/amb_centre</item>
-        <item>@array/amb_neocapsule</item>
-    </array>
-
     <array name="troll_ntt">
         <item>@array/troll_centre</item>
         <item>@array/troll_neocapsule</item>
     </array>
 
     <!--CenTre data-->
-
-    <string-array name="amb_centre">
-        <item>8912</item>
-        <item>8915</item>
-        <item>4223</item>
-        <item>4224</item>
-    </string-array>
 
     <string-array name="troll_centre">
         <item>NORTH 1</item>
@@ -115,13 +107,28 @@
 
     <!--Example of other NTT data-->
 
-    <string-array name="amb_neocapsule">
-        <item>AMBULAB</item>
-    </string-array>
-
     <string-array name="troll_neocapsule">
         <item>ISOLATORS</item>
         <item>BLOCKS</item>
+    </string-array>
+
+    <!-- Arrays for MANUFACTURER and ENGINE selection -->
+
+    <string-array name="amb_manufacturer">
+        <item>FIAT</item>
+        <item>FORD</item>
+        <item>MAN</item>
+        <item>MERCEDES</item>
+        <item>PEUGEOT</item>
+        <item>VW</item>
+    </string-array>
+
+    <string-array name="amb_engine">
+        <item>DIESEL</item>
+        <item>PETROL</item>
+        <item>HYBRID\nDIESEL</item>
+        <item>HYBRID\nPETROL</item>
+        <item>ELECTRIC</item>
     </string-array>
 
     <!--Other arrays for use with AmbSelect-->
@@ -140,5 +147,7 @@
     <string name="butt2">2</string>
     <string name="butt3">3</string>
     <string name="butt4">4</string>
+    <string name="butt5">5</string>
+    <string name="butt6">6</string>
 
 </resources>

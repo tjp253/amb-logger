@@ -15,7 +15,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:ems="10"
-        android:inputType="number"
+        android:inputType="textCapCharacters"
         android:textAllCaps="true"
         android:textColor="@color/colorBlack"
         app:layout_constraintBottom_toBottomOf="parent"
