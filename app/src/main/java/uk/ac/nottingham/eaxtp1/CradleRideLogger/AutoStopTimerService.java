@@ -6,6 +6,7 @@ import android.os.CountDownTimer;
 import android.os.IBinder;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.atHospital;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.autoStopOn;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.forcedStop;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.WifiCheckService.wifiConnected;
@@ -53,7 +54,7 @@ public class AutoStopTimerService extends Service {
             @Override
             public void onFinish() {
                 // For some reason, timer doesn't get cancelled.
-                if (wifiConnected || atHospital) {
+                if (autoStopOn && (wifiConnected || atHospital)) {
                     cancelRecording();
                 } else {
                     startFinalTimer();
@@ -72,7 +73,7 @@ public class AutoStopTimerService extends Service {
         finalTimer = new CountDownTimer((limitMax-limitStart)*1000, 60*1000) {
             @Override
             public void onTick(long l) {
-                if (recording && (wifiConnected || atHospital)) {
+                if (recording && autoStopOn && (wifiConnected || atHospital)) {
                     cancelRecording();
                     stopSelf();
                 }
@@ -80,7 +81,7 @@ public class AutoStopTimerService extends Service {
 
             @Override
             public void onFinish() {
-                if (recording) {
+                if (recording && autoStopOn) {
                     cancelRecording();
                     finalTimerOn = false;
                 }

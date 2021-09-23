@@ -77,11 +77,11 @@
 
     <string name="choose_ntt">Neonatal Transfer Team</string>
     <string name="ntt_centre">CenTre</string>
-    <string name="ntt_neocapsule">NeoCapsule</string>
+<!--    <string name="ntt_neocapsule">NeoCapsule</string>-->
 
     <string-array name="ntt_choice">
         <item>@string/ntt_centre</item>
-        <item>@string/ntt_neocapsule</item>
+<!--        <item>@string/ntt_neocapsule</item>-->
     </string-array>
 
     <string-array name="ntt_number">
@@ -93,7 +93,7 @@
 
     <array name="troll_ntt">
         <item>@array/troll_centre</item>
-        <item>@array/troll_neocapsule</item>
+<!--        <item>@array/troll_neocapsule</item>-->
     </array>
 
     <!--CenTre data-->
@@ -107,10 +107,10 @@
 
     <!--Example of other NTT data-->
 
-    <string-array name="troll_neocapsule">
-        <item>ISOLATORS</item>
-        <item>BLOCKS</item>
-    </string-array>
+<!--    <string-array name="troll_neocapsule">-->
+<!--        <item>ISOLATORS</item>-->
+<!--        <item>BLOCKS</item>-->
+<!--    </string-array>-->
 
     <!-- Arrays for MANUFACTURER and ENGINE selection -->
 

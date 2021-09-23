@@ -4,10 +4,12 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 
+import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -32,6 +34,8 @@ public class AudioService extends Service {
     static int amp; // Declare the global MaxAmplitude variable
 
     private int audio_codec;
+
+    String output_file = "/dev/null"; // temp location for Android 10 and below
 
 //    Declare timer for MaxAmplitude check
     Timer timer;
@@ -63,8 +67,11 @@ public class AudioService extends Service {
         noiseDetector.setAudioSource(MediaRecorder.AudioSource.MIC);
         noiseDetector.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         noiseDetector.setAudioEncoder(audio_codec);
-        noiseDetector.setOutputFile("/dev/null");
-        try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // Android 11 and above
+            output_file = getExternalCacheDir().getAbsolutePath() + "/temp.3gp";
+        }
+        noiseDetector.setOutputFile(output_file);
+        try { // need to use try/catch to handle exception, even though if caught the app fails!
             noiseDetector.prepare();
             noiseDetector.start();
         } catch (Exception e) {
@@ -109,6 +116,11 @@ public class AudioService extends Service {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        // if using Android 11 or later, file should be manually deleted from the storage area.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            new File(output_file).delete();
         }
 
         if (wakeLock != null && wakeLock.isHeld()) {

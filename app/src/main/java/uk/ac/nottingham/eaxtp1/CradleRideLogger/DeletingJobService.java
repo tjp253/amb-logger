@@ -23,7 +23,7 @@ public class DeletingJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters jobParameters) {
 
-        uploadedPath = String.valueOf(getExternalFilesDir("Uploaded"));
+        uploadedPath = String.valueOf(getExternalFilesDir(getApplicationContext().getResources().getString(R.string.fol_up)));
         File uploadedFolder = new File(uploadedPath);
 
         // Checks files are not in the process of being uploaded, and that there are files in the

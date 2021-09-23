@@ -74,7 +74,7 @@ public class LoggingService extends Service {
     TimerTask loggingTask;
 
     static String mainPath, gzipPath;
-    String filepath = "Recording", filename, toFile, outputTitle;
+    String filename, toFile, outputTitle;
 
     StringBuilder stringBuilder = new StringBuilder();  // You don't need to say the string is empty
 
@@ -220,7 +220,7 @@ public class LoggingService extends Service {
             wakelock.acquire(wakelockTimeout);
         }
 
-        mainPath = getExternalFilesDir(filepath) + "/";
+        mainPath = getExternalFilesDir(res.getString(R.string.fol_rec)) + "/";
         gzipPath = mainPath + filename;
 
         try { // to open a file-writing stream
@@ -247,14 +247,12 @@ public class LoggingService extends Service {
 
     public void logTitle() { // Create, format and log the file header
         ArrayList<String> titleList, gpsTitleList;
-        gpsTitleList = new ArrayList<> ( Arrays.asList("Lat", "Long", "Speed", "GPS Time",
-                 "Acc", "Alt", "Bearing", "ERT") );
+        gpsTitleList = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.title_gps)));
 
         if (preferences.getBoolean(KEY_G, true)) {
-            titleList = new ArrayList<> ( Arrays.asList("id", "X", "Y", "Z", "Time", "GyX", "GyY", "GyZ",
-                    "North", "East", "Down", "GPS Sample", "Audio") );
+            titleList = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.title_main_gy)));
         } else {
-            titleList = new ArrayList<> ( Arrays.asList("id", "X", "Y", "Z", "Time", "GPS Sample", "Audio") );
+            titleList = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.title_main_no_gy)));
         }
 
         if (! (BuildConfig.TEST_MODE && gpsOff) ) {
@@ -262,8 +260,12 @@ public class LoggingService extends Service {
         }
 
         outputTitle = TextUtils.join(",", titleList);
-        // Include version and model as comments to aid processing
-        outputTitle = outputTitle + "#Version=" + versionNum + "#Model=" + Build.MODEL + "\n";
+        // Include ID number, version and model as comments to aid processing
+        outputTitle = outputTitle
+                + res.getString(R.string.com_id) + userID
+                + res.getString(R.string.com_vers) + versionNum
+                + res.getString(R.string.com_model) + Build.MODEL
+                + "\n";
 
         try {
             myOutputStream.write(outputTitle.getBytes(StandardCharsets.UTF_8));

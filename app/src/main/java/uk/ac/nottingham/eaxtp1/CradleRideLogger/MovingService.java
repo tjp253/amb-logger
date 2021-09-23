@@ -27,9 +27,11 @@ public class MovingService extends IntentService {
     public void onCreate() {
         super.onCreate();
 
-        mainPath = String.valueOf(getExternalFilesDir(""));
-        folderPath = mainPath + "/Recording";
-        finishedPath = mainPath + "/Finished";
+        Resources res = getResources();
+
+        mainPath = getExternalFilesDir("") + "/";
+        folderPath = mainPath + res.getString(R.string.fol_rec);
+        finishedPath = mainPath + res.getString(R.string.fol_fin);
 
 //        Ensures there's a folder to move the recorded files to.
         File finishedDirectory = new File(finishedPath);

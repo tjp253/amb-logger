@@ -5,6 +5,7 @@ import android.content.ContextWrapper;
 import android.content.res.Resources;
 import android.os.Environment;
 import android.os.StatFs;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,8 +35,6 @@ public class FileCheckUtilities extends ContextWrapper {
 
     URL url;
 
-    int dateEnd, idStart, idEnd;
-
     String idSeparator;
 
     Resources res = getResources();
@@ -54,20 +53,9 @@ public class FileCheckUtilities extends ContextWrapper {
 
     // Method of extracting the ID from a filename
     public String getID(File file) {
-        if (idStart == 0) {
-            idStart = res.getInteger(R.integer.idStart);
-        }
-        if (idEnd == 0) {
-            idEnd = res.getInteger(R.integer.idEnd);
-        }
-        String tempID = file.getName().substring(idStart,idEnd);
-        // Check if the file is in the old format. If so, adjust.
-        if (tempID.contains("-")) {
-            tempID = file.getName()
-                    .substring(res.getInteger(R.integer.idStartOld),
-                            res.getInteger(R.integer.idEndOld));
-        }
-        return tempID;
+        String filename = file.getName();
+        int idStart = filename.indexOf(getIDSeparator()) + getIDSeparator().length();
+        return file.getName().substring(idStart, idStart + 8);
     }
 
     private String getIDSeparator() {
@@ -79,15 +67,9 @@ public class FileCheckUtilities extends ContextWrapper {
 
     // Method of extracting the start time from a filename
     public String getDate(File file) {
-        if (dateEnd == 0) {
-            dateEnd = res.getInteger(R.integer.dateEnd);
-        }
-        String tempDate = file.getName().substring(0,dateEnd);
-        // Check if the file is in the old format. If so, adjust.
-        if (tempDate.contains("ID")) {
-            tempDate = tempDate.substring(0, tempDate.indexOf(getIDSeparator()));
-        }
-        return tempDate;
+        String filename = file.getName();
+        int dateEnd = filename.indexOf(getIDSeparator());
+        return filename.substring(0, dateEnd);
     }
 
     // Check if file is to be deleted or not.
@@ -194,7 +176,7 @@ public class FileCheckUtilities extends ContextWrapper {
     // i.e. all files from a specific journey.
     private void deleteJourney(final String id, final String date) {
         new Thread(() -> {
-            File uploadedFolder = new File(String.valueOf(getExternalFilesDir("Uploaded")));
+            File uploadedFolder = new File(String.valueOf(getExternalFilesDir(res.getString(R.string.fol_up))));
             for (File file : uploadedFolder.listFiles()) {
                 if (getID(file).equals(id) && getDate(file).equals(date)) {
                     file.delete();

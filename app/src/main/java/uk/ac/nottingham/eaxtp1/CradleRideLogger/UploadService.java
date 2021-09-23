@@ -62,8 +62,8 @@ public class UploadService extends IntentService {
         uploadLimit = res.getInteger(R.integer.limit_upload);
 
         mainPath = String.valueOf(getExternalFilesDir(""));
-        finishedPath = mainPath + "/Finished/";
-        movedPath = mainPath + "/Uploaded/";
+        finishedPath = mainPath + "/" + res.getString(R.string.fol_fin) + "/";
+        movedPath = mainPath + "/" + res.getString(R.string.fol_up) + "/";
         oversizedPath = mainPath + "/Oversized/";
         failedPath = mainPath + "/FailedUploads/";
 
@@ -186,6 +186,9 @@ public class UploadService extends IntentService {
                 }
                 chunkFile.delete();
                 chunk++;
+                if (chunk == chunks) {// reset the buffer in case final chunk is small
+                    buffer = new byte[(int) fullFileLength - (chunks * uploadLimit)];
+                }
 
             }
 

@@ -10,12 +10,6 @@
         android:summary="@string/set_as_mess"
         android:title="@string/set_as" />
 
-    <SwitchPreference
-        android:layout_width="match_parent"
-        android:defaultValue="@bool/send_to_pi"
-        android:key="@string/key_pref_pi"
-        android:title="@string/set_pi" />
-
     <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
         android:defaultValue="@integer/delay_default"
         android:key="@string/key_pref_delay"
@@ -87,6 +81,12 @@
             android:entryValues="@array/codec_ints"
             android:key="AudioCodec"
             android:title="Audio Codec" />
+
+        <SwitchPreference
+            android:layout_width="match_parent"
+            android:defaultValue="@bool/send_to_pi"
+            android:key="@string/key_pref_pi"
+            android:title="@string/set_pi" />
     </PreferenceCategory>
 
     <SwitchPreference

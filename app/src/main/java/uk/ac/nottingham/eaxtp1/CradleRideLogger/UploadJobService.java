@@ -26,7 +26,7 @@ public class UploadJobService extends JobService {
     @Override
     public boolean onStartJob(JobParameters params) {
 
-        String finishedPath = String.valueOf(getExternalFilesDir("Finished"));
+        String finishedPath = String.valueOf(getExternalFilesDir(getApplicationContext().getResources().getString(R.string.fol_fin)));
         File finishedFolder = new File(finishedPath);
         // If there are files to upload and the app is not currently recording data start uploading.
         if (!recording && finishedFolder.isDirectory() && finishedFolder.listFiles().length > 0) {

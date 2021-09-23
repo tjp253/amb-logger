@@ -29,7 +29,6 @@ public class DateFormatter extends ContextWrapper {
         SimpleDateFormat dateFormat = new SimpleDateFormat(res.getString(R.string.file_date_format));
         Date todayDate = new Date();
         String date = dateFormat.format(todayDate);
-        date = date.replace(" ", "T"); // cannot include 'T' initially
-        return date;
+        return date.replace(" ", "T"); // cannot include 'T' initially
     }
 }

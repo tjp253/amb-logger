@@ -43,13 +43,6 @@
     <integer name="deleteFiles">925</integer>
     <integer name="doNotDeleteFiles">952</integer>
 
-    <!--Integer locations for extracting id and date from filename-->
-    <integer name="dateEnd">23</integer>
-    <integer name="idStart">26</integer>
-    <integer name="idEnd">34</integer>
-    <integer name="idStartOld">19</integer>
-    <integer name="idEndOld">27</integer>
-
     <string-array name="codec_ints">
         <item>1</item>
         <item>2</item>

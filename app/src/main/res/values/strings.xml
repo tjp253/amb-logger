@@ -6,6 +6,60 @@
     <string name="file_type">.csv.gz</string>
     <string name="chunk_formatter">-%02d</string>
 
+    <!-- Folders to contain the files -->
+    <string name="fol_rec">Recording</string>
+    <string name="fol_fin">Finished</string>
+    <string name="fol_up">Uploaded</string>
+
+    <!-- For in-file comments -->
+    <string name="com_id">#ID=</string>
+    <string name="com_vers">#Version=</string>
+    <string name="com_model">#Model=</string>
+
+    <!-- Logging title arrays -->
+    <string-array name="title_gps">
+        <item>Lat</item>
+        <item>Lon</item>
+        <item>Speed</item>
+        <item>GPS Time</item>
+        <item>Acc</item>
+        <item>Alt</item>
+        <item>Bearing</item>
+        <item>ERT</item>
+    </string-array>
+    <string name="tit_id">id</string>
+    <string name="tit_x">X</string>
+    <string name="tit_y">Y</string>
+    <string name="tit_z">Z</string>
+    <string name="tit_t">Time</string>
+    <string name="tit_samp">GPS Sample</string>
+    <string name="tit_noise">Noise</string>
+    <string-array name="title_main_gy">
+        <item>@string/tit_id</item>
+        <item>@string/tit_x</item>
+        <item>@string/tit_y</item>
+        <item>@string/tit_z</item>
+        <item>@string/tit_t</item>
+        <item>GyX</item>
+        <item>GyY</item>
+        <item>GyZ</item>
+        <item>North</item>
+        <item>East</item>
+        <item>Down</item>
+        <item>@string/tit_samp</item>
+        <item>@string/tit_noise</item>
+    </string-array>
+    <string-array name="title_main_no_gy">
+        <item>@string/tit_id</item>
+        <item>@string/tit_x</item>
+        <item>@string/tit_y</item>
+        <item>@string/tit_z</item>
+        <item>@string/tit_t</item>
+        <item>@string/tit_samp</item>
+        <item>@string/tit_noise</item>
+    </string-array>
+
+
     <string name="id_string">Unique ID: \t</string>
     <string name="version_string">\nVersion: \t</string>
     <string name="instruct_placeholder">Instructions</string>
