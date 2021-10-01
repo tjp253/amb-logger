@@ -81,12 +81,6 @@
             android:entryValues="@array/codec_ints"
             android:key="AudioCodec"
             android:title="Audio Codec" />
-
-        <SwitchPreference
-            android:layout_width="match_parent"
-            android:defaultValue="@bool/send_to_pi"
-            android:key="@string/key_pref_pi"
-            android:title="@string/set_pi" />
     </PreferenceCategory>
 
     <SwitchPreference

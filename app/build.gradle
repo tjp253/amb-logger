@@ -20,7 +20,6 @@ android {
         resValue 'bool', 'delete_files_by_default', 'true'
         resValue 'string', 'suffix', '-END'
         resValue 'bool', 'launcher_in_toolbar', 'false'
-        resValue 'bool', 'send_to_pi', 'false'
     }
     buildTypes {
         release {
@@ -49,7 +48,6 @@ android {
             buildConfigField 'boolean', 'TEST_MODE', 'true'
             resValue "string", "app_name", "CradleRide Shaker"
             resValue 'bool', 'delete_files_by_default', 'false'
-            resValue 'bool', 'send_to_pi', 'true'
         }
     }
 }

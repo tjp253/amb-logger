@@ -79,7 +79,7 @@ public class Settings extends AppCompatActivity  {
         SharedPreferences.Editor prefEd, prefEdAmb;
         ListPreference nttList;
         int leftMargin, rightMargin, verticalMargin, topMargin;
-        String asPref, buffS, buffE, nttPref, magPref, filePref, audPref, tPref, piPref;
+        String asPref, buffS, buffE, nttPref, magPref, filePref, audPref, tPref;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -103,7 +103,6 @@ public class Settings extends AppCompatActivity  {
                 nttList.setTitle(resources.getStringArray(R.array.ntt_choice)[prefAmb.getInt(nttPref,0)]);
             } else if (BuildConfig.TEST_MODE) {
                 tPref = getActivity().getString(R.string.key_pref_test);
-                piPref = getActivity().getString(R.string.key_pref_pi);
             }
 
             PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(this);
@@ -174,12 +173,6 @@ public class Settings extends AppCompatActivity  {
                 if (key.equals(tPref)) { // Test mode on/off
 
                     gpsOff = !sharedPreferences.getBoolean(key, false);
-
-                    return;
-
-                } else if (key.equals(piPref)) { // Sending to Pi yes/no
-
-                    prefEd.putBoolean(key, sharedPreferences.getBoolean(key, true)).apply();
 
                     return;
 
