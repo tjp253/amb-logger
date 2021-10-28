@@ -61,6 +61,6 @@ dependencies {
     implementation 'androidx.preference:preference:1.1.1'
     implementation 'com.google.code.gson:gson:2.8.8' // read in hospital coords from JSON
     implementation 'com.squareup.okhttp3:okhttp:4.2.2' // handle easy uploads
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
     implementation 'com.vanniktech:vntnumberpickerpreference:1.0.0'
 }
