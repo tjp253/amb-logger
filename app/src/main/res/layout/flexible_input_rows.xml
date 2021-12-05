@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <include
+        layout="@layout/flexible_input_row"
+        android:id="@+id/entry_0" />
+
+    <include
+        layout="@layout/flexible_input_row"
+        android:id="@+id/entry_1" />
+
+    <include
+        layout="@layout/flexible_input_row"
+        android:id="@+id/entry_2" />
+
+    <include
+        layout="@layout/flexible_input_row"
+        android:id="@+id/entry_3" />
+
+    <include
+        layout="@layout/flexible_input_row"
+        android:id="@+id/entry_4" />
+
+    <include
+        layout="@layout/flexible_input_row"
+        android:id="@+id/entry_5" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/addButtRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Widgets.ButtonDefault
+            android:id="@+id/buttAdd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/butt_add"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</LinearLayout>

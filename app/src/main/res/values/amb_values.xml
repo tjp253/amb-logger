@@ -5,15 +5,21 @@
     <string name="suffix_meta">-META</string>
 
     <string name="pref_amb">ambPref</string>
-    <string name="pref_amb_settings">Amb Settings</string>
-    <string name="key_pref_ntt">NTT Pref</string>
 
-    <string name="key_man">PrefMan</string>
-    <string name="key_eng">PrefEng</string>
-    <string name="key_troll">PrefTroll</string>
+    <!--KEYS USED IN THE SETTINGS-->
+    <string name="pref_amb_settings">Amb Settings</string>
+    <string name="key_pref_ntt">NTT Pref</string><!--Name of NTT-->
+    <string name="key_country">PrefCountry</string><!--Country of operation-->
+    <string name="key_modes">PrefModes</string><!--Modes of transport available to NTT-->
+    <string name="key_troll_options">PrefTrolleys</string><!--Trolley Options-->
+
+    <string name="key_mode">PrefMode</string><!--Mode of transport used for recording-->
+    <string name="key_man">PrefMan</string><!--Manufacturer-->
+    <string name="key_eng">PrefEng</string><!--Engine type-->
+    <string name="key_troll">PrefTroll</string><!--Trolley-->
     <string name="key_bob">PrefBOB</string><!--baby on board-->
-    <string name="key_trans">PrefTrans</string>
-    <string name="key_emerge">PrefEmerge</string>
+    <string name="key_trans">PrefTrans</string><!--Reason for transfer-->
+    <string name="key_emerge">PrefEmerge</string><!--Any emergency driving-->
     <!-- Array of amb keys to be reset after each recording -->
     <string-array name="amb_opt_keys">
         <item>@string/key_bob</item>
@@ -31,14 +37,17 @@
     <integer name="ambEnd">1133</integer>
     <integer name="ambDead">1111</integer>
 
+    <string name="modeTit">Please select the mode of transport</string>
     <string name="manTit">Please select the ambulance manufacturer</string>
     <string name="engTit">Please select the ambulance engine type</string>
     <string name="entMan">Please enter the ambulance manufacturer</string>
+
     <string name="entButt">Enter</string>
+
     <string name="forcedAmbSelect">Recording stopped due to lack of movement.\n\nPlease input selections to return to the Start Screen.</string>
     <string name="forcedIntent">Forced Stop</string>
 
-    <string name="trollTit">Please select current trolley</string>
+    <string name="trollTit">Please enter the current trolley</string>
 
     <string name="patTit">Patient on board?</string>
     <string name="yesButt">YES</string>
@@ -61,6 +70,12 @@
 
     <!-- array template for amb options header file -->
     <string-array name="amb_file_template">
+        <item>Country</item>
+        <item> </item>
+        <item>Team</item>
+        <item> </item>
+        <item>Mode</item>
+        <item> </item>
         <item>Manufacturer</item>
         <item> </item>
         <item>Engine</item>
@@ -75,13 +90,17 @@
         <item> </item>
     </string-array>
 
-    <string name="choose_ntt">Neonatal Transfer Team</string>
-    <string name="ntt_centre">CenTre</string>
-<!--    <string name="ntt_neocapsule">NeoCapsule</string>-->
+    <string name="amb_settings_divider">Neonatal Transport Team Settings</string>
+
+    <string name="choose_country">Country of Operation</string>
+    <string name="choose_ntt">Neonatal Transport Team</string>
+    <string name="choose_mode">Transport Mode(s) Used</string>
+    <string name="choose_troll">Transport Trolley Code(s)</string>
+
+    <string name="ntt_centre">CENTRE</string>
 
     <string-array name="ntt_choice">
         <item>@string/ntt_centre</item>
-<!--        <item>@string/ntt_neocapsule</item>-->
     </string-array>
 
     <string-array name="ntt_number">
@@ -98,6 +117,12 @@
 
     <!--CenTre data-->
 
+    <!--STYLEABLE FOR TROLLEY INPUT-->
+    <declare-styleable name="FlexibleInputPreference">
+        <attr name="defaultValues" format="reference" />
+    </declare-styleable>
+    <integer name="max_input_options">6</integer>
+
     <string-array name="troll_centre">
         <item>NORTH 1</item>
         <item>NORTH 2</item>
@@ -111,6 +136,23 @@
 <!--        <item>ISOLATORS</item>-->
 <!--        <item>BLOCKS</item>-->
 <!--    </string-array>-->
+
+    <string name="mode_road">ROAD</string>
+    <string name="mode_heli">HELICOPTER</string>
+    <string name="mode_plane">FIXED-WING</string>
+
+    <!-- Array for MODE OF TRANSPORT. Could use images to select?? -->
+    <string-array name="transport_modes">
+        <item>@string/mode_road</item>
+        <item>@string/mode_heli</item>
+        <item>@string/mode_plane</item>
+    </string-array>
+    <!-- Need a corresponding array of the indices. Java seems silly -->
+    <string-array name="transport_modes_indices">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
 
     <!-- Arrays for MANUFACTURER and ENGINE selection -->
 
@@ -141,6 +183,8 @@
         <item>@string/transReasonOne</item>
         <item>@string/transReasonTwo</item>
     </string-array>
+
+    <string name="valueNotApplicable">N/A</string>
 
     <!--Button Placeholders-->
     <string name="butt1">1</string>

@@ -13,10 +13,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.IMUService.date;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.LoggingService.gzipPath;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.LoggingService.mainPath;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.IMUService.date;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.LoggingService.gzipPath;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.LoggingService.mainPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
+
+import androidx.preference.PreferenceManager;
 
 public class AmbLoggingService extends IntentService {
 //    IntentService to handle logging of ambulance options.
@@ -60,20 +62,36 @@ public class AmbLoggingService extends IntentService {
     }
 
     public void logAmb() { // Log ambulance options
+        // TODO: change the template depending on the available options? processing can handle it.
         String[] template = res.getStringArray(R.array.amb_file_template);
 
-        SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 
-        template[1] = ambPref.getString(getString(R.string.key_man),"");
-        template[3] = ambPref.getString(getString(R.string.key_eng),"");
-        template[5] = ambPref.getString(getString(R.string.key_troll),"");
-        template[7] = ambPref.getString(getString(R.string.key_bob),"");
-        if ("YES".equals(template[7])) {
-            template[9] = ambPref.getString(getString(R.string.key_trans), res.getString(R.string.optUnknown));
+        String notApplicable = getString(R.string.valueNotApplicable),
+            unknown = getString(R.string.optUnknown);
+
+        // COUNTRY
+        template[1] = pref.getString(getString(R.string.key_country), "GB");
+        // TEAM
+        template[3] = pref.getString(getString(R.string.key_pref_ntt), getString(R.string.ntt_centre));
+        // MODE
+        template[5] = pref.getString(getString(R.string.key_mode), "");
+        // MANUFACTURER
+        template[7] = pref.getString(getString(R.string.key_man), notApplicable);
+        // ENGINE
+        template[9] = pref.getString(getString(R.string.key_eng), notApplicable);
+        // TROLLEY
+        template[11] = pref.getString(getString(R.string.key_troll),"");
+        // PATIENT
+        template[13] = pref.getString(getString(R.string.key_bob),"");
+        // REASON
+        if (getString(R.string.yesButt).equals(template[13])) {
+            template[15] = pref.getString(getString(R.string.key_trans), unknown);
         } else {
-            template[9] = "N/A";
+            template[15] = notApplicable;
         }
-        template[11] = ambPref.getString(getString(R.string.key_emerge),res.getString(R.string.optUnknown));
+        // EMERGENCY
+        template[17] = pref.getString(getString(R.string.key_emerge), unknown);
 
         String ambList = TextUtils.join(",", template) + "\n";
 
@@ -84,7 +102,7 @@ public class AmbLoggingService extends IntentService {
             e.printStackTrace();
         }
 
-        SharedPreferences.Editor ambEd = ambPref.edit();
+        SharedPreferences.Editor ambEd = pref.edit();
         if (atStart) {
             ambEd.putString(getString(R.string.key_amb_name), ambPath);
             ambEd.putString(getString(R.string.key_end_name), gzipPath);

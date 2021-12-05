@@ -98,6 +98,8 @@
     <string name="butt_ok">@android:string/ok</string>
     <string name="butt_cancel">@android:string/cancel</string>
     <string name="butt_later">later</string>
+    <string name="butt_delete">delete</string>
+    <string name="butt_add">add new</string>
 
     <string name="menu_policy">Privacy Policy</string>
     <string name="privacy_title">CradleRide Privacy Policy</string>
