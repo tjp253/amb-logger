@@ -17,20 +17,36 @@ import android.preference.PreferenceManager;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.appcompat.widget.Toolbar;
+
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.forcedStopAmb;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbSelect.selectingAmb;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.gpsData;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.GPSService.sGPS;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.GPSService.gpsData;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.GPSService.sGPS;
+
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.FileHandling.UploadService;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.AudioService;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.GPSService;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.GPSTimerService;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.IMUService;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.LoggingService;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.DialogHandler;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.FSChecker;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.JobUtilities;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.NotificationUtilities;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.PermissionHandler;
 
 public class MainActivity extends Activity implements View.OnClickListener {
 
@@ -38,10 +54,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     PermissionHandler perms;
     DialogHandler dialogHandler;
 
-    static boolean gpsOff, // Only used in Test Mode - can choose to test accelerometers (and audio) only
+    public static boolean gpsOff, // Only used in Test Mode - can choose to test accelerometers (and audio) only
             phoneDead; // Boolean which becomes true if the phone shut down during recording.
 
-    static String versionNum = ""; // Used to aid both debugging and future processing
+    public static String versionNum = ""; // Used to aid both debugging and future processing
 
 //    For Ambulance Mode. Intents start the ambulance-specific services. Ints and String are for onActivityResult.
     Intent ambSelect, ambGPS;    final static String ambExtra = "EndSelecting";
@@ -54,10 +70,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     SharedPreferences.Editor prefEditor;
     AlertDialog disclosureDialog, launcherDialog;
     Button adButt;
-    final static String KEY_G = "Gravity Present", KEY_FS = "MaxFS", KEY_F_CHECK = "CheckFS";
+    public final static String KEY_G = "Gravity Present", KEY_FS = "MaxFS", KEY_F_CHECK = "CheckFS";
     final String user_ID = "User ID", KEY_DISC = "NotSeenDisclosure2", KEY_INST = "FirstInstance", KEY_FIRST = "firstLogin";
 
-    static int userID;  // Declare unique user ID
+    public static int userID;  // Declare unique user ID
 
 //    Declare UI objects.
     Button recordButt, cancelButt;
@@ -66,7 +82,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private ProgressBar loadingAn;  // Declare the progress circle for GPS search.
 
     boolean buttPressed, displayOn, buffing, fileEmpty;
-    static boolean initialising, recording, moving, crashed, forcedStop;    // forcedStop set to true when AutoStop has been used.
+    public static boolean initialising, recording, moving;
+    public static boolean forcedStop, crashed;    // forcedStop set to true when AutoStop has been used.
 
     @SuppressLint("WifiManagerLeak")    // Android Studio stuff
     @Override
@@ -88,13 +105,13 @@ public class MainActivity extends Activity implements View.OnClickListener {
         loadingAn.setVisibility(View.GONE);
 
 //        Initialise preferences and open the editor
-        preferences = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         prefEditor = preferences.edit();
 //        prefEditor.putInt(user_ID, 13319625).apply(); // Set ID for Dev's phone
 
 //        Initialises a Unique ID for each user on first start-up. Probably could replace this
 // with a check for User ID preference...
-        if (preferences.getBoolean(KEY_FIRST, true)) {
+        if (preferences.getBoolean(KEY_FIRST, true) && !inOldPreferences()) {
             Random random = new Random();
             int rndUserID = 10000000 + random.nextInt(90000000);
 
@@ -161,6 +178,40 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
+    public boolean inOldPreferences() {
+        // Copy all old preferences to the default SharedPreferences
+        SharedPreferences prefOld = getSharedPreferences(getString(R.string.pref_main), MODE_PRIVATE);
+        Map<String, ?> allOldPrefs = prefOld.getAll(); // grab all old preferences
+
+        Set<String> oldKeys = allOldPrefs.keySet(), currentKeys = preferences.getAll().keySet();
+
+        // if OldPrefs is empty, UserID has not been set
+        if (oldKeys.isEmpty()) {
+            return false;
+        }
+
+        SharedPreferences.Editor prefOldEditor = prefOld.edit();
+        if (currentKeys.containsAll(Arrays.asList(KEY_FIRST, user_ID))) {
+            prefOldEditor.clear().apply();
+            return true;
+        }
+
+        for (String key : allOldPrefs.keySet()) {
+            if (allOldPrefs.get(key) instanceof  Boolean) {
+                prefEditor.putBoolean(key, (Boolean) allOldPrefs.get(key));
+            } else if (allOldPrefs.get(key) instanceof  Integer) {
+                prefEditor.putInt(key, (Integer) allOldPrefs.get(key));
+            } else if (allOldPrefs.get(key) instanceof  Long) {
+                prefEditor.putLong(key, (Long) allOldPrefs.get(key));
+            }
+        }
+        prefEditor.apply();
+        prefOldEditor.clear().apply();
+
+        return (preferences.contains(KEY_FIRST) && preferences.contains(user_ID));
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -192,8 +243,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             // down during recording, this will return as true and the user will be asked for the
             // AMB options as they normally would at the end of recordings. After selecting, the
             // file is written and sent to upload.
-            phoneDead = getSharedPreferences(getString(R.string.pref_amb),MODE_PRIVATE)
-                    .getBoolean(getString(R.string.key_dead),false);
+            phoneDead = preferences.getBoolean(getString(R.string.key_dead),false);
             if (phoneDead) {
                 ambSelect.putExtra(getString(R.string.extra_dead),true);
                 startActivityForResult(ambSelect, getResources().getInteger(R.integer.ambDead));
@@ -413,9 +463,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     prefEditor.putBoolean(KEY_INST, true);  // Ensure only one instance.
                     prefEditor.commit();
 
-                    if (perms.mAPI) {
-                        permissionCheck();  // Asks for GPS & audio permissions
-                    }
+                    permissionCheck();  // Asks for GPS & audio permissions
                 });
         disclosureDialog = builder.create();    // Create the disclosure window
 
@@ -507,7 +555,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 //    Declare variables for use with the Broadcast Receivers. The Broadcast Receivers enable
 // communication with other classes.
-    static final String timerFilter = "TimerResponse", timerInt = "tResponse",
+    public static final String timerFilter = "TimerResponse", timerInt = "tResponse",
             loggingFilter = "LoggingResponse", loggingInt = "lResponse",
             gpsFilter = "GPSResponse", gpsBool = "StationaryResponse";
     PowerManager.WakeLock screenLock;
@@ -628,8 +676,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         public void onReceive(Context context, Intent intent) {
             if (recording) {
                 phoneDead = true;
-                SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
-                ambPref.edit().putBoolean(getString(R.string.key_dead), true).apply();
+                prefEditor.putBoolean(getString(R.string.key_dead), true).apply();
             }
             unregisterReceiverAllInstances(shutdownReceiver);
         }

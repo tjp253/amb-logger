@@ -3,10 +3,13 @@ package uk.ac.nottingham.eaxtp1.CradleRideLogger;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import java.io.File;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbLoggingService.ambPath;
+
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.FileHandling.MovingService;
 
 public class AmbWriteAfterReboot extends IntentService {
 
@@ -21,8 +24,8 @@ public class AmbWriteAfterReboot extends IntentService {
 
     public void writeAmbOpts() {
 
-        SharedPreferences ambPref = getSharedPreferences(getString(R.string.pref_amb), MODE_PRIVATE);
-        ambPath = ambPref.getString(getString(R.string.key_amb_name),null);
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+        ambPath = pref.getString(getString(R.string.key_amb_name),null);
 
         startService(new Intent(this, AmbLoggingService.class)
                 .putExtra(getString(R.string.bool_at_start), false));
@@ -34,14 +37,14 @@ public class AmbWriteAfterReboot extends IntentService {
             e.printStackTrace();
         }
 
-        String endPath = ambPref.getString(getString(R.string.key_end_name),null);
+        String endPath = pref.getString(getString(R.string.key_end_name),null);
         if (endPath == null) return;
 
         File endFile = new File(endPath);
         endPath = endPath.replace(getString(R.string.file_type), getString(R.string.suffix) + getString(R.string.file_type));
         endFile.renameTo(new File(endPath));
 
-        ambPref.edit().putBoolean(getString(R.string.key_dead),false).apply();
+        pref.edit().putBoolean(getString(R.string.key_dead),false).apply();
 
         this.startService(new Intent(getApplicationContext(), MovingService.class));
 

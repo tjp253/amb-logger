@@ -5,7 +5,9 @@
     <application
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity"
+        <activity
+            android:name="uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity"
+            android:exported="true"
             tools:ignore="InnerclassSeparator"
             android:excludeFromRecents="false">
             <intent-filter>
