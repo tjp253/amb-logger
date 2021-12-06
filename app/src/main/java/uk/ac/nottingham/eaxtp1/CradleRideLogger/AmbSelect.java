@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.LOGGING_BROADCAST_AMB;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.ambExtra;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingFilter;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
@@ -380,7 +381,7 @@ public class AmbSelect extends Activity implements View.OnClickListener {
 //        If forced to stop (due to inactivity) this refreshes the MainActivity
         if (forcedStopAmb) {
             Intent intent = new Intent(loggingFilter);
-            intent.putExtra(loggingInt, 9);
+            intent.putExtra(loggingInt, LOGGING_BROADCAST_AMB);
             sendBroadcast(intent);
         }
 

@@ -163,6 +163,12 @@
     <string name="setTit">Settings</string>
     <string name="setScreen">PrefScreen</string>
 
+    <string name="key_gravity">Gravity Present</string>
+    <string name="key_fs">MaxFS</string>
+    <string name="key_user_id">User ID</string>
+    <string name="key_disclosure">NotSeenDisclosure2</string>
+    <string name="key_instance">FirstInstance</string>
+
     <string name="key_pref_as">AutoStopOn</string>
     <string name="key_pref_delay">DelayTime</string>
     <string name="key_pref_timeout">GPS Timeout</string>

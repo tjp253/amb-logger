@@ -26,8 +26,6 @@ import uk.ac.nottingham.eaxtp1.CradleRideLogger.R;
 
 public class MyFlexibleInputPreference extends DialogPreference {
 
-    private final CharSequence[] defaultValues;
-
     int maxNumChoices, rowOfFocus = 0;
     String[] entryStrings; // To contain the strings for each entry row
     List<Integer> rowsVisible = new ArrayList<>(); // To contain the indices for visible rows
@@ -45,21 +43,42 @@ public class MyFlexibleInputPreference extends DialogPreference {
     public MyFlexibleInputPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.FlexibleInputPreference);
-
-        defaultValues = a.getTextArray(R.styleable.FlexibleInputPreference_defaultValues);
-
-        a.recycle();
-
         maxNumChoices = getContext().getResources().getInteger(R.integer.max_input_options);
 
         entryStrings = new String[maxNumChoices];
     }
 
     @Override
+    protected Object onGetDefaultValue(TypedArray a, int index) {
+        CharSequence[] defaultValues = a.getTextArray(index);
+        Set<String> defaultSet = new HashSet<>();
+        for (CharSequence value : defaultValues) {
+            defaultSet.add(value.toString());
+        }
+        return defaultSet;
+    }
+
+    @Override
     protected void onSetInitialValue(boolean restorePersistedValue, Object defaultValue) {
-        super.onSetInitialValue(restorePersistedValue, defaultValue);
-        initialiseValues();
+
+        if (!restorePersistedValue) {
+            //noinspection unchecked: it is definitely a Set!
+            persistStringSet((Set<String>) defaultValue);
+        }
+
+        // first, grab any values stored in preferences and convert to a list
+        persistedSet = getPersistedStringSet(persistedSet); // store for later comparison
+        List<String> persistedValues = new ArrayList<>(persistedSet);
+        rowsVisible.clear();
+
+        // fill entries with the stored values
+        Collections.sort(persistedValues);
+        for (int index = 0; index < persistedValues.size(); index++) {
+            // PersistedSet is stored in random order...
+            entryStrings[index] = persistedValues.get(index);
+            rowsVisible.add(index);
+        }
+
         updateSummary();
     }
 
@@ -75,7 +94,7 @@ public class MyFlexibleInputPreference extends DialogPreference {
     protected void showDialog(Bundle state) {
         super.showDialog(state);
 
-        initialiseValues();
+        onSetInitialValue(true, null);
 
         dialog = (AlertDialog) super.getDialog();
 
@@ -138,30 +157,6 @@ public class MyFlexibleInputPreference extends DialogPreference {
         });
 
         updateRows();
-
-    }
-
-    void initialiseValues() {
-        // first, grab any values stored in preferences and convert to a list
-        persistedSet = getPersistedStringSet(persistedSet); // store for later comparison
-        List<String> persistedValues = new ArrayList<>(persistedSet);
-        rowsVisible.clear();
-
-        if (persistedValues.isEmpty()) { // no values persisted
-            // therefore fill entries with default values
-            for (int index = 0; index < defaultValues.length; index++) {
-                entryStrings[index] = defaultValues[index].toString();
-                rowsVisible.add(index);
-            }
-        } else { // persisted values exist
-            // therefore fill entries with the stored values
-            Collections.sort(persistedValues);
-            for (int index = 0; index < persistedValues.size(); index++) {
-                // PersistedSet is stored in reverse alphabetical order...
-                entryStrings[index] = persistedValues.get(index);
-                rowsVisible.add(index);
-            }
-        }
 
     }
 

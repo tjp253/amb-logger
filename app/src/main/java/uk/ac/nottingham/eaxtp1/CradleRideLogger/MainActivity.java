@@ -24,7 +24,6 @@ import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -70,8 +69,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     SharedPreferences.Editor prefEditor;
     AlertDialog disclosureDialog, launcherDialog;
     Button adButt;
-    public final static String KEY_G = "Gravity Present", KEY_FS = "MaxFS", KEY_F_CHECK = "CheckFS";
-    final String user_ID = "User ID", KEY_DISC = "NotSeenDisclosure2", KEY_INST = "FirstInstance", KEY_FIRST = "firstLogin";
+    public static String KEY_G, KEY_FS;
+    String KEY_ID, KEY_DISCLOSURE, KEY_INSTANCE;
 
     public static int userID;  // Declare unique user ID
 
@@ -103,34 +102,40 @@ public class MainActivity extends Activity implements View.OnClickListener {
         cancelButt.setOnClickListener(this);
         loadingAn = findViewById(R.id.initProgress);
         loadingAn.setVisibility(View.GONE);
+        
+        KEY_G = getString(R.string.key_gravity);
+        KEY_FS = getString(R.string.key_fs);
+        KEY_ID = getString(R.string.key_user_id);
+        KEY_DISCLOSURE = getString(R.string.key_disclosure);
+        KEY_INSTANCE = getString(R.string.key_instance);
 
 //        Initialise preferences and open the editor
+        // first, set the default preferences, if never modified by the user
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         prefEditor = preferences.edit();
-//        prefEditor.putInt(user_ID, 13319625).apply(); // Set ID for Dev's phone
+//        prefEditor.putInt(KEY_ID, 13319625).apply(); // Set ID for Dev's phone
 
 //        Initialises a Unique ID for each user on first start-up. Probably could replace this
 // with a check for User ID preference...
-        if (preferences.getBoolean(KEY_FIRST, true) && !inOldPreferences()) {
+        if (preferences.getInt(KEY_ID, -1) == -1 && !inOldPreferences()) {
             Random random = new Random();
             int rndUserID = 10000000 + random.nextInt(90000000);
 
-            prefEditor.putBoolean(KEY_FIRST, false);    // Tell preferences ID has been made
-            prefEditor.putInt(user_ID, rndUserID);      // Add User ID to preferences
+            prefEditor.putInt(KEY_ID, rndUserID);      // Add User ID to preferences
             prefEditor.apply();                         // Save preferences
         }
 
 //        Shows Disclosure Agreement if not seen (and accepted) before.
-        if (preferences.getBoolean(KEY_DISC, true)) {
+        if (preferences.getBoolean(KEY_DISCLOSURE, true)) {
 //        TODO: remove the '!' below when code is finalised.
-            prefEditor.putBoolean(KEY_DISC, true);
-            prefEditor.commit();
+            prefEditor.putBoolean(KEY_DISCLOSURE, true).apply();
             showDisclosure();   // Starts the 'showDisclosure' method to deal with usage agreement.
         } else {
             setAsLauncher(); // Check if app is launcher, and ask to set if it isn't.
         }
 
-        userID = preferences.getInt(user_ID, 1);    // Initialises the User ID
+        userID = preferences.getInt(KEY_ID, 1);    // Initialises the User ID
 
 //        Initialise User ID / app version viewer and sets text.
         versionView = findViewById(R.id.versionView);
@@ -173,7 +178,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
 
 //        If the Sample Frequency and Gyro have not been assessed, start the FSChecker service
-        if (preferences.getBoolean(KEY_F_CHECK, true)) {
+        if (preferences.getInt(KEY_FS, -1) == -1) {
             startService(new Intent(getApplicationContext(), FSChecker.class));
         }
     }
@@ -192,13 +197,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
 
         SharedPreferences.Editor prefOldEditor = prefOld.edit();
-        if (currentKeys.containsAll(Arrays.asList(KEY_FIRST, user_ID))) {
+        if (currentKeys.contains(KEY_ID)) {
             prefOldEditor.clear().apply();
             return true;
         }
 
+        String nttPref = getString(R.string.key_pref_ntt);
+
         for (String key : allOldPrefs.keySet()) {
-            if (allOldPrefs.get(key) instanceof  Boolean) {
+            if (key.equals(nttPref)) {
+                prefEditor.putString(key, getString(R.string.ntt_centre));
+            } else if (allOldPrefs.get(key) instanceof  Boolean) {
                 prefEditor.putBoolean(key, (Boolean) allOldPrefs.get(key));
             } else if (allOldPrefs.get(key) instanceof  Integer) {
                 prefEditor.putInt(key, (Integer) allOldPrefs.get(key));
@@ -209,7 +218,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         prefEditor.apply();
         prefOldEditor.clear().apply();
 
-        return (preferences.contains(KEY_FIRST) && preferences.contains(user_ID));
+        return preferences.contains(KEY_ID);
     }
 
     @Override
@@ -459,8 +468,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         AlertDialog.Builder builder = dialogHandler.buildDisclosureDialog()
                 .setView(checkboxView)  // Layout used by the window
                 .setPositiveButton(R.string.ad_button, (dialog, BUTTON_POSITIVE) -> {
-                    prefEditor.putBoolean(KEY_DISC, false); // Accept the disclosure agreement!
-                    prefEditor.putBoolean(KEY_INST, true);  // Ensure only one instance.
+                    prefEditor.putBoolean(KEY_DISCLOSURE, false); // Accept the disclosure agreement!
+                    prefEditor.putBoolean(KEY_INSTANCE, true);  // Ensure only one instance.
                     prefEditor.commit();
 
                     permissionCheck();  // Asks for GPS & audio permissions
@@ -469,11 +478,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 //        If there are no other instances of the disclosure window, show the window and
 // initialise the 'accept' button.
-        if (preferences.getBoolean(KEY_INST, true)) {
+        if (preferences.getBoolean(KEY_INSTANCE, true)) {
             disclosureDialog.show();
             adButt = disclosureDialog.getButton(AlertDialog.BUTTON_POSITIVE);
             adButt.setEnabled(false);
-            prefEditor.putBoolean(KEY_INST, false);
+            prefEditor.putBoolean(KEY_INSTANCE, false);
             prefEditor.commit();
         }
 
@@ -544,7 +553,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
     protected void onStop() {
         super.onStop();
 //        Ensures only one instance in normal usage. App restarts differently with Ctrl-F10 in Studio...
-        prefEditor.putBoolean(KEY_INST, true).commit();
+        prefEditor.putBoolean(KEY_INSTANCE, true).commit();
     }
 
     @Override
@@ -555,6 +564,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
 //    Declare variables for use with the Broadcast Receivers. The Broadcast Receivers enable
 // communication with other classes.
+    public static final int TIMER_BROADCAST_START = 1, TIMER_BROADCAST_TIMEOUT = 0,
+        TIMER_BROADCAST_FIX = 2, TIMER_BROADCAST_KILLED = 3;
+
     public static final String timerFilter = "TimerResponse", timerInt = "tResponse",
             loggingFilter = "LoggingResponse", loggingInt = "lResponse",
             gpsFilter = "GPSResponse", gpsBool = "StationaryResponse";
@@ -564,14 +576,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private final BroadcastReceiver timerReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getIntExtra(timerInt, 1)) {  // GPS Timer communication
-                case 1: // Start recording data
+            switch (intent.getIntExtra(timerInt, TIMER_BROADCAST_START)) {  // GPS Timer communication
+                case TIMER_BROADCAST_START: // Start recording data
                     buffing = false;
                     startAll();
                     changeDisplay();
                     break;
 
-                case 0: // Cancels recording if the GPS can't get a fix within a reasonable time.
+                case TIMER_BROADCAST_TIMEOUT: // Cancels recording if the GPS can't get a fix within a reasonable time.
                     stopInitialising();
                     instructDisplay.setText(R.string.failed);
                     if (!displayOn) {   // Send notification if user is not in MainActivity
@@ -581,34 +593,37 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     unregisterReceiverAllInstances(timerReceiver);
                     break;
 
-                case 2: // Let User know GPS is fixed, but waiting for buffer before recording.
+                case TIMER_BROADCAST_FIX: // Let User know GPS is fixed, but waiting for buffer before recording.
                     buffing = true;
                     changeDisplay();
                     break;
 
-                case 3: // Cancel the Broadcast Receiver if GPSTimerService destroyed before lock
+                case TIMER_BROADCAST_KILLED: // Cancel the Broadcast Receiver if GPSTimerService destroyed before lock
                     unregisterReceiverAllInstances(timerReceiver);
                     break;
             }
         }
     };
 
+    public static final int LOGGING_BROADCAST_CANCEL = 0, LOGGING_BROADCAST_RECORDING = 1,
+        LOGGING_BROADCAST_AMB = 25, LOGGING_BROADCAST_PROBLEM = 99;
+
     private final BroadcastReceiver loggingReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getIntExtra(loggingInt,1)) { // Logging Service communication
-                case 0: // Recording stopped before any data recorded (time < end buffer time)
+            switch (intent.getIntExtra(loggingInt,LOGGING_BROADCAST_RECORDING)) { // Logging Service communication
+                case LOGGING_BROADCAST_CANCEL: // Recording stopped before any data recorded (time < end buffer time)
                     fileEmpty = true;
                     break;
 
-                case 1: // Recording has some data
+                case LOGGING_BROADCAST_RECORDING: // Recording has some data
                     fileEmpty = false;
                     if (BuildConfig.CROWD_MODE) {
                         unregisterReceiverAllInstances(loggingReceiver); // Cancel Broadcast Receiver for regular users
                     }
                     return;
 
-                case 9: // Notify AMB user that logging has stopped (as AmbSelect screen will be up).
+                case LOGGING_BROADCAST_AMB: // Notify AMB user that logging has stopped (as AmbSelect screen will be up).
                     displayOnFinish();
                     forcedStop = false;
                     stopService(loggingService);
@@ -616,7 +631,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     unregisterReceiverAllInstances(shutdownReceiver);
                     break;
 
-                case 99: // Flash the screen if there's an error reading from the logging queue
+                case LOGGING_BROADCAST_PROBLEM: // Flash the screen if there's an error reading from the logging queue
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {   // For APIs 27+
                         setTurnScreenOn(true);  // Can't check as don't have latest API
                     } else {

@@ -10,7 +10,6 @@ import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_F_CHECK;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_FS;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.KEY_G;
 
@@ -53,7 +52,6 @@ public class FSChecker extends Service implements SensorEventListener {
         SharedPreferences.Editor prefEditor = pref.edit();
         prefEditor.putBoolean(KEY_G, gPresent);
         prefEditor.putInt(KEY_FS, fSample);
-        prefEditor.putBoolean(KEY_F_CHECK, false);
         prefEditor.apply();
 
     }

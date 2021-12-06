@@ -58,7 +58,7 @@
         <!-- TRANSPORT MODES USED -->
         <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyMultiSelectListPreference
             android:key="@string/key_modes"
-            android:defaultValue="@array/transport_modes_indices"
+            android:defaultValue="@array/default_mode_indices"
             android:entries="@array/transport_modes"
             android:entryValues="@array/transport_modes_indices"
             android:title="@string/choose_mode"/>
@@ -67,7 +67,7 @@
         <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyFlexibleInputPreference
             android:key="@string/key_troll_options"
             android:title="@string/choose_troll"
-            app:defaultValues="@array/troll_centre"
+            android:defaultValue="@array/troll_centre"
             />
 
         <!-- ATTACHED WITH MAGNETS SWITCH -->

@@ -117,10 +117,6 @@
 
     <!--CenTre data-->
 
-    <!--STYLEABLE FOR TROLLEY INPUT-->
-    <declare-styleable name="FlexibleInputPreference">
-        <attr name="defaultValues" format="reference" />
-    </declare-styleable>
     <integer name="max_input_options">6</integer>
 
     <string-array name="troll_centre">
@@ -152,6 +148,9 @@
         <item>0</item>
         <item>1</item>
         <item>2</item>
+    </string-array>
+    <string-array name="default_mode_indices">
+        <item>0</item>
     </string-array>
 
     <!-- Arrays for MANUFACTURER and ENGINE selection -->

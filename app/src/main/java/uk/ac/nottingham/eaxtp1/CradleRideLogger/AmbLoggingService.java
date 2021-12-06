@@ -75,7 +75,7 @@ public class AmbLoggingService extends IntentService {
         // TEAM
         template[3] = pref.getString(getString(R.string.key_pref_ntt), getString(R.string.ntt_centre));
         // MODE
-        template[5] = pref.getString(getString(R.string.key_mode), "");
+        template[5] = pref.getString(getString(R.string.key_mode), res.getString(R.string.mode_road));
         // MANUFACTURER
         template[7] = pref.getString(getString(R.string.key_man), notApplicable);
         // ENGINE

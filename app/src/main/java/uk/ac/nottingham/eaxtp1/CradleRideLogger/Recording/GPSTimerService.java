@@ -16,6 +16,10 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import androidx.annotation.Nullable;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.TIMER_BROADCAST_FIX;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.TIMER_BROADCAST_KILLED;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.TIMER_BROADCAST_START;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.TIMER_BROADCAST_TIMEOUT;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.crashed;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
@@ -107,7 +111,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
             @Override
             public void onFinish() {
                 if (!recording) {
-                    sendBroadcast(0);
+                    sendBroadcast(TIMER_BROADCAST_TIMEOUT);
                 }
             }
         }.start();
@@ -124,7 +128,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
             public void onFinish() {
                 positioned = true;
                 if (gpsOff) {
-                    sendBroadcast(1);   // Start recording
+                    sendBroadcast(TIMER_BROADCAST_START);   // Start recording
                 }
             }
         }.start();
@@ -132,12 +136,12 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
     public void buffTheStart() {
         if ( bs == 0) { // No buffer
-            sendBroadcast(1);   // Start recording
+            sendBroadcast(TIMER_BROADCAST_START);   // Start recording
             gpsRemoval();   // Start GPS removal timer - need to delay to enable GPS service to start
 
         } else {    // Wait for buffer before recording data
             buffering = true;
-            sendBroadcast(2);   // Let User know GPS is fixed, but waiting for buffer before recording.
+            sendBroadcast(TIMER_BROADCAST_FIX);   // Let User know GPS is fixed, but waiting for buffer before recording.
             startBuffer = new CountDownTimer(bs, bs) {
                 @Override
                 public void onTick(long millisUntilFinished) {}
@@ -145,7 +149,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
                 @Override
                 public void onFinish() {
                     buffFinished = true;    buffering = false;
-                    sendBroadcast(1);   // Start recording
+                    sendBroadcast(TIMER_BROADCAST_START);   // Start recording
                     gpsRemoval();   // Start GPS removal timer - need to delay to enable GPS service to start
                 }
             }.start();
@@ -179,12 +183,12 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
                         timeoutTimer.cancel();  // Cancel GPS timeout as GPS is locked
 
                         if ( bs == 0) { // No buffer
-                            sendBroadcast(1);   // Start the recording
+                            sendBroadcast(TIMER_BROADCAST_START);   // Start the recording
                             gpsRemoval();   // Start GPS removal timer - need to delay to enable GPS service to start
 
                         } else {    // Apply start buffer to protect user's location
                             buffering = true;
-                            sendBroadcast(2);   // Let User know GPS is fixed, but waiting for buffer before recording.
+                            sendBroadcast(TIMER_BROADCAST_FIX);   // Let User know GPS is fixed, but waiting for buffer before recording.
                             buffTheStart();
                         }
                     }
@@ -234,7 +238,7 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
         super.onDestroy();
 
         if (!buffFinished) {
-            sendBroadcast(3);   // Cancel Main Activity's Broadcast Receiver
+            sendBroadcast(TIMER_BROADCAST_KILLED);   // Cancel Main Activity's Broadcast Receiver
             buffering = false;
         }
 

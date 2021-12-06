@@ -25,6 +25,9 @@ import java.util.TimerTask;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.LOGGING_BROADCAST_CANCEL;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.LOGGING_BROADCAST_PROBLEM;
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.LOGGING_BROADCAST_RECORDING;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.GPSService.gpsData;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.IMUService.date;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.IMUService.myQ;
@@ -112,7 +115,7 @@ public class LoggingService extends Service {
             // If the Start Buffer is enabled, wait until the Buffer Time has passed before
             // creating a file. Otherwise, create the file now.
             if (bufferOn) {
-                sendBroadcast(0);   // Tell Main Activity no data has been written
+                sendBroadcast(LOGGING_BROADCAST_CANCEL);   // Tell Main Activity no data has been written
                 int fs = pref.getInt(KEY_FS, 100);   // Read the IMU sample frequency
 //        if (fs > 250) {
 //            logPeriod = (int) Math.ceil(logPeriod * fs / 200);    // Logs quicker at higher frequencies, to account for increased data size.
@@ -253,7 +256,7 @@ public class LoggingService extends Service {
             if (BuildConfig.TEST_MODE && i < 10) {
                 writeDebug(System.currentTimeMillis()
                         + "- Queue empty. Supposed size: " + qSize + ". Actual size: " + i + "\n");
-                sendBroadcast(99);
+                sendBroadcast(LOGGING_BROADCAST_PROBLEM);
             }
 
             e.getMessage();
@@ -321,11 +324,11 @@ public class LoggingService extends Service {
             } else if (dataInFile){
 
                 this.startService(new Intent(getApplicationContext(), MovingService.class));
-                sendBroadcast(1);
+                sendBroadcast(LOGGING_BROADCAST_RECORDING);
 
             } else {
 
-                sendBroadcast(0);
+                sendBroadcast(LOGGING_BROADCAST_CANCEL);
 
             }
             sentIntents = true;
