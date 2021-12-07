@@ -11,11 +11,6 @@
     <string name="fol_fin">Finished</string>
     <string name="fol_up">Uploaded</string>
 
-    <!-- For in-file comments -->
-    <string name="com_id">#ID=</string>
-    <string name="com_vers">#Version=</string>
-    <string name="com_model">#Model=</string>
-
     <!-- Logging title arrays -->
     <string-array name="title_gps">
         <item>Lat</item>

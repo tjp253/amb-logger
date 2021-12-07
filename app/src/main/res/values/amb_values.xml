@@ -71,23 +71,33 @@
     <!-- array template for amb options header file -->
     <string-array name="amb_file_template">
         <item>Country</item>
-        <item> </item>
+        <item />
         <item>Team</item>
-        <item> </item>
+        <item />
         <item>Mode</item>
-        <item> </item>
+        <item />
         <item>Manufacturer</item>
-        <item> </item>
+        <item />
         <item>Engine</item>
-        <item> </item>
+        <item />
         <item>Trolley</item>
-        <item> </item>
+        <item />
         <item>Patient</item>
-        <item> </item>
+        <item />
         <item>Reason for Transfer</item>
-        <item> </item>
+        <item />
         <item>Emergency driving used</item>
-        <item> </item>
+        <item />
+    </string-array>
+    
+    <!-- in-file comments - add to end of meta -->
+    <string-array name="processing_info_template">
+        <item>ID</item>
+        <item />
+        <item>Version</item>
+        <item />
+        <item>Model</item>
+        <item />
     </string-array>
 
     <string name="amb_settings_divider">Neonatal Transport Team Settings</string>

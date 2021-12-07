@@ -50,12 +50,12 @@ public class UploadService extends IntentService {
 
     URL url;
 
-    String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, failedPath, fullFilePath;
+    String mainPath, finishedPath, movedPath, uploadFilePath, fileName, parse, fullFilePath;
 
     File sourceFolder; // Have the sourceFolder available to the whole class to enable
     // 'NotificationSender' to count the amount of files left to be uploaded.
 
-    int uploadFileCount = 0, failedFileCount = 0, uploadLimit;
+    int uploadFileCount = 0, uploadLimit;
 
     long fullFileLength;
 
@@ -69,7 +69,6 @@ public class UploadService extends IntentService {
         mainPath = String.valueOf(getExternalFilesDir(""));
         finishedPath = mainPath + "/" + res.getString(R.string.fol_fin) + "/";
         movedPath = mainPath + "/" + res.getString(R.string.fol_up) + "/";
-        failedPath = mainPath + "/FailedUploads/";
 
         notUtils = new NotificationUtilities(this);
         // Cancel uploaded / oversized / failed notifications when starting a new lot of uploads
@@ -107,6 +106,15 @@ public class UploadService extends IntentService {
         }
         return url;
     }
+
+    File[] getFileList() {
+        // Grab the list of files, but handle NullPointerExceptions (if I/O error while accessing)
+        File[] fileList = sourceFolder.listFiles();
+        if (fileList == null) {
+            return new File[0];
+        }
+        return fileList;
+    }
     
     public void handleUploads() {
 
@@ -124,7 +132,7 @@ public class UploadService extends IntentService {
         }
 
         sourceFolder = new File(finishedPath);
-        File[] fileList = sourceFolder.listFiles();
+        File[] fileList = getFileList();
         if (fileList.length == 0) {
             return; // nothing to upload. should not reach here, but catch anyway
         }
@@ -151,7 +159,7 @@ public class UploadService extends IntentService {
                 moveFile(file.getName());
 
             } else {
-                sendBroadcast(sourceFolder.listFiles().length == 0);
+                sendBroadcast(getFileList().length == 0);
             }
 
         }
@@ -166,6 +174,17 @@ public class UploadService extends IntentService {
 
         new JobUtilities(this).scheduleDelete();
 
+    }
+
+    public String formChunkName(int chunk, boolean finalPart) {
+        String toInsert = String.format(Locale.UK, res.getString(R.string.chunk_formatter), chunk);
+        if (finalPart) {
+            toInsert += res.getString(R.string.suffix);
+        }
+        return fullFilePath.replace(
+                res.getString(R.string.file_type),
+                toInsert + res.getString(R.string.file_type)
+        );
     }
 
     public boolean uploadInChunks(File file) {
@@ -203,17 +222,6 @@ public class UploadService extends IntentService {
         return true;
     }
 
-    public String formChunkName(int chunk, boolean finalPart) {
-        String toInsert = String.format(Locale.UK, res.getString(R.string.chunk_formatter), chunk);
-        if (finalPart) {
-            toInsert += res.getString(R.string.suffix);
-        }
-        return fullFilePath.replace(
-                res.getString(R.string.file_type),
-                toInsert + res.getString(R.string.file_type)
-        );
-    }
-
     public boolean uploadFile(File file) {
 
         uploadFilePath = file.getAbsolutePath();
@@ -244,7 +252,9 @@ public class UploadService extends IntentService {
             try {
                 response = okHttpClient.newCall(request).execute();
             } catch (UnknownHostException uhe) {
-                throw new IOException("UnknownHostException - Upload connection failed.");
+                // URL DOES NOT EXIST - WILL BE THROWN WHEN REMOVED FROM OPTICS SERVER
+                return false; // cannot upload, so quit // TODO: restore below exception once on new server and new URL sorted?
+//                throw new IOException("UnknownHostException - Upload connection failed.");
             } catch (SocketException se) {
                 throw new IOException("Socket Exception");
             }
@@ -265,8 +275,7 @@ public class UploadService extends IntentService {
                 // File already uploaded.
 
             } else {
-                fileName = null;
-                failedFileCount++;
+                return false; // Some other problem came up...
             }
 
         } catch (IOException e) {
@@ -280,15 +289,12 @@ public class UploadService extends IntentService {
 
     public void notificationSender() {
 
-        sendBroadcast(sourceFolder.listFiles().length == 0);
+        sendBroadcast(getFileList().length == 0);
 
         if (uploadFileCount > 0) {
             uploadNotification();
         }
 
-        if (failedFileCount > 0) {
-            failedNotification();
-        }
     }
 
     public void uploadNotification() {
@@ -304,22 +310,6 @@ public class UploadService extends IntentService {
         notUtils.getManager()
                 .notify(notUtils.UPLOADED_INT,
                         notUtils.getUploadedNotification(true, uText)
-                                .build());
-    }
-
-    private void failedNotification() {
-        String fText;
-        if (failedFileCount == 1) {
-            fText = failedFileCount + " file failed to upload.\nPlease check the Finished folder.";
-        } else {
-            fText = failedFileCount + " files too large to upload.\nPlease check the Finished folder.";
-        }
-
-        failedFileCount = 0;
-
-        notUtils.getManager()
-                .notify(notUtils.FAILED_INT,
-                        notUtils.getUploadedNotification(false, fText)
                                 .build());
     }
 

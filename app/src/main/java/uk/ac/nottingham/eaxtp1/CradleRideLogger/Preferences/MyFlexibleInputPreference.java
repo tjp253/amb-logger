@@ -6,7 +6,6 @@ import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.View;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.R;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.TextUtils;
 
 public class MyFlexibleInputPreference extends DialogPreference {
 
@@ -265,9 +265,7 @@ public class MyFlexibleInputPreference extends DialogPreference {
 
     public void updateSummary() {
         setSummary(
-            TextUtils.join(
-                "\n", Arrays.copyOfRange(entryStrings, 0, getNumValues())
-            )
+            TextUtils.joinNewLine(Arrays.copyOfRange(entryStrings, 0, getNumValues()))
         );
     }
 }

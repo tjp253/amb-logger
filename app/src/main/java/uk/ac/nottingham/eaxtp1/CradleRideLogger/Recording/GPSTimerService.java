@@ -5,7 +5,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.location.GpsStatus;
+import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -14,6 +14,8 @@ import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.TIMER_BROADCAST_FIX;
@@ -32,7 +34,7 @@ import uk.ac.nottingham.eaxtp1.CradleRideLogger.BuildConfig;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.R;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.NotificationUtilities;
 
-public class GPSTimerService extends Service implements LocationListener, GpsStatus.Listener {
+public class GPSTimerService extends Service implements LocationListener {
     public GPSTimerService() {}
 
 //    This service handles the GPS lock and the timers needed for the app to run smoothly.
@@ -45,6 +47,8 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 // location.
 //    GPS Removal Timer allows the full GPS service time to start up and initialise before
 // killing this one.
+
+    GnssStatus.Callback myGnssStatusCallback;
 
     CountDownTimer timeoutTimer, positionTimer, removalTimer, startBuffer;
 
@@ -74,9 +78,45 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
 
             timeOut = preferences.getInt(getString(R.string.key_pref_timeout), getResources().getInteger(R.integer.timeout_default)) * 60000;   // Retrieve timeout
 
+            myGnssStatusCallback = new GnssStatus.Callback() {
+                @Override
+                public void onSatelliteStatusChanged(@NonNull GnssStatus status) {
+                    // Decide if there's a reasonable location fix
+                    if (recording) {
+                        return; // Don't care. Already found a fix.
+                    }
+
+                    // Ensure the GPS is fixed before the user starts recording
+
+                    if (myLastLocation != null)
+                        gpsFixed = (SystemClock.elapsedRealtime() - myLastLocationMillis) < 3000;
+
+                    if (gpsFixed && positioned) {
+                        timeoutTimer.cancel();  // Cancel GPS timeout as GPS is locked
+
+                        if ( bs == 0) { // No buffer
+                            sendBroadcast(TIMER_BROADCAST_START);   // Start the recording
+                            gpsRemoval();   // Start GPS removal timer - need to delay to enable GPS service to start
+
+                        } else {    // Apply start buffer to protect user's location
+                            buffering = true;
+                            sendBroadcast(TIMER_BROADCAST_FIX);   // Let User know GPS is fixed, but waiting for buffer before recording.
+                            buffTheStart();
+                        }
+                    }
+                }
+
+                @Override
+                public void onFirstFix(int ttffMillis) {
+                    gpsFixed = true; //  Can start recording
+                }
+            };
+
             myLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            myLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-            myLocationManager.addGpsStatusListener(this);
+            myLocationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, 0, 0, this
+            );
+            myLocationManager.registerGnssStatusCallback(myGnssStatusCallback);
             gpsTimer(); // Cancel GPS (and recording) if no GPS signal within requested time
         }
 
@@ -167,40 +207,6 @@ public class GPSTimerService extends Service implements LocationListener, GpsSta
                 stopSelf();
             }
         }.start();
-    }
-
-//    Decide whether GPS is locked or not
-    @Override
-    public void onGpsStatusChanged(int event) {
-        if (!recording) {
-//        Ensures the GPS is fixed before the user starts recording
-            switch (event) {
-                case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-                    if (myLastLocation != null)
-                        gpsFixed = (SystemClock.elapsedRealtime() - myLastLocationMillis) < 3000;
-
-                    if (gpsFixed && positioned) {
-                        timeoutTimer.cancel();  // Cancel GPS timeout as GPS is locked
-
-                        if ( bs == 0) { // No buffer
-                            sendBroadcast(TIMER_BROADCAST_START);   // Start the recording
-                            gpsRemoval();   // Start GPS removal timer - need to delay to enable GPS service to start
-
-                        } else {    // Apply start buffer to protect user's location
-                            buffering = true;
-                            sendBroadcast(TIMER_BROADCAST_FIX);   // Let User know GPS is fixed, but waiting for buffer before recording.
-                            buffTheStart();
-                        }
-                    }
-
-                    break;
-                case GpsStatus.GPS_EVENT_FIRST_FIX:
-
-                    gpsFixed = true;
-
-                    break;
-            }
-        }
     }
 
 //    Store GPS data when available - give starting location data to the recording

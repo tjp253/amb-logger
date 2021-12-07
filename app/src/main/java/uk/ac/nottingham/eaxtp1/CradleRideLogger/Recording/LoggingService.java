@@ -5,12 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,7 +38,6 @@ import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.loggingInt;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.phoneDead;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.recording;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
-import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.versionNum;
 
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.AmbLoggingService;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.BuildConfig;
@@ -48,6 +45,7 @@ import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.DateFormatter;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.FileHandling.MovingService;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.NotificationUtilities;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.R;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.TextUtils;
 
 public class LoggingService extends Service {
     public LoggingService() {}
@@ -117,9 +115,6 @@ public class LoggingService extends Service {
             if (bufferOn) {
                 sendBroadcast(LOGGING_BROADCAST_CANCEL);   // Tell Main Activity no data has been written
                 int fs = pref.getInt(KEY_FS, 100);   // Read the IMU sample frequency
-//        if (fs > 250) {
-//            logPeriod = (int) Math.ceil(logPeriod * fs / 200);    // Logs quicker at higher frequencies, to account for increased data size.
-//        }
                 buffSamples = buffBy*60*fs; buffBy = buffBy*60000;
                 startTimer();
             } else {
@@ -201,13 +196,7 @@ public class LoggingService extends Service {
             titleList.addAll(gpsTitleList);
         }
 
-        outputTitle = TextUtils.join(",", titleList);
-        // Include ID number, version and model as comments to aid processing
-        outputTitle = outputTitle
-                + res.getString(R.string.com_id) + userID
-                + res.getString(R.string.com_vers) + versionNum
-                + res.getString(R.string.com_model) + Build.MODEL
-                + "\n";
+        outputTitle = TextUtils.joinCSV(titleList) + "\n";
 
         try {
             myOutputStream.write(outputTitle.getBytes(StandardCharsets.UTF_8));

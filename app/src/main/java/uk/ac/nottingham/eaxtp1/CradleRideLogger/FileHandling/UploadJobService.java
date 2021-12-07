@@ -25,13 +25,26 @@ public class UploadJobService extends JobService {
     // unnecessary, fail-safe to prevent using mobile data.
     static boolean uploading;
 
-    @Override
-    public boolean onStartJob(JobParameters params) {
+    int numOfFiles() {
 
         String finishedPath = String.valueOf(getExternalFilesDir(getApplicationContext().getResources().getString(R.string.fol_fin)));
         File finishedFolder = new File(finishedPath);
+
+        if (!finishedFolder.isDirectory()) {
+            return 0; // Folder not a directory, so no files
+        }
+        File[] fileList = finishedFolder.listFiles();
+        if (fileList == null) {
+            return 0; // Possible error thrown, so skip uploads for now
+        }
+        return fileList.length;
+    }
+
+    @Override
+    public boolean onStartJob(JobParameters params) {
+
         // If there are files to upload and the app is not currently recording data start uploading.
-        if (!recording && finishedFolder.isDirectory() && finishedFolder.listFiles().length > 0) {
+        if (!recording && numOfFiles() > 0) {
 
             registerReceiver(receiver,new IntentFilter(uploadFilter));
 

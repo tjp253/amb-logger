@@ -26,6 +26,7 @@ public class MovingService extends IntentService {
     // foolproof. I started off as a complete rookie; cut me some slack.
 
     String mainPath, folderPath, finishedPath;
+    File oldFolder;
 
     @Override
     public void onCreate() {
@@ -50,6 +51,15 @@ public class MovingService extends IntentService {
         moveFiles(folderPath, finishedPath);
     }
 
+    File[] getFileList() {
+        // Grab the list of files, but handle NullPointerExceptions (if I/O error while accessing)
+        File[] fileList = oldFolder.listFiles();
+        if (fileList == null) {
+            return new File[0];
+        }
+        return fileList;
+    }
+
     public void moveFiles(String oldPath, String newPath) {
 
         moving = true;
@@ -59,9 +69,9 @@ public class MovingService extends IntentService {
         byte[] buffer = new byte[2048]; // amount of bytes to read & write each pass
         int read;
 
-        File oldFolder = new File(oldPath);
+        oldFolder = new File(oldPath);
 
-        File[] fileList = oldFolder.listFiles();
+        File[] fileList = getFileList();
 
         if (BuildConfig.AMB_MODE) { // Combine the AMB metadata with the main file
             Resources res = getResources();
@@ -89,12 +99,12 @@ public class MovingService extends IntentService {
                 }
             }
 
-            fileList = oldFolder.listFiles();
+            fileList = getFileList();
         }
 
         for (File file : fileList) {
 
-            int filesRemaining = oldFolder.listFiles().length;
+            int filesRemaining = getFileList().length;
             if (filesRemaining == 0) {
                 return;
             }

@@ -34,7 +34,7 @@ public class DeletingJobService extends JobService {
         // folder to be deleted
         if (!uploading && uploadedFolder.isDirectory() && !userWantsFilesKept) {
             uploadedFiles = uploadedFolder.listFiles();
-            if (uploadedFiles.length != 0) {
+            if (uploadedFiles != null && uploadedFiles.length != 0) {
                 checkAndDeleteFiles(jobParameters);
                 return true;
             }

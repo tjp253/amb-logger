@@ -177,7 +177,9 @@ public class FileCheckUtilities extends ContextWrapper {
     private void deleteJourney(final String id, final String date) {
         new Thread(() -> {
             File uploadedFolder = new File(String.valueOf(getExternalFilesDir(res.getString(R.string.fol_up))));
-            for (File file : uploadedFolder.listFiles()) {
+            File[] uploadedFileList = uploadedFolder.listFiles();
+            if (uploadedFileList == null) return;
+            for (File file : uploadedFileList) {
                 if (getID(file).equals(id) && getDate(file).equals(date)) {
                     file.delete();
                 }

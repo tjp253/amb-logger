@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.preference.MultiSelectListPreference;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -15,6 +14,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.TextUtils;
 
 public class MyMultiSelectListPreference extends MultiSelectListPreference {
 
@@ -78,7 +79,7 @@ public class MyMultiSelectListPreference extends MultiSelectListPreference {
         for (int index = 0; index < numValues; index++) {
             chosenStrings[index] = entryStrings[Integer.parseInt(valueIndices.get(index))];
         }
-        setSummary(TextUtils.join("\n", chosenStrings));
+        setSummary(TextUtils.joinNewLine(chosenStrings));
     }
 
     @Override

@@ -4,7 +4,7 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.text.TextUtils;
+import android.os.Build;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,12 +13,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
+import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.versionNum;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.IMUService.date;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.LoggingService.gzipPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.LoggingService.mainPath;
 import static uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity.userID;
 
 import androidx.preference.PreferenceManager;
+
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.TextUtils;
 
 public class AmbLoggingService extends IntentService {
 //    IntentService to handle logging of ambulance options.
@@ -34,6 +37,7 @@ public class AmbLoggingService extends IntentService {
     static String ambPath;
     OutputStream myAmbStream;
     Resources res;
+    SharedPreferences preferences;
 
     public AmbLoggingService() {
         super("AmbLoggingService");
@@ -42,7 +46,7 @@ public class AmbLoggingService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         res = getResources();
-        atStart = intent.getBooleanExtra(getString(R.string.bool_at_start), true);
+        atStart = intent.getBooleanExtra(res.getString(R.string.bool_at_start), true);
         prepLog();
     }
 
@@ -60,40 +64,60 @@ public class AmbLoggingService extends IntentService {
 
         logAmb();
     }
+    
+    String fillMeta() {
+        // Fill the string array of Meta Options
 
-    public void logAmb() { // Log ambulance options
         // TODO: change the template depending on the available options? processing can handle it.
-        String[] template = res.getStringArray(R.array.amb_file_template);
+        String[] template_meta = res.getStringArray(R.array.amb_file_template);
 
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-
-        String notApplicable = getString(R.string.valueNotApplicable),
-            unknown = getString(R.string.optUnknown);
+        String notApplicable = res.getString(R.string.valueNotApplicable),
+                unknown = res.getString(R.string.optUnknown);
 
         // COUNTRY
-        template[1] = pref.getString(getString(R.string.key_country), "GB");
+        template_meta[1] = preferences.getString(res.getString(R.string.key_country), "GB");
         // TEAM
-        template[3] = pref.getString(getString(R.string.key_pref_ntt), getString(R.string.ntt_centre));
+        template_meta[3] = preferences.getString(res.getString(R.string.key_pref_ntt), res.getString(R.string.ntt_centre));
         // MODE
-        template[5] = pref.getString(getString(R.string.key_mode), res.getString(R.string.mode_road));
+        template_meta[5] = preferences.getString(res.getString(R.string.key_mode), res.getString(R.string.mode_road));
         // MANUFACTURER
-        template[7] = pref.getString(getString(R.string.key_man), notApplicable);
+        template_meta[7] = preferences.getString(res.getString(R.string.key_man), notApplicable);
         // ENGINE
-        template[9] = pref.getString(getString(R.string.key_eng), notApplicable);
+        template_meta[9] = preferences.getString(res.getString(R.string.key_eng), notApplicable);
         // TROLLEY
-        template[11] = pref.getString(getString(R.string.key_troll),"");
+        template_meta[11] = preferences.getString(res.getString(R.string.key_troll),"");
         // PATIENT
-        template[13] = pref.getString(getString(R.string.key_bob),"");
+        template_meta[13] = preferences.getString(res.getString(R.string.key_bob),"");
         // REASON
-        if (getString(R.string.yesButt).equals(template[13])) {
-            template[15] = pref.getString(getString(R.string.key_trans), unknown);
+        if (res.getString(R.string.yesButt).equals(template_meta[13])) {
+            template_meta[15] = preferences.getString(res.getString(R.string.key_trans), unknown);
         } else {
-            template[15] = notApplicable;
+            template_meta[15] = notApplicable;
         }
         // EMERGENCY
-        template[17] = pref.getString(getString(R.string.key_emerge), unknown);
+        template_meta[17] = preferences.getString(res.getString(R.string.key_emerge), unknown);
 
-        String ambList = TextUtils.join(",", template) + "\n";
+        return TextUtils.joinCSV(template_meta);
+    }
+
+    String fillProcessing() {
+        String[] template_pro = res.getStringArray(R.array.processing_info_template);
+
+        // USER ID
+        template_pro[1] = String.valueOf(userID);
+        // APP VERSION
+        template_pro[3] = versionNum;
+        // DEVICE MODEL
+        template_pro[5] = Build.MODEL;
+
+        return TextUtils.joinCSV(template_pro);
+    }
+
+    public void logAmb() { // Log ambulance options
+
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        String ambList = TextUtils.joinCSV(new String[] {fillMeta(), fillProcessing()}) + "\n";
 
         try {
             myAmbStream.write(ambList.getBytes(StandardCharsets.UTF_8));
@@ -102,13 +126,13 @@ public class AmbLoggingService extends IntentService {
             e.printStackTrace();
         }
 
-        SharedPreferences.Editor ambEd = pref.edit();
+        SharedPreferences.Editor ambEd = preferences.edit();
         if (atStart) {
-            ambEd.putString(getString(R.string.key_amb_name), ambPath);
-            ambEd.putString(getString(R.string.key_end_name), gzipPath);
+            ambEd.putString(res.getString(R.string.key_amb_name), ambPath);
+            ambEd.putString(res.getString(R.string.key_end_name), gzipPath);
         } else {
-            ambEd.putString(getString(R.string.key_amb_name),null);
-            ambEd.putString(getString(R.string.key_end_name), null);
+            ambEd.putString(res.getString(R.string.key_amb_name),null);
+            ambEd.putString(res.getString(R.string.key_end_name), null);
             for (String key : res.getStringArray(R.array.amb_opt_keys)) {
                 ambEd.remove(key);
             }
