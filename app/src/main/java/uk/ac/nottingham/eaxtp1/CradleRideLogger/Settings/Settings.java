@@ -1,11 +1,12 @@
-package uk.ac.nottingham.eaxtp1.CradleRideLogger;
+package uk.ac.nottingham.eaxtp1.CradleRideLogger.Settings;
 
 import android.os.Bundle;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import android.text.Html;
 import android.view.MenuItem;
-import android.view.View;
+
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.R;
 
 public class Settings extends AppCompatActivity  {
 
@@ -15,15 +16,12 @@ public class Settings extends AppCompatActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new SettingsFragment())
-                .commit();
+        setContentView(R.layout.activity_settings);
 
-        findViewById(android.R.id.content).setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-        );
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.settings, new SettingsFragment())
+                .commit();
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {

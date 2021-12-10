@@ -1,133 +1,151 @@
 <PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:key="@string/setScreen"
-    android:layout="@layout/activity_settings">
+    app:key="@string/setScreen"
+    app:iconSpaceReserved="false">
 
-    <PreferenceCategory android:title="General">
+    <PreferenceCategory app:title="General"
+        app:iconSpaceReserved="false">
 
         <!-- AUTO STOP SWITCH -->
         <SwitchPreference
-            android:layout_width="match_parent"
-            android:defaultValue="true"
-            android:key="@string/key_pref_as"
-            android:summary="@string/set_as_mess"
-            android:title="@string/set_as" />
+            app:defaultValue="true"
+            app:key="@string/key_pref_as"
+            app:summary="@string/set_as_mess"
+            app:title="@string/set_as"
+            app:iconSpaceReserved="false" />
 
         <!-- START DELAY PICKER -->
-        <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
-            android:defaultValue="@integer/delay_default"
-            android:key="@string/key_pref_delay"
-            android:title="@string/set_delay"
-            app:vnt_maxValue="@integer/delay_max"
-            app:vnt_minValue="@integer/delay_min" />
+        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyNumberPickerPreference
+            app:defaultValue="@integer/delay_default"
+            app:key="@string/key_pref_delay"
+            app:maxValue="@integer/delay_max"
+            app:minValue="@integer/delay_min"
+            app:title="@string/set_delay"
+            app:units="seconds"
+            app:iconSpaceReserved="false" />
 
         <!-- MOVEMENT TIMEOUT PICKER -->
-        <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
-            android:defaultValue="@integer/timeout_default"
-            android:inputType="number"
-            android:key="@string/key_pref_timeout"
-            android:title="@string/set_timeout"
-            app:vnt_maxValue="@integer/timeout_max"
-            app:vnt_minValue="@integer/timeout_min" />
+        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyNumberPickerPreference
+            app:defaultValue="@integer/timeout_default"
+            app:key="@string/key_pref_timeout"
+            app:maxValue="@integer/timeout_max"
+            app:minValue="@integer/timeout_min"
+            app:title="@string/set_timeout"
+            app:units="minutes"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 
     <!-- AMBULANCE SPECIFIC SETTINGS-->
     <PreferenceCategory
-        android:title="@string/amb_settings_divider"
-        android:key="@string/pref_amb_settings">
+        app:key="@string/pref_amb_settings"
+        app:title="@string/amb_settings_divider"
+        app:iconSpaceReserved="false">
 
         <!-- COUNTRY OF OPERATION -->
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyListPreference
-            android:key="@string/key_country"
-            android:entries="@array/country_names"
-            android:entryValues="@array/country_codes"
-            android:defaultValue="GB"
-            android:title="@string/choose_country" />
+        <ListPreference
+            app:defaultValue="GB"
+            app:entries="@array/country_names"
+            app:entryValues="@array/country_codes"
+            app:key="@string/key_country"
+            app:title="@string/choose_country"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
 
         <!-- TRANSPORT TEAM -->
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyEditTextPreference
-            android:defaultValue="@string/ntt_centre"
-            android:key="@string/key_pref_ntt"
-            android:title="@string/choose_ntt"
-            android:singleLine="true"
-            android:inputType="textCapCharacters"
-            />
+        <EditTextPreference
+            app:defaultValue="@string/ntt_centre"
+            app:key="@string/key_pref_ntt"
+            app:title="@string/choose_ntt"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
 
         <!-- TRANSPORT MODES USED -->
         <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyMultiSelectListPreference
-            android:key="@string/key_modes"
-            android:defaultValue="@array/default_mode_indices"
-            android:entries="@array/transport_modes"
-            android:entryValues="@array/transport_modes_indices"
-            android:title="@string/choose_mode"/>
+            app:defaultValue="@array/default_mode_indices"
+            app:entries="@array/transport_modes"
+            app:entryValues="@array/transport_modes_indices"
+            app:key="@string/key_modes"
+            app:title="@string/choose_mode"
+            app:iconSpaceReserved="false" />
 
         <!-- TROLLEYS USED BY NTT -->
         <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyFlexibleInputPreference
-            android:key="@string/key_troll_options"
-            android:title="@string/choose_troll"
-            android:defaultValue="@array/troll_centre"
-            />
+            app:defaultValue="@array/troll_centre"
+            app:key="@string/key_troll_options"
+            app:title="@string/choose_troll"
+            app:iconSpaceReserved="false" />
 
         <!-- ATTACHED WITH MAGNETS SWITCH -->
         <SwitchPreference
-            android:layout_width="match_parent"
-            android:defaultValue="true"
-            android:key="@string/key_pref_magnets"
-            android:title="@string/set_magnets"
-            android:summary="@string/set_mag_sum"/>
+            app:defaultValue="true"
+            app:key="@string/key_pref_magnets"
+            app:summary="@string/set_mag_sum"
+            app:title="@string/set_magnets"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:key="@string/set_buff_tit"
-        android:title="@string/set_buff_tit">
+        app:key="@string/set_buff_tit"
+        app:title="@string/set_buff_tit"
+        app:iconSpaceReserved="false">
 
-        <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
-            android:defaultValue="@integer/buff_default"
-            android:inputType="number"
-            android:key="@string/key_pref_buff_start"
-            android:title="@string/set_buff_start"
-            app:vnt_maxValue="@integer/buff_max"
-            app:vnt_minValue="@integer/buff_min" />
+        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyNumberPickerPreference
+            app:defaultValue="@integer/buff_default"
+            app:key="@string/key_pref_buff_start"
+            app:maxValue="@integer/buff_max"
+            app:minValue="@integer/buff_min"
+            app:title="@string/set_buff_start"
+            app:units="minutes"
+            app:iconSpaceReserved="false" />
 
-        <com.vanniktech.vntnumberpickerpreference.VNTNumberPickerPreference
-            android:defaultValue="@integer/buff_default"
-            android:inputType="number"
-            android:key="@string/key_pref_buff_end"
-            android:title="@string/set_buff_end"
-            app:vnt_maxValue="@integer/buff_max"
-            app:vnt_minValue="@integer/buff_min" />
+        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyNumberPickerPreference
+            app:defaultValue="@integer/buff_default"
+            app:key="@string/key_pref_buff_end"
+            app:maxValue="@integer/buff_max"
+            app:minValue="@integer/buff_min"
+            app:title="@string/set_buff_end"
+            app:units="minutes"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 
+    <!-- PREFERENCES FOR USE DURING TESTING / CALIBRATIONS -->
     <PreferenceCategory
-        android:title="@string/set_test_tit"
-        android:key="@string/set_test_tit">
+        app:key="@string/set_test_tit"
+        app:title="@string/set_test_tit"
+        app:iconSpaceReserved="false">
 
+        <!-- TOGGLE LOCATION ON/OFF -->
         <SwitchPreference
-            android:defaultValue="false"
-            android:key="@string/key_pref_test"
-            android:title="@string/set_testing" />
+            app:defaultValue="false"
+            app:key="@string/key_pref_test"
+            app:title="@string/set_testing"
+            app:iconSpaceReserved="false" />
 
+        <!-- SET THE AUDIO CODEC -->
         <ListPreference
-            android:defaultValue="AMR_NB"
-            android:entries="@array/codecs"
-            android:entryValues="@array/codec_ints"
-            android:key="AudioCodec"
-            android:title="Audio Codec" />
+            app:defaultValue="AMR_NB"
+            app:entries="@array/codecs"
+            app:entryValues="@array/codec_ints"
+            app:key="AudioCodec"
+            app:title="Audio Codec"
+            app:useSimpleSummaryProvider="true"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Miscellaneous">
+    <PreferenceCategory app:title="Miscellaneous"
+        app:iconSpaceReserved="false">
 
         <SwitchPreference
-            android:defaultValue="@bool/delete_files_by_default"
-            android:key="@string/key_pref_files"
-            android:summary="@string/set_files_sum"
-            android:title="@string/set_files" />
+            app:defaultValue="@bool/delete_files_by_default"
+            app:key="@string/key_pref_files"
+            app:summary="@string/set_files_sum"
+            app:title="@string/set_files"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
-
 
 </PreferenceScreen>

@@ -1,6 +1,7 @@
 package uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class TextUtils {
 
@@ -14,6 +15,10 @@ public class TextUtils {
 
     public static String joinNewLine(Object[] strings) {
         return android.text.TextUtils.join("\n", strings);
+    }
+
+    public static String joinNewLine(List<String> strings) {
+        return joinNewLine(strings.toArray());
     }
 
 }

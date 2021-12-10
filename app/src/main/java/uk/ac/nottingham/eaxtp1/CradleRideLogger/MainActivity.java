@@ -41,6 +41,7 @@ import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.GPSService;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.GPSTimerService;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.IMUService;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.Recording.LoggingService;
+import uk.ac.nottingham.eaxtp1.CradleRideLogger.Settings.Settings;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.DialogHandler;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.FSChecker;
 import uk.ac.nottingham.eaxtp1.CradleRideLogger.Utilities.JobUtilities;

@@ -127,8 +127,8 @@
     <string name="as_on">Auto-Stop enabled</string>
     <string name="as_off">Auto-Stop disabled</string>
 
-    <string name="set_delay">Start Delay (seconds): \u0020\u0020\u0020\u0020</string>
-    <string name="set_timeout">GPS Timeout (minutes): \t</string>
+    <string name="set_delay">Start Delay:</string>
+    <string name="set_timeout">GPS Timeout:</string>
 
     <string name="set_files">Delete successfully uploaded files</string>
     <string name="set_files_sum">App will check weekly for successfully uploaded journeys,
