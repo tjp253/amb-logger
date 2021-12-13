@@ -15,7 +15,7 @@
             app:iconSpaceReserved="false" />
 
         <!-- START DELAY PICKER -->
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyNumberPickerPreference
+        <uk.ac.nottingham.AmbLogger.Preferences.MyNumberPickerPreference
             app:defaultValue="@integer/delay_default"
             app:key="@string/key_pref_delay"
             app:maxValue="@integer/delay_max"
@@ -25,7 +25,7 @@
             app:iconSpaceReserved="false" />
 
         <!-- MOVEMENT TIMEOUT PICKER -->
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyNumberPickerPreference
+        <uk.ac.nottingham.AmbLogger.Preferences.MyNumberPickerPreference
             app:defaultValue="@integer/timeout_default"
             app:key="@string/key_pref_timeout"
             app:maxValue="@integer/timeout_max"
@@ -61,7 +61,7 @@
             app:iconSpaceReserved="false" />
 
         <!-- TRANSPORT MODES USED -->
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyMultiSelectListPreference
+        <uk.ac.nottingham.AmbLogger.Preferences.MyMultiSelectListPreference
             app:defaultValue="@array/default_mode_indices"
             app:entries="@array/transport_modes"
             app:entryValues="@array/transport_modes_indices"
@@ -70,7 +70,7 @@
             app:iconSpaceReserved="false" />
 
         <!-- TROLLEYS USED BY NTT -->
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyFlexibleInputPreference
+        <uk.ac.nottingham.AmbLogger.Preferences.MyFlexibleInputPreference
             app:defaultValue="@array/troll_centre"
             app:key="@string/key_troll_options"
             app:title="@string/choose_troll"
@@ -82,31 +82,6 @@
             app:key="@string/key_pref_magnets"
             app:summary="@string/set_mag_sum"
             app:title="@string/set_magnets"
-            app:iconSpaceReserved="false" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        app:key="@string/set_buff_tit"
-        app:title="@string/set_buff_tit"
-        app:iconSpaceReserved="false">
-
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyNumberPickerPreference
-            app:defaultValue="@integer/buff_default"
-            app:key="@string/key_pref_buff_start"
-            app:maxValue="@integer/buff_max"
-            app:minValue="@integer/buff_min"
-            app:title="@string/set_buff_start"
-            app:units="minutes"
-            app:iconSpaceReserved="false" />
-
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Preferences.MyNumberPickerPreference
-            app:defaultValue="@integer/buff_default"
-            app:key="@string/key_pref_buff_end"
-            app:maxValue="@integer/buff_max"
-            app:minValue="@integer/buff_min"
-            app:title="@string/set_buff_end"
-            app:units="minutes"
             app:iconSpaceReserved="false" />
 
     </PreferenceCategory>

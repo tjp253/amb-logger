@@ -35,7 +35,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <uk.ac.nottingham.eaxtp1.CradleRideLogger.Widgets.ButtonDefault
+        <uk.ac.nottingham.AmbLogger.Widgets.ButtonDefault
             android:id="@+id/buttAdd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

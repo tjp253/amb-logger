@@ -4,10 +4,6 @@
     <integer name="delay_min">0</integer>
     <integer name="delay_max">60</integer>
 
-    <integer name="buff_default">0</integer>
-    <integer name="buff_min">0</integer>
-    <integer name="buff_max">5</integer>
-
     <integer name="logging_period">5000</integer> <!-- write to file every 5 seconds (5000 ms) -->
 
     <integer name="acc_max">35</integer> <!-- Radial accuracy threshold -->

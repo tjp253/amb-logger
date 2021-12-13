@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!-- suppress AndroidDomInspection -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="uk.ac.nottingham.eaxtp1.CradleRideLogger">
+    package="uk.ac.nottingham.AmbLogger">
 
     <!-- Permissions for the recording -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -33,55 +33,72 @@
         tools:ignore="GoogleAppIndexingWarning"> <!-- Suppresses a couple of warnings. -->
 
         <activity
-            android:name=".MainActivity"
+            android:name="uk.ac.nottingham.AmbLogger.MainActivity"
             android:launchMode="singleTask"
             android:screenOrientation="portrait"
             android:exported="true"
+            android:excludeFromRecents="false"
             tools:ignore="LockedOrientationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <category tools:node="merge" android:name="android.intent.category.HOME"/>
+                <category tools:node="merge" android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <service android:name=".FileHandling.UploadService" />
+        <activity android:name="uk.ac.nottingham.AmbLogger.AmbSpecific.MetaSelectionActivity"
+            tools:ignore="InnerclassSeparator,LockedOrientationActivity"
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true"/>
 
-        <service android:name=".FileHandling.MovingService" />
+        <service android:name="uk.ac.nottingham.AmbLogger.AmbSpecific.InitialiseGPS"
+            tools:ignore="InnerclassSeparator" />
 
-        <service android:name=".Recording.AudioService"
+        <service android:name="uk.ac.nottingham.AmbLogger.AmbSpecific.LogMetaAfterReboot"
+            tools:ignore="InnerclassSeparator"
+            android:exported="false" />
+
+        <service android:name="uk.ac.nottingham.AmbLogger.AmbSpecific.MetaLoggingService"
+            tools:ignore="InnerclassSeparator"/>
+
+        <service android:name="uk.ac.nottingham.AmbLogger.FileHandling.UploadService" />
+
+        <service android:name="uk.ac.nottingham.AmbLogger.FileHandling.MovingService" />
+
+        <service android:name="uk.ac.nottingham.AmbLogger.Recording.AudioService"
             android:foregroundServiceType="microphone" />
 
-        <service android:name=".Recording.GPSService"
+        <service android:name="uk.ac.nottingham.AmbLogger.Recording.GPSService"
             android:foregroundServiceType="location" />
 
-        <service android:name=".Recording.LoggingService" />
+        <service android:name="uk.ac.nottingham.AmbLogger.Recording.LoggingService" />
 
-        <service android:name=".Recording.IMUService" />
+        <service android:name="uk.ac.nottingham.AmbLogger.Recording.IMUService" />
 
-        <service android:name=".FileHandling.UploadJobService"
+        <service android:name="uk.ac.nottingham.AmbLogger.FileHandling.UploadJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <service android:name=".Recording.GPSTimerService" />
+        <service android:name="uk.ac.nottingham.AmbLogger.Recording.GPSTimerService" />
 
-        <service android:name=".Utilities.FSChecker" />
+        <service android:name="uk.ac.nottingham.AmbLogger.Utilities.FSChecker" />
 
-        <service android:name=".Recording.WifiCheckService"
+        <service android:name="uk.ac.nottingham.AmbLogger.Recording.WifiCheckService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <activity android:name=".Settings.Settings"
+        <activity android:name="uk.ac.nottingham.AmbLogger.Settings.Settings"
             android:theme="@style/MyPrefTheme"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value="uk.ac.nottingham.AmbLogger.MainActivity" />
         </activity>
 
-        <service android:name=".FileHandling.DeletingJobService"
+        <service android:name="uk.ac.nottingham.AmbLogger.FileHandling.DeletingJobService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <service android:name=".Recording.AutoStopTimerService" />
+        <service android:name="uk.ac.nottingham.AmbLogger.Recording.AutoStopTimerService" />
     </application>
 
 </manifest>

@@ -4,22 +4,21 @@ android {
     compileSdkVersion 31
     buildToolsVersion '30.0.3'
     defaultConfig {
-        applicationId "uk.ac.nottingham.eaxtp1.CradleRideLogger"
+        // cannot modify appID without creating completely new app on Google Play
+        applicationId "uk.ac.nottingham.eaxtp1.ambulancelogger"
         minSdkVersion 24
         targetSdkVersion 31
         versionCode 78
         versionName "3.5.4"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-        resValue "string", "app_name", "CradleRide Logger"
-        buildConfigField 'boolean', 'CROWD_MODE', 'false'
-        buildConfigField 'boolean', 'AMB_MODE', 'false'
         buildConfigField 'boolean', 'TEST_MODE', 'false'
-        resValue 'integer', 'timeout_default', '1'
-        resValue 'integer', 'timeout_min', '1'
-        resValue 'integer', 'timeout_max', '5'
+        resValue "string", "app_name", "AmbLogger"
+        resValue 'integer', 'timeout_default', '10'
+        resValue 'integer', 'timeout_min', '5'
+        resValue 'integer', 'timeout_max', '15'
         resValue 'bool', 'delete_files_by_default', 'true'
-        resValue 'string', 'suffix', '-END'
-        resValue 'bool', 'launcher_in_toolbar', 'false'
+        resValue 'string', 'suffix', '-AMB'
+        resValue 'bool', 'launcher_in_toolbar', 'true'
     }
     buildTypes {
         release {
@@ -29,25 +28,18 @@ android {
     }
     flavorDimensions("1")
     productFlavors {
-        core {  // Had to change from 'main' as otherwise it would not sync the gradle.
-            buildConfigField 'boolean', 'CROWD_MODE', 'true'
-        }
-        ambulance {
-            applicationId "uk.ac.nottingham.eaxtp1.ambulancelogger"
-            buildConfigField 'boolean', 'AMB_MODE', 'true'
-            resValue "string", "app_name", "Ambulance Logger"
-            resValue 'integer', 'timeout_default', '10'
-            resValue 'integer', 'timeout_min', '5'
-            resValue 'integer', 'timeout_max', '15'
-            resValue 'string', 'suffix', '-AMB'
-            resValue 'bool', 'launcher_in_toolbar', 'true'
-        }
+        core {}
         shaker {
-            applicationIdSuffix ".shaker"
+            applicationIdSuffix ".test"
             versionNameSuffix ' - Test Mode'
             buildConfigField 'boolean', 'TEST_MODE', 'true'
-            resValue "string", "app_name", "CradleRide Shaker"
+            resValue 'string', 'suffix', ''
+            resValue "string", "app_name", "AmbLogger TESTER"
             resValue 'bool', 'delete_files_by_default', 'false'
+            resValue 'bool', 'launcher_in_toolbar', 'false'
+            resValue 'integer', 'timeout_default', '1'
+            resValue 'integer', 'timeout_min', '1'
+            resValue 'integer', 'timeout_max', '5'
         }
     }
 }

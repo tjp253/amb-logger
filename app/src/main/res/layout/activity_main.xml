@@ -9,7 +9,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="uk.ac.nottingham.eaxtp1.CradleRideLogger.MainActivity"
+    tools:context="uk.ac.nottingham.AmbLogger.MainActivity"
     android:weightSum="1">
 
     <TextView

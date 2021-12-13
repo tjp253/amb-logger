@@ -143,9 +143,6 @@
     <string name="set_test_tit">Testing</string>
     <string name="set_testing">Use GPS</string>
 
-    <string name="set_buff_tit">Recording Buffer</string>
-    <string name="set_buff_start">Minutes from Start:\u0020</string>
-    <string name="set_buff_end">Minutes from End:\u0020\u0020\u0020</string>
     <string name="file_empty">Recording duration was shorter than buffer time. No data was saved for this journey.</string>
 
     <string name="test_on">Testing on. GPS disabled.</string>
@@ -167,8 +164,6 @@
     <string name="key_pref_as">AutoStopOn</string>
     <string name="key_pref_delay">DelayTime</string>
     <string name="key_pref_timeout">GPS Timeout</string>
-    <string name="key_pref_buff_start">BuffStart</string>
-    <string name="key_pref_buff_end">BuffEnd</string>
     <string name="key_pref_test">TestMode</string>
     <string name="key_pref_files">DeleteFiles</string>
 
