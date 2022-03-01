@@ -65,6 +65,14 @@ public class MetaLoggingService extends IntentService {
 
         logAmb();
     }
+
+    int template_index;
+
+    int get_next_index() {
+        // increments the template_index by two and returns the value
+        template_index = template_index + 2; // go to next blank entry (titles in-between)
+        return template_index;
+    }
     
     String fillMeta() {
         // Fill the string array of Meta Options
@@ -75,28 +83,34 @@ public class MetaLoggingService extends IntentService {
         String notApplicable = res.getString(R.string.valueNotApplicable),
                 unknown = res.getString(R.string.optUnknown);
 
+        template_index = -1; // initialise an integer so meta template can be modified more fluidly
+
         // COUNTRY
-        template_meta[1] = preferences.getString(res.getString(R.string.key_country), "GB");
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_country), "GB");
         // TEAM
-        template_meta[3] = preferences.getString(res.getString(R.string.key_pref_ntt), res.getString(R.string.ntt_centre));
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_pref_ntt), res.getString(R.string.ntt_centre));
+        // STARTING HOSPITAL
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_hosp_start), "");
+        // DESTINATION HOSPITAL
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_hosp_end), "");
         // MODE
-        template_meta[5] = preferences.getString(res.getString(R.string.key_mode), res.getString(R.string.mode_road));
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_mode), res.getString(R.string.mode_road));
         // MANUFACTURER
-        template_meta[7] = preferences.getString(res.getString(R.string.key_man), notApplicable);
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_man), notApplicable);
         // ENGINE
-        template_meta[9] = preferences.getString(res.getString(R.string.key_eng), notApplicable);
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_eng), notApplicable);
         // TROLLEY
-        template_meta[11] = preferences.getString(res.getString(R.string.key_troll),"");
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_troll),"");
         // PATIENT
-        template_meta[13] = preferences.getString(res.getString(R.string.key_bob),"");
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_bob),"");
         // REASON
-        if (res.getString(R.string.yesButt).equals(template_meta[13])) {
-            template_meta[15] = preferences.getString(res.getString(R.string.key_trans), unknown);
+        if (res.getString(R.string.yesButt).equals(template_meta[template_index])) {
+            template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_trans), unknown);
         } else {
-            template_meta[15] = notApplicable;
+            template_meta[get_next_index()] = notApplicable;
         }
         // EMERGENCY
-        template_meta[17] = preferences.getString(res.getString(R.string.key_emerge), unknown);
+        template_meta[get_next_index()] = preferences.getString(res.getString(R.string.key_emerge), unknown);
 
         return TextUtils.joinCSV(template_meta);
     }

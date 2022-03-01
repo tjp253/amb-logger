@@ -5,6 +5,8 @@ import android.text.InputFilter;
 import android.util.AttributeSet;
 import android.view.inputmethod.EditorInfo;
 
+import uk.ac.nottingham.AmbLogger.R;
+
 public class EditTextDefault extends androidx.appcompat.widget.AppCompatEditText {
     public EditTextDefault(Context context) {
         super(context);
@@ -22,6 +24,10 @@ public class EditTextDefault extends androidx.appcompat.widget.AppCompatEditText
     }
     
     public void setDefaults() {
+
+        // Set the text color to black
+        setTextColor(getResources().getColor(R.color.colorBlack, getContext().getTheme()));
+
         // Ensure everything is capitalised
         setFilters(new InputFilter[] {new InputFilter.AllCaps()});
 

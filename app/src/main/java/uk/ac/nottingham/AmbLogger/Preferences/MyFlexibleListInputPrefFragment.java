@@ -160,7 +160,7 @@ public class MyFlexibleListInputPrefFragment extends PreferenceDialogFragmentCom
     public void onStateChanged(@NonNull LifecycleOwner source, @NonNull Lifecycle.Event event) {
         if (event != Lifecycle.Event.ON_START) return;
 
-        preference.onSetInitialValue(null);
+        preference.onSetInitialValue(new HashSet<>());
 
         dialog = (AlertDialog) requireDialog();
 

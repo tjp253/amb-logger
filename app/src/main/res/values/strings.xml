@@ -92,6 +92,7 @@
 
     <string name="butt_ok">@android:string/ok</string>
     <string name="butt_cancel">@android:string/cancel</string>
+    <string name="butt_enter">enter</string>
     <string name="butt_later">later</string>
     <string name="butt_delete">delete</string>
     <string name="butt_add">add new</string>

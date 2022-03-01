@@ -178,8 +178,9 @@ public class IMUService extends Service /*implements SensorEventListener*/ {
                             outputList.add(Float.toString(value));
                         }
 
+                        outputList.add(Long.toString(currTime - startTime));
+
                         if (!gpsOff) {
-                            outputList.add(Long.toString(currTime - startTime));
 
                             // The following code handles the AutoStop service, depending on how long it
                             // has been since the last GPS Sample. If the AutoStop Timer is NOT on due to
@@ -200,8 +201,6 @@ public class IMUService extends Service /*implements SensorEventListener*/ {
                                 }
                             }
 
-                        } else {
-                            outputList.add(Long.toString(currTime));  // Outputs time since 1970, when testing.
                         }
 
                         if (gyroPresent) {  // Calculate accelerometer values in World coordinates

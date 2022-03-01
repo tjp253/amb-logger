@@ -38,7 +38,7 @@ public class DialogHandler extends ContextWrapper {
                 .setCancelable(false);
     }
 
-    // Check if the app is the launcher (AMB Build only)
+    // Check if the app is the launcher
     public boolean appNotLauncher() {
         final Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);
@@ -49,7 +49,7 @@ public class DialogHandler extends ContextWrapper {
 
     }
 
-    // Build the LauncherDialog core (AMB Build only)
+    // Build the LauncherDialog core
     public AlertDialog.Builder buildLauncherPrompt() {
         return new AlertDialog.Builder(dialogWrapper)
                 .setTitle(R.string.lc_title)

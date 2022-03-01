@@ -13,6 +13,7 @@ import android.text.TextWatcher;
 import android.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class MetaSelectionActivity extends Activity implements View.OnClickListe
     boolean patient, resuscitated, sameDayRecording;
     int viewSame = View.INVISIBLE, viewOther = View.VISIBLE;
 
-    boolean startOfRecording = !(recording || forcedStopAmb || phoneDead);
+    boolean startOfRecording = !(recording || forcedStopAmb || phoneDead), inputtedHospital;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +120,8 @@ public class MetaSelectionActivity extends Activity implements View.OnClickListe
         }
 
         res = getResources();
+
+        requestHospital();
 
         if (startOfRecording) { // Ask for transport-start data
             // Start GPS initialising
@@ -183,6 +186,57 @@ public class MetaSelectionActivity extends Activity implements View.OnClickListe
 
         }
 
+    }
+
+    Button confirmHospital;
+
+    public void requestHospital() {
+        View inputView = ConstraintLayout.inflate(this, R.layout.hosp_input, null);
+        EditText inputText = inputView.findViewById(R.id.hosp_input);
+        inputText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                confirmHospital.setEnabled(editable.length() > 0);
+            }
+        });
+        int titleInt, prefInt;
+        if (startOfRecording) {
+            titleInt = R.string.hospStartTit;
+            prefInt = R.string.key_hosp_start;
+        } else {
+            titleInt = R.string.hospEndTit;
+            prefInt = R.string.key_hosp_end;
+        }
+        AlertDialog hospitalDialog = new AlertDialog.Builder(dialogWrapper)
+                .setTitle(getString(titleInt))
+                .setView(inputView)
+                .setPositiveButton(R.string.butt_enter, (dialog, which) -> {
+                    prefEd.putString(getString(prefInt), inputText.getText().toString()).apply();
+                    inputtedHospital = true;
+                })
+                .setNegativeButton(R.string.butt_cancel, (dialog, which) -> {
+                    if (startOfRecording) {
+                        confirmExit();
+                    } else {
+                        finish();
+                    }
+                })
+                .setCancelable(false).create();
+
+        hospitalDialog.show();
+        confirmHospital = hospitalDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        confirmHospital.setEnabled(false);
+        inputText.requestFocus(); // cannot get keyboard to auto pop-up, even with 'imm'
     }
 
     public void setupInputRow() {
@@ -434,7 +488,9 @@ public class MetaSelectionActivity extends Activity implements View.OnClickListe
         builder .setTitle("Cancel Recording")
                 .setPositiveButton(R.string.yesButt, (dialog, which) -> sendIntentBack(false))
                 .setNegativeButton(R.string.noButt, (dialog, which) -> {
-//                        Do nothing.
+                    if (!inputtedHospital) {
+                        requestHospital();
+                    }
                 })
                 .setCancelable(false).create().show();
     }

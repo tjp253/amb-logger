@@ -8,8 +8,8 @@ android {
         applicationId "uk.ac.nottingham.eaxtp1.ambulancelogger"
         minSdkVersion 24
         targetSdkVersion 31
-        versionCode 78
-        versionName "3.5.4"
+        versionCode 81
+        versionName "3.5.7"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         buildConfigField 'boolean', 'TEST_MODE', 'false'
         resValue "string", "app_name", "AmbLogger"
@@ -49,9 +49,9 @@ dependencies {
     androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation 'androidx.appcompat:appcompat:1.4.0'
-    implementation 'androidx.preference:preference:1.1.1'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'androidx.preference:preference:1.2.0'
     implementation 'com.google.code.gson:gson:2.8.8' // read in hospital coords from JSON
     implementation 'com.squareup.okhttp3:okhttp:4.2.2' // handle easy uploads
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
 }

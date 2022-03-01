@@ -13,6 +13,8 @@
     <string name="key_modes">PrefModes</string><!--Modes of transport available to NTT-->
     <string name="key_troll_options">PrefTrolleys</string><!--Trolley Options-->
 
+    <string name="key_hosp_start">PrefHospStart</string><!--Starting hospital-->
+    <string name="key_hosp_end">PrefHospEnd</string><!--Destination hospital-->
     <string name="key_mode">PrefMode</string><!--Mode of transport used for recording-->
     <string name="key_man">PrefMan</string><!--Manufacturer-->
     <string name="key_eng">PrefEng</string><!--Engine type-->
@@ -36,6 +38,9 @@
     <integer name="ambStart">1132</integer>
     <integer name="ambEnd">1133</integer>
     <integer name="ambDead">1111</integer>
+
+    <string name="hospStartTit">Please input the starting hospital</string>
+    <string name="hospEndTit">Please input the destination hospital</string>
 
     <string name="modeTit">Please select the mode of transport</string>
     <string name="manTit">Please select the ambulance manufacturer</string>
@@ -73,6 +78,10 @@
         <item>Country</item>
         <item />
         <item>Team</item>
+        <item />
+        <item>Start</item>
+        <item />
+        <item>Destination</item>
         <item />
         <item>Mode</item>
         <item />
